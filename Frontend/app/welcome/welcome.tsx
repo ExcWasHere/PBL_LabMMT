@@ -1,5 +1,6 @@
 import logoDark from "./logo-dark.svg";
 import logoLight from "./logo-light.svg";
+import test from "./test.jpg";
 
 export function Welcome() {
   return (
@@ -13,7 +14,7 @@ export function Welcome() {
               className="block w-full dark:hidden"
             />
             <img
-              src={logoDark}
+              src={test}
               alt="React Router"
               className="hidden w-full dark:block"
             />
@@ -22,7 +23,8 @@ export function Welcome() {
         <div className="max-w-[300px] w-full space-y-6 px-4">
           <nav className="rounded-3xl border border-gray-200 p-6 dark:border-gray-700 space-y-4">
             <p className="leading-6 text-gray-700 dark:text-gray-200 text-center">
-              What&apos;s next?
+              What&apos;s next? <br></br>
+              YNTKTS
             </p>
             <ul>
               {resources.map(({ href, text, icon }) => (

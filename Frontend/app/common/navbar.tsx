@@ -120,13 +120,13 @@ const Navbar: React.FC<HeaderProps> = () => {
           backgroundColor:
             isScrolled || isMobileMenuOpen
               ? isDarkMode
-                ? "#111827"
+                ? "#000000"
                 : "#ffffff"
               : isDarkMode
-                ? "rgba(17, 24, 39, 0.2)"
+                ? "rgba(0, 0, 0, 0.3)"
                 : "rgba(255, 255, 255, 0.2)",
           color: isDarkMode
-            ? "#e5e7eb"
+            ? "#ffffff"
             : isScrolled || isMobileMenuOpen
               ? "#1f2937"
               : "#ffffff",
@@ -155,7 +155,7 @@ const Navbar: React.FC<HeaderProps> = () => {
         <nav className="hidden md:block">
           <ul className="flex gap-4 font-semibold items-center">
             <NavLinks />
-            {/* Dark Mode Toggle Button */}
+            {/* Dark Mode Button */}
             <li>
               <button
                 onClick={toggleDarkMode}
@@ -212,7 +212,7 @@ const Navbar: React.FC<HeaderProps> = () => {
       <div
         style={{
           backgroundColor: isDarkMode ? "#000000" : "#ffffff",
-          color: isDarkMode ? "#e5e7eb" : "#1f2937",
+          color: isDarkMode ? "#ffffff" : "#1f2937",
         }}
         className={`fixed right-0 top-0 w-64 h-full shadow-xl z-50 transform transition-all duration-500 ease-in-out ${
           isMobileMenuOpen ? "translate-x-0" : "translate-x-full"

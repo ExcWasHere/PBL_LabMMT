@@ -1,13 +1,17 @@
 import type { Route } from "./+types/home";
-import { Welcome } from "../welcome/welcome";
+import Navbar from "~/common/navbar";
 
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: "MMT | Home" },
-    { name: "Home", content: "Welcome to Lab MMT JTI!" },
+    { title: "MMT | Beranda" },
+    { name: "Beranda", content: "Welcome to Lab MMT JTI!" },
   ];
 }
 
 export default function Home() {
-  return <Welcome />;
+  return (
+    <>
+      <Navbar />
+    </>
+  );
 }

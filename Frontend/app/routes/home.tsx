@@ -1,13 +1,19 @@
+import IndexHero from "~/components/HomePage/section1";
 import type { Route } from "./+types/home";
-import { Welcome } from "../welcome/welcome";
+import Navbar from "~/common/navbar";
 
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: "New React Router App" },
-    { name: "description", content: "Welcome to React Router!" },
+    { title: "MMT | Beranda" },
+    { name: "Beranda", content: "Welcome to Lab MMT JTI!" },
   ];
 }
 
 export default function Home() {
-  return <Welcome />;
+  return (
+    <>
+      <Navbar />
+      <IndexHero />
+    </>
+  );
 }

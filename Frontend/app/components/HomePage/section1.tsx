@@ -41,7 +41,8 @@ export default function IndexHero() {
           </div>
 
           <h1 className="text-white text-4xl md:text-7xl font-bold mb-6 leading-tight">
-            Selamat Datang di Lab{" "}
+            Selamat Datang <br />
+            di Lab{" "}
             <span className="text-orange-500">Multimedia Mobile Tech</span>
           </h1>
 

@@ -135,7 +135,7 @@ const Navbar: React.FC<HeaderProps> = () => {
           <img src="/logo/jti.png" alt="Logo 1" className="w-10 h-10" />
           <img src="/logo/labMMT.png" alt="Logo 2" className="w-10 h-13" />
 
-          {/* Brand Name */}
+          {/* Brand MMT */}
           {!isMobileMenuOpen && (
             <h1 className="text-xl md:text-2xl font-bold transition-transform duration-300 hover:scale-105">
               Laboratorium<span className="text-orange-400">MMT</span>
@@ -143,7 +143,7 @@ const Navbar: React.FC<HeaderProps> = () => {
           )}
         </div>
 
-        {/* Desktop Navigation */}
+        {/* Desktop Ver. */}
         <nav className="hidden md:block">
           <ul className="flex gap-4 font-semibold items-center">
             <NavLinks />

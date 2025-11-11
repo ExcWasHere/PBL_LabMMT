@@ -2,6 +2,7 @@ import type { Route } from "./+types/home";
 import { Coba } from "../components/Proyek/coba";
 import Navbar from "~/common/navbar";
 import Header from "~/components/Proyek/header"
+import Footer from "~/common/footer";
 
 export function meta() {
   return [
@@ -16,6 +17,7 @@ export default function Proyek() {
     <Navbar />
     <Header />
     <Coba />
+    <Footer />
     </>
   );
 }

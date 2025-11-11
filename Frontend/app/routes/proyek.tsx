@@ -10,7 +10,7 @@ export function meta() {
   ];
 }
 
-export default function coba() {
+export default function Proyek() {
     return (
     <>
     <Navbar />

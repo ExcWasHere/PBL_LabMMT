@@ -4,4 +4,6 @@ export default [
     index("routes/home.tsx"),
     route("proyek", "routes/proyek.tsx"),
     route("masuk", "routes/masuk.tsx"),
+    route("galeri", "routes/galeri.tsx"),
+    route("berita", "routes/berita.tsx"),
 ] satisfies RouteConfig;

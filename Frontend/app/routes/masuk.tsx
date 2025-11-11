@@ -3,12 +3,12 @@ import LoginPage from "~/components/Auth/login";
 
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: "MMT | Beranda" },
-    { name: "Beranda", content: "Welcome to Lab MMT JTI!" },
+    { title: "MMT | Masuk" },
+    { name: "Masuk", content: "Welcome to Lab MMT JTI!" },
   ];
 }
 
-export default function Home() {
+export default function Masuk() {
   return (
     <>
     <LoginPage />

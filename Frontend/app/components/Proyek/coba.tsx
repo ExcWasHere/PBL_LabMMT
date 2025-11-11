@@ -8,7 +8,7 @@ import Card from "../../common/card";
 export function Coba() {
   const projects = [
     {
-      image: "/home/test2.jpg",
+      image: "/proyek/test2.jpg",
       date: "11 Nov 2025",
       title: "Project A",
       desc: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
@@ -16,7 +16,7 @@ export function Coba() {
       info: "Game",
     },
     {
-      image: "/home/test2.jpg",
+      image: "/proyek/test2.jpg",
       date: "11 Nov 2025",
       title: "Project B",
       desc: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
@@ -24,7 +24,7 @@ export function Coba() {
       info: "UI / UX",
     },
     {
-      image: "/home/test2.jpg",
+      image: "/proyek/test2.jpg",
       date: "11 Nov 2025",
       title: "Project C",
       desc: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",

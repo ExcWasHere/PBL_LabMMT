@@ -10,6 +10,7 @@ export default function App() {
       title: "Event A",
       desc: "Lorem ipsum dolor sit amet elit, sed do eiusmod tempor.",
       tags: ["Foto", "Video"],
+      location: "sfddsfsf"
     },
     {
       image: "/home/eventB.jpg",
@@ -17,6 +18,7 @@ export default function App() {
       title: "Event B",
       desc: "Lorem ipsum dolor sit amet elit, sed do eiusmod tempor.",
       tags: ["Foto", "Animasi"],
+      location: "sfddsfsf"
     },
     {
       image: "/home/eventC.jpg",
@@ -24,6 +26,7 @@ export default function App() {
       title: "Event C",
       desc: "Lorem ipsum dolor sit amet elit, sed do eiusmod tempor.",
       tags: ["Foto", "Video"],
+      location: "sfddsfsf"
     },
   ];
 

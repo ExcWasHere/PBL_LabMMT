@@ -2,6 +2,7 @@ import IndexHero from "~/components/HomePage/section1";
 import type { Route } from "./+types/home";
 import Navbar from "~/common/navbar";
 import ProfileSingkat from "~/components/HomePage/section2";
+import { HomeProject } from "~/components/HomePage/section3";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -16,6 +17,7 @@ export default function Home() {
       <Navbar />
       <IndexHero />
       <ProfileSingkat />
+      <HomeProject/>
     </>
   );
 }

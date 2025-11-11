@@ -1,5 +1,7 @@
 import type { Route } from "./+types/home";
-import { Coba } from "../welcome/coba";
+import { Coba } from "../components/Proyek/coba";
+import Navbar from "~/common/navbar";
+import Header from "~/components/Proyek/header"
 
 export function meta() {
   return [
@@ -9,5 +11,11 @@ export function meta() {
 }
 
 export default function coba() {
-    return <Coba />;
+    return (
+    <>
+    <Navbar />
+    <Header />
+    <Coba />
+    </>
+  );
 }

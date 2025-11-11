@@ -3,6 +3,7 @@ import type { Route } from "./+types/home";
 import Navbar from "~/common/navbar";
 import ProfileSingkat from "~/components/HomePage/section2";
 import { HomeProject } from "~/components/HomePage/section3";
+import Footer from "~/common/footer";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -18,6 +19,7 @@ export default function Home() {
       <IndexHero />
       <ProfileSingkat />
       <HomeProject/>
+      <Footer />
     </>
   );
 }

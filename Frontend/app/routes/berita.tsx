@@ -1,9 +1,10 @@
-import type { Route } from "./+types/masuk";
-import LoginPage from "~/components/Auth/login";
+import Footer from "~/common/footer";
+import type { Route } from "./+types/berita";
+import Navbar from "~/common/navbar";
 
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: "MMT | Masuk" },
+    { title: "MMT | Berita" },
     { name: "Masuk", content: "Welcome to Lab MMT JTI!" },
   ];
 }
@@ -11,7 +12,8 @@ export function meta({}: Route.MetaArgs) {
 export default function Masuk() {
   return (
     <>
-    <LoginPage />
+    <Navbar />
+    <Footer />
     </>
   );
 }

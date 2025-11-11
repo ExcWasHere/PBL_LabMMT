@@ -1,5 +1,3 @@
-import { ExternalLink } from "lucide-react";
-import { Tag, Tags } from "lucide-react";
 import { Search } from "lucide-react";
 import { Funnel } from "lucide-react";
 import { useState } from "react";

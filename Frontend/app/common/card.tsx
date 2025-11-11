@@ -40,8 +40,7 @@ export default function Card({
           className="absolute top-4 left-4 z-10 opacity-0 -translate-y-4
                      group-hover:opacity-100 group-hover:translate-y-0
                      transition-all duration-500
-                     flex items-center gap-2" // <-- Dibungkus flex
-        >
+                     flex items-center gap-2">
           {/* date */}
           <span className="bg-orange-500 text-white text-xs px-2 py-1 rounded">
             {date}

@@ -86,21 +86,19 @@ const Navbar: React.FC<HeaderProps> = () => {
       {navItems.map((item) => (
         <li key={item} className="px-4">
           <a
-            href={`${
+            href={
               item === "Beranda"
                 ? "/"
                 : `/${item.toLowerCase().replace(/\s+/g, "-")}`
-            }`}
-            style={{
-              backgroundColor: activeItem === item ? "#0ea5e9" : "transparent",
-              color:
+            }
+            className={`block py-3 px-4 rounded-lg transition-all duration-200 
+              ${
                 activeItem === item
-                  ? "white"
+                  ? "bg-orange-500 text-white"
                   : isDarkMode
-                    ? "#000000"
-                    : "#1f2937",
-            }}
-            className="block py-3 px-4 rounded-lg transition-all duration-200 hover:bg-orange-100"
+                    ? "text-gray-200 hover:bg-gray-700"
+                    : "text-gray-800 hover:bg-orange-100"
+              }`}
             onClick={() => {
               setActiveItem(item);
               setIsMobileMenuOpen(false);
@@ -134,24 +132,18 @@ const Navbar: React.FC<HeaderProps> = () => {
         className="w-full top-0 left-0 z-50 fixed h-16 md:h-20 flex justify-between items-center shadow-xl px-4 md:px-10 transition-all duration-500"
       >
         <div className="flex items-center gap-3">
-          <img
-            src="/logo/jti.png"
-            alt="Logo 1"
-            className="w-10 h-10"
-          />
-          <img
-            src="/logo/labMMT.png"
-            alt="Logo 2"
-            className="w-10 h-13"
-          />
+          <img src="/logo/jti.png" alt="Logo 1" className="w-10 h-10" />
+          <img src="/logo/labMMT.png" alt="Logo 2" className="w-10 h-13" />
 
-          {/* Brand Name */}
-          <h1 className="text-xl md:text-2xl font-bold transition-transform duration-300 hover:scale-105">
-            Laboratorium<span className="text-orange-400">MMT</span>
-          </h1>
+          {/* Brand MMT */}
+          {!isMobileMenuOpen && (
+            <h1 className="text-xl md:text-2xl font-bold transition-transform duration-300 hover:scale-105">
+              Laboratorium<span className="text-orange-400">MMT</span>
+            </h1>
+          )}
         </div>
 
-        {/* Desktop Navigation */}
+        {/* Desktop Ver. */}
         <nav className="hidden md:block">
           <ul className="flex gap-4 font-semibold items-center">
             <NavLinks />
@@ -177,7 +169,7 @@ const Navbar: React.FC<HeaderProps> = () => {
 
         {/* Mobile Menu Button */}
         <button
-          className="md:hidden text-2xl p-2 rounded-full hover:bg-orange-100 transition-colors duration-200"
+          className="md:hidden text-2xl p-2 rounded-full hover:bg-orange-400 transition-colors duration-200"
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           aria-label="Toggle menu"
         >
@@ -189,8 +181,8 @@ const Navbar: React.FC<HeaderProps> = () => {
                 isScrolled
                   ? "text-orange-500"
                   : isDarkMode
-                    ? "text-black"
-                    : "text-white"
+                    ? "text-white"
+                    : "text-gray-800"
               }
             />
           )}
@@ -199,32 +191,25 @@ const Navbar: React.FC<HeaderProps> = () => {
 
       {/* Mobile Menu Overlay */}
       <button
-        className={`fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity duration-300 ${
+        className={`fixed inset-0 bg-transparent bg-opacity-50 z-40 transition-opacity duration-300 ${
           isMobileMenuOpen ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
         onClick={() => setIsMobileMenuOpen(false)}
-        onKeyDown={(e) => e.key === "Escape" && setIsMobileMenuOpen(false)}
         aria-label="Close menu overlay"
-        tabIndex={isMobileMenuOpen ? 0 : -1}
       />
 
       {/* Mobile Menu */}
       <div
-        style={{
-          backgroundColor: isDarkMode ? "#000000" : "#ffffff",
-          color: isDarkMode ? "#ffffff" : "#1f2937",
-        }}
         className={`fixed right-0 top-0 w-64 h-full shadow-xl z-50 transform transition-all duration-500 ease-in-out ${
           isMobileMenuOpen ? "translate-x-0" : "translate-x-full"
-        } rounded-l-2xl`}
+        } rounded-l-2xl ${
+          isDarkMode ? "bg-black text-white" : "bg-white text-gray-800"
+        }`}
       >
         <div
-          style={{
-            borderBottom: isDarkMode
-              ? "1px solid #374151"
-              : "1px solid #f3f4f6",
-          }}
-          className="p-4 flex justify-between items-center"
+          className={`p-4 flex justify-between items-center border-b ${
+            isDarkMode ? "border-gray-700" : "border-gray-200"
+          }`}
         >
           <h1 className="text-xl font-bold">
             Laboratorium<span className="text-orange-500">MMT</span>
@@ -236,20 +221,20 @@ const Navbar: React.FC<HeaderProps> = () => {
         <nav className="py-6">
           <ul className="flex flex-col gap-2 font-semibold">
             <MobileNavLinks />
-            {/* Dark Mode Mobile Menu */}
             <li className="px-4">
               <button
                 onClick={toggleDarkMode}
-                style={{
-                  backgroundColor: isDarkMode ? "#374151" : "transparent",
-                }}
-                className="w-full flex items-center justify-between py-3 px-4 rounded-lg hover:bg-orange-100 hover:text-orange-500 transition-all duration-200"
+                className={`w-full flex items-center justify-between py-3 px-4 rounded-lg transition-all duration-200 ${
+                  isDarkMode
+                    ? "bg-gray-800 hover:bg-gray-700 text-white"
+                    : "hover:bg-orange-100 text-gray-800"
+                }`}
               >
                 <span>Dark Mode</span>
                 {isDarkMode ? (
-                  <Sun className="w-5 h-5" />
+                  <Sun className="w-5 h-5 text-yellow-400" />
                 ) : (
-                  <Moon className="w-5 h-5" />
+                  <Moon className="w-5 h-5 text-gray-600" />
                 )}
               </button>
             </li>

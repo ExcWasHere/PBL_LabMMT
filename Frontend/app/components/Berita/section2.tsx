@@ -7,7 +7,7 @@ export default function Coba() {
     {
       image: "/galeri/eventA.jpg",
       date: "10 Nov 2024",
-      title: "Workshop AR/VR",
+      title: "NEWS A",
       desc: "Kegiatan pelatihan AR/VR bersama anggota lab MMT.",
       tags: ["Foto", "Animasi"],
       info: "Malang"
@@ -15,7 +15,7 @@ export default function Coba() {
     {
       image: "/galeri/eventB.jpg",
       date: "10 Nov 2024",
-      title: "Pameran Game",
+      title: "NEWS B",
       desc: "Menampilkan hasil karya mahasiswa berbasis Unity.",
       tags: ["Foto", "Animasi"],
       info: "Darjo"
@@ -23,7 +23,7 @@ export default function Coba() {
     {
       image: "/galeri/eventC.jpg",
       date: "10 Nov 2024",
-      title: "Kunjungan Industri",
+      title: "NEWS C",
       desc: "Kegiatan kunjungan industri ke perusahaan teknologi.",
       tags: ["Foto", "Animasi"],
       info: "Blitar"

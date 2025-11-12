@@ -23,9 +23,7 @@ export default function IndexHero() {
           {/* INI TAG */}
           <div className="flex flex-wrap justify-center gap-3 mb-4">
             {[
-              { label: "Game Dev", icon: <Gamepad2 size={14} /> },
-              { label: "UI/UX", icon: <PenTool size={14} /> },
-              { label: "AR/VR", icon: <Glasses size={14} /> },
+           
             ].map((tag, index) => (
               <span
                 key={index}
@@ -34,20 +32,18 @@ export default function IndexHero() {
                   animationDuration: `${1 + index * 0.3}s`,
                 }}
               >
-                {tag.icon}
-                {tag.label}
+             
               </span>
             ))}
           </div>
 
           <h1 className="text-white text-4xl md:text-7xl font-bold mb-6 leading-tight">
-            Selamat Datang <br />
-            di Lab{" "}
-            <span className="text-orange-500">Multimedia Mobile Tech</span>
+            Featured 
+            <span className="text-orange-500">News</span>
           </h1>
 
           <p className="text-white text-lg md:text-xl max-w-2xl mx-auto">
-            Tempat kolaborasi mahasiswa dan dosen dalam menciptakan karya multimedia inovatif yang mengubah dunia digital.
+           Jendela informasi yang menampilkan hasil kolaborasi mahasiswa dan dosen dalam menciptakan inovasi multimedia yang berdampak pada dunia digital
           </p>
         </div>
       </div>

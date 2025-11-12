@@ -12,6 +12,7 @@
     "@react-router/dev": "^7.9.5",
     "@react-router/node": "^7.9.5",
     "@react-router/serve": "^7.9.5",
+    "framer-motion": "^12.23.24",
     "isbot": "^5.1.31",
     "lucide-react": "^0.552.0",
     "react": "^19.1.1",

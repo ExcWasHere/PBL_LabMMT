@@ -10,7 +10,7 @@ export function Coba() {
       date: "11 Nov 2025",
       title: "Project A",
       desc: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-      tags: ["Tailwind"],
+      tags: ["Unity"],
       info: "Game",
     },
     {
@@ -19,7 +19,7 @@ export function Coba() {
       title: "Project B",
       desc: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
       tags: ["Tailwind", "React"],
-      info: "UI / UX",
+      info: "UI/UX",
     },
     {
       image: "/proyek/test2.jpg",
@@ -27,34 +27,88 @@ export function Coba() {
       title: "Project C",
       desc: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
       tags: ["Tailwind", "Javascript"],
-      info: "AR / VR",
+      info: "AR/VR",
+    },
+    {
+      image: "/proyek/12.avif",
+      date: "8 Nov 2024",
+      title: "Project D",
+      desc: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+      tags: ["Unity"],
+      info: "AR/VR",
+    },
+    {
+      image: "/proyek/12.avif",
+      date: "10 Nov 2024",
+      title: "Project E",
+      desc: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+      tags: ["Figma"],
+      info: "UI/UX",
+    },
+    {
+      image: "/proyek/12.avif",
+      date: "11 Nov 2024",
+      title: "Project F",
+      desc: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+      tags: ["Unity"],
+      info: "AR/VR",
     },
   ];
 
   const [selectedOption, setSelectedOption] = useState("");
 
+  const [category, setCategory] = useState("");
+  const [tags, setTags] = useState("");
+  const [year, setYear] = useState("");
+  const [sort, setSort] = useState("");
+  const [search, setSearch] = useState("");
+
+  const filteredProject = projects
+    .filter((item) =>
+      search ? item.title.toLowerCase().includes(search.toLowerCase()) : true
+    )
+    .filter((item) =>
+      category ? item.info.toLowerCase() === category.toLowerCase() : true
+    )
+    .filter((item) => (tags ? item.tags.includes(tags) : true))
+    .filter((item) => (year ? item.date.includes(year) : true))
+    .sort((a, b) => {
+      if (sort === "latest") {
+        return new Date(b.date).getTime() - new Date(a.date).getTime();
+      }
+      if (sort === "oldest") {
+        return new Date(a.date).getTime() - new Date(b.date).getTime();
+      }
+      if (sort === "a-z") return a.title.localeCompare(b.title);
+      if (sort === "z-a") return b.title.localeCompare(a.title);
+      return 0;
+    });
+
   return (
     <>
       <div className="bg-white min-h-screen">
-        <main className="flex items-center justify-center py-10">
+        <main className="py-10">
           <section id="intro">
             <div className="max-w-6xl mx-auto px-6">
-              <div className="flex gap-4 items-center ">
+              <div className="flex gap-4 items-center ml-5">
                 <div className="flex items-center bg-[#f5ece5] rounded-lg px-3 py-2 w-full max-w-md shadow-sm mb-10">
                   <Search className="stroke-black" />
                   <input
                     type="text"
                     placeholder="Search"
                     className="bg-[#f5ece5] flex-1 ml-2 focus:outline-none text-gray-700 placeholder-black"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
                   />
                 </div>
 
                 <div className="flex items-center bg-[#f5ece5] rounded-lg px-3 py-2 w-45 max-w-sm shadow-sm mb-10">
                   <select
                     className="bg-[#f5ece5] flex-1 ml-2 focus:outline-none text-black placeholder-black cursor-pointer"
-                    defaultValue=""
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
                   >
-                    <option value="" disabled>
+                    <option value="">
                       Select Category
                     </option>
                     <option value="ui/ux">UI/UX</option>
@@ -66,14 +120,15 @@ export function Coba() {
                 <div className="flex items-center bg-[#f5ece5] rounded-lg px-3 py-2 w-30 max-w-sm shadow-sm mb-10">
                   <select
                     className="bg-[#f5ece5] flex-1 ml-2 focus:outline-none text-black placeholder-black cursor-pointer"
-                    defaultValue=""
+                    value={tags}
+                    onChange={(e) => setTags(e.target.value)}
                   >
-                    <option value="" disabled>
+                    <option value="">
                       Tags
                     </option>
-                    <option value="react">React</option>
-                    <option value="tailwind">Tailwind</option>
-                    <option value="unity">Unity</option>
+                    <option value="React">React</option>
+                    <option value="Tailwind">Tailwind</option>
+                    <option value="Unity">Unity</option>
                     <option value="Figma">Figma</option>
                   </select>
                 </div>
@@ -81,9 +136,10 @@ export function Coba() {
                 <div className="flex items-center bg-[#f5ece5] rounded-lg px-3 py-2 w-30 max-w-sm shadow-sm mb-10">
                   <select
                     className="bg-[#f5ece5] flex-1 ml-2 focus:outline-none text-black placeholder-black cursor-pointer"
-                    defaultValue=""
+                    value={year}
+                    onChange={(e) => setYear(e.target.value)}
                   >
-                    <option value="" disabled>
+                    <option value="">
                       Year
                     </option>
                     <option value="2023">2023</option>
@@ -93,21 +149,19 @@ export function Coba() {
                 </div>
 
                 <div
-                  className={`flex items-center bg-[#f5ece5] rounded-lg px-3 py-2 max-w-sm shadow-sm mb-10 ${selectedOption ? "w-fit min-w-30" : "w-30 justify-center"}`}
+                  className={`flex items-center bg-[#f5ece5] rounded-lg px-3 py-2 max-w-sm shadow-sm mb-10 ${sort ? "w-fit min-w-30" : "w-30 justify-center"}`}
                 >
-                  {!selectedOption && (
-                    <Funnel size={20} className="stroke-black" />
-                  )}
+                  {!sort && <Funnel size={20} className="stroke-black" />}
                   <select
                     className="bg-[#f5ece5] flex-1 ml-1 text-sm focus:outline-none text-black placeholder-black cursor-pointer"
-                    defaultValue=""
-                    onChange={(e) => setSelectedOption(e.target.value)}
+                    value={sort}
+                    onChange={(e) => setSort(e.target.value)}
                   >
-                    <option value="" disabled>
+                    <option value="">
                       Sort by
                     </option>
                     <option value="popular">Popular</option>
-                    <option value="old">Oldest</option>
+                    <option value="oldest">Oldest</option>
                     <option value="latest">Latest</option>
                     <option value="a-z">A - Z</option>
                     <option value="z-a">Z - A</option>
@@ -115,9 +169,9 @@ export function Coba() {
                 </div>
               </div>
 
-              <div className="min-h-screen bg-white px-6 py-4">
+              <div className="bg-white px-6 py-4">
                 <div className="grid md:grid-cols-3 gap-8">
-                  {projects.map((e, i) => (
+                  {filteredProject.map((e, i) => (
                     <Card key={i} {...e} />
                   ))}
                 </div>

@@ -4,6 +4,9 @@ import Navbar from "~/common/navbar";
 import ProfileSingkat from "~/components/HomePage/section2";
 import { HomeProject } from "~/components/HomePage/section3";
 import Footer from "~/common/footer";
+import { HomeBerita } from "~/components/HomePage/section4";
+import { Register } from "~/components/HomePage/section6";
+import { HomeMember } from "~/components/HomePage/section5";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -19,6 +22,9 @@ export default function Home() {
       <IndexHero />
       <ProfileSingkat />
       <HomeProject/>
+      <HomeBerita/>
+      <HomeMember/>
+      <Register/>
       <Footer />
     </>
   );

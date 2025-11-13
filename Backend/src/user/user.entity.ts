@@ -4,28 +4,38 @@ export enum UserRole {
   ADMIN = 'admin',
   DOSEN = 'dosen',
   MAHASISWA = 'mahasiswa',
+  VIEWER = 'viewer',
 }
 
-@Entity()
+@Entity({ name: 'users' })
 export class User {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
+  @Column({ type: 'varchar', length: 150 })
   name: string;
 
-  @Column({ unique: true })
+  @Column({ type: 'varchar', length: 200, unique: true })
   email: string;
 
-  @Column()
+  @Column({ type: 'varchar', length: 255 })
   password: string;
 
   @Column({
     type: 'enum',
     enum: UserRole,
+    default: UserRole.MAHASISWA,
   })
   role: UserRole;
 
-  @Column({ name: 'phone_number', nullable: true })
-  phoneNumber: string;
+  @Column({ name: 'phone_number', type: 'varchar', length: 32, nullable: true })
+  phoneNumber?: string | null;
+
+  @Column({
+    name: 'validation_field',
+    type: 'varchar',
+    length: 100,
+    nullable: true,
+  })
+  validationField?: string | null;
 }

@@ -10,7 +10,15 @@ export function Coba() {
       title: "Workshop AR/VR",
       desc: "Kegiatan pelatihan AR/VR bersama anggota lab MMT.",
       tags: ["Foto", "Animasi"],
-      info: "Malang"
+      info: "Malang",
+      photos: [
+        "/galeri/eventA.jpg",
+        "/galeri/eventB.jpg",
+        "/galeri/eventC.jpg",
+        "/home/kondisiLab.jpg",
+        "/galeri/eventA.jpg",
+        "/galeri/eventC.jpg",
+      ],
     },
     {
       image: "/galeri/eventB.jpg",
@@ -18,7 +26,12 @@ export function Coba() {
       title: "Pameran Game",
       desc: "Menampilkan hasil karya mahasiswa berbasis Unity.",
       tags: ["Foto", "Animasi"],
-      info: "Darjo"
+      info: "Darjo",
+      photos: [
+        "/galeri/eventB1.jpg",
+        "/galeri/eventB2.jpg",
+        "/galeri/eventB3.jpg",
+      ],
     },
     {
       image: "/galeri/eventC.jpg",
@@ -26,15 +39,36 @@ export function Coba() {
       title: "Kunjungan Industri",
       desc: "Kegiatan kunjungan industri ke perusahaan teknologi.",
       tags: ["Foto", "Animasi"],
-      info: "Blitar"
+      info: "Blitar",
+      photos: [
+        "/galeri/eventC1.jpg",
+        "/galeri/eventC2.jpg",
+        "/galeri/eventC3.jpg",
+      ],
     },
   ];
 
+  // 🧠 state filter
   const [tags, setCategory] = useState("");
   const [year, setYear] = useState("");
   const [sort, setSort] = useState("");
   const [search, setSearch] = useState("");
 
+  // 🧠 state modal gallery
+  const [activeGallery, setActiveGallery] = useState<number | null>(null);
+  const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
+
+  // 🪄 fungsi open & close modal
+  const openPopup = (index: number) => {
+    setActiveGallery(index);
+    setCurrentPhotoIndex(0);
+  };
+
+  const closePopup = () => {
+    setActiveGallery(null);
+  };
+
+  // filter logic
   const filteredGallery = galleries
     .filter((item) =>
       search ? item.title.toLowerCase().includes(search.toLowerCase()) : true
@@ -120,13 +154,94 @@ export function Coba() {
             </div>
           </div>
 
+          {/* grid cards */}
           <div className="grid md:grid-cols-3 gap-8">
             {filteredGallery.map((item, i) => (
-              <Card key={i} {...item} />
+              <div key={i} onClick={() => openPopup(i)}>
+                <Card {...item} />
+              </div>
             ))}
           </div>
         </section>
       </main>
+
+      {/* 🖼️ Modal popup carousel */}
+      {activeGallery !== null && (
+      <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[9999] p-4 backdrop-blur-sm">
+        {/* overlay klik luar */}
+        <div
+          className="absolute inset-0 cursor-pointer"
+          onClick={closePopup}
+        />
+
+        {/* isi modal */}
+        <div className="relative bg-white rounded-2xl shadow-2xl max-w-4xl w-full p-4 z-10">
+          {/* tombol close */}
+          <button
+            onClick={closePopup}
+            className="absolute top-4 right-4 bg-black/60 hover:bg-black/80 text-white rounded-full w-10 h-10 flex items-center justify-center text-2xl transition z-50"
+          >
+            ×
+          </button>
+
+
+          {/* carousel container */}
+          <div className="relative flex items-center justify-center">
+            {/* tombol kiri */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setCurrentPhotoIndex((prev) =>
+                  prev === 0
+                    ? galleries[activeGallery].photos.length - 1
+                    : prev - 1
+                );
+              }}
+              className="absolute left-2 md:left-4 bg-black/60 hover:bg-black/80 text-white rounded-full w-10 h-10 md:w-12 md:h-12 flex items-center justify-center text-3xl font-bold transition"
+            >
+              ‹
+            </button>
+
+            {/* gambar utama */}
+            <img
+              src={galleries[activeGallery].photos[currentPhotoIndex]}
+              alt="gallery"
+              className="max-h-[80vh] w-auto object-contain transition-all duration-300"
+            />
+
+            {/* tombol kanan */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setCurrentPhotoIndex((prev) =>
+                  prev === galleries[activeGallery].photos.length - 1
+                    ? 0
+                    : prev + 1
+                );
+              }}
+              className="absolute right-2 md:right-4 bg-black/60 hover:bg-black/80 text-white rounded-full w-10 h-10 md:w-12 md:h-12 flex items-center justify-center text-3xl font-bold transition"
+            >
+              ›
+            </button>
+          </div>
+
+          {/* indikator */}
+          <div className="flex justify-center gap-2 mt-5">
+            {galleries[activeGallery].photos.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setCurrentPhotoIndex(i)}
+                className={`w-3 h-3 rounded-full transition ${
+                  i === currentPhotoIndex
+                    ? "bg-orange-500 scale-110"
+                    : "bg-gray-300 hover:bg-gray-400"
+                }`}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+    )}
     </div>
   );
 }

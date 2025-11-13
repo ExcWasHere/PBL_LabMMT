@@ -5,7 +5,9 @@ interface CardProps {
   title: string;
   desc: string;
   tags: string[];
+  onClick?: () => void;
 }
+
 
 export default function Card({
   image,
@@ -14,9 +16,11 @@ export default function Card({
   title,
   desc,
   tags,
+  onClick,
 }: CardProps) {
   return (
     <div
+      onClick={onClick}
       className="group rounded-2xl overflow-hidden 
                  border border-gray-200 shadow-sm"
     >

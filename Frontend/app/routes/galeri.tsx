@@ -1,6 +1,5 @@
 import type { Route } from "./+types/home";
 import Navbar from "~/common/navbar";
-import Footer from "~/common/footer";
 import Header from "~/components/Galeri/headerGaleri";
 import { Coba } from "~/components/Galeri/isi";
 
@@ -17,7 +16,6 @@ export default function Galeri() {
       <Navbar />
       <Header />
       <Coba />
-      <Footer />
     </>
   );
 }

@@ -6,4 +6,5 @@ export default [
     route("masuk", "routes/masuk.tsx"),
     route("galeri", "routes/galeri.tsx"),
     route("berita", "routes/berita.tsx"),
+    route("dashboard-viewer", "routes/dashboard-viewer.tsx"),
 ] satisfies RouteConfig;

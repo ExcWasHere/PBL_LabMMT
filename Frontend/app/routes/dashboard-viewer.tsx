@@ -1,5 +1,6 @@
 import Dashboard from "~/components/Dashboard/viewer";
 import type { Route } from "./+types/dashboard-viewer";
+import ProtectedRoute from "~/components/Auth/protected-route";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -11,7 +12,9 @@ export function meta({}: Route.MetaArgs) {
 export default function Viewer() {
   return (
     <>
+    <ProtectedRoute>
     <Dashboard />
+    </ProtectedRoute>
     </>
   );
 }

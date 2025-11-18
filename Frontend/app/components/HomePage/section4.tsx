@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import Card from "../../common/card";
+import { Link } from "react-router";
 
 
 export function HomeBerita(){
@@ -63,12 +64,15 @@ export function HomeBerita(){
                 <motion.div
                     initial={{ scale: 0.8, opacity: 0 }}
                     whileInView={{ scale: 1, opacity: 1 }}
-                    transition={{ duration: 0.2 }}
+                    transition={{ duration: 0.3 }}
                 >
                 <div className="text-center ">
+                    <a href="/Berita">
+
                     <button className="bg-orange-500 text-white px-8 py-3 rounded-lg hover:bg-orange-600 duration-300 hover:scale-105">
                         See All
                     </button>
+                    </a>
                     
                 </div>
             </motion.div>

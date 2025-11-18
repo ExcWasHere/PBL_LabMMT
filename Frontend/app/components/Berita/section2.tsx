@@ -9,7 +9,7 @@ export default function Coba() {
       date: "10 Nov 2024",
       title: "NEWS A",
       desc: "Kegiatan pelatihan AR/VR bersama anggota lab MMT.",
-      tags: ["Foto", "Animasi"],
+      tags: ["Berita", "Nama Penulis"],
       info: "Malang"
     },
     {
@@ -17,7 +17,7 @@ export default function Coba() {
       date: "10 Nov 2024",
       title: "NEWS B",
       desc: "Menampilkan hasil karya mahasiswa berbasis Unity.",
-      tags: ["Foto", "Animasi"],
+      tags: ["Berita", "Nama Penulis"],
       info: "Darjo"
     },
     {
@@ -25,7 +25,7 @@ export default function Coba() {
       date: "10 Nov 2024",
       title: "NEWS C",
       desc: "Kegiatan kunjungan industri ke perusahaan teknologi.",
-      tags: ["Foto", "Animasi"],
+      tags: ["Berita", "Nama Penulis"],
       info: "Blitar"
     },
   ];
@@ -79,9 +79,9 @@ export default function Coba() {
                 <option value="" disabled>
                   Select Category
                 </option>
-                <option value="Foto">Foto</option>
-                <option value="Video">Video</option>
-                <option value="Animasi">Animasi</option>
+                <option value="Video">News</option>
+                <option value="Foto">Workshop</option>
+                
               </select>
             </div>
 

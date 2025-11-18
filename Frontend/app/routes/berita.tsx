@@ -17,7 +17,7 @@ export default function Masuk() {
     <Navbar />
     <IndexHero />
     <Roby />
-    <Footer />
+    
     </>
   );
 }

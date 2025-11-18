@@ -7,4 +7,5 @@ export default [
     route("galeri", "routes/galeri.tsx"),
     route("berita", "routes/berita.tsx"),
     route("dashboard-viewer", "routes/dashboard-viewer.tsx"),
+    route("news-detail", "routes/news-detail.tsx")
 ] satisfies RouteConfig;

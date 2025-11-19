@@ -10,7 +10,7 @@ export default function Coba() {
       title: "NEWS A",
       desc: "Kegiatan pelatihan AR/VR bersama anggota lab MMT.",
       tags: ["Berita", "Nama Penulis"],
-      info: "Malang"
+      info: "Nama Penulis"
     },
     {
       image: "/galeri/eventB.jpg",
@@ -18,7 +18,7 @@ export default function Coba() {
       title: "NEWS B",
       desc: "Menampilkan hasil karya mahasiswa berbasis Unity.",
       tags: ["Berita", "Nama Penulis"],
-      info: "Darjo"
+      info: "Nama Penulis"
     },
     {
       image: "/galeri/eventC.jpg",
@@ -26,7 +26,7 @@ export default function Coba() {
       title: "NEWS C",
       desc: "Kegiatan kunjungan industri ke perusahaan teknologi.",
       tags: ["Berita", "Nama Penulis"],
-      info: "Blitar"
+      info: "Nama Penulis"
     },
   ];
 
@@ -79,8 +79,8 @@ export default function Coba() {
                 <option value="" disabled>
                   Select Category
                 </option>
-                <option value="Video">News</option>
-                <option value="Foto">Workshop</option>
+                <option value="News">News</option>
+                <option value="Workshop">Workshop</option>
                 
               </select>
             </div>

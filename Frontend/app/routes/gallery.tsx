@@ -1,7 +1,7 @@
-import type { Route } from "./+types/galeri";
+import type { Route } from "./+types/gallery";
 import Navbar from "~/common/navbar";
-import Header from "~/components/Galeri/headerGaleri";
-import { Coba } from "~/components/Galeri/isi";
+import Header from "~/components/Gallery/heroGallery";
+import { Coba } from "~/components/Gallery/contentGallery";
 
 export function meta() {
   return [

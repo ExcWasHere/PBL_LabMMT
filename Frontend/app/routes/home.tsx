@@ -1,12 +1,15 @@
-import IndexHero from "~/components/HomePage/section1";
+"use client";
+
+import IndexHero from "~/components/HomePage/hero";
 import type { Route } from "./+types/home";
 import Navbar from "~/common/navbar";
-import ProfileSingkat from "~/components/HomePage/section2";
-import { HomeProject } from "~/components/HomePage/section3";
+import ProfileSingkat from "~/components/HomePage/Profile";
+import { HomeProject } from "~/components/HomePage/Projects";
+import { HomeBerita } from "~/components/HomePage/news";
+import { HomeMember} from "~/components/HomePage/members";
+import { Register } from "~/components/HomePage/registration";
+import { MediaPartner} from "~/components/HomePage/medpart";
 import Footer from "~/common/footer";
-import { HomeBerita } from "~/components/HomePage/section4";
-import { Register } from "~/components/HomePage/section6";
-import { HomeMember } from "~/components/HomePage/section5";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -21,10 +24,11 @@ export default function Home() {
       <Navbar />
       <IndexHero />
       <ProfileSingkat />
-      <HomeProject/>
-      <HomeBerita/>
-      <HomeMember/>
-      <Register/>
+      <HomeProject />
+      <HomeBerita />
+      <HomeMember />
+      <Register />
+      <MediaPartner />
       <Footer />
     </>
   );

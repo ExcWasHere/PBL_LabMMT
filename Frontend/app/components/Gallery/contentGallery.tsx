@@ -27,11 +27,7 @@ export function Coba() {
       desc: "Menampilkan hasil karya mahasiswa berbasis Unity.",
       tags: ["Foto", "Animasi"],
       info: "Darjo",
-      photos: [
-        "/galeri/eventB1.jpg",
-        "/galeri/eventB2.jpg",
-        "/galeri/eventB3.jpg",
-      ],
+      photos: ["/galeri/eventB1.jpg", "/galeri/eventB2.jpg", "/galeri/eventB3.jpg"],
     },
     {
       image: "/galeri/eventC.jpg",
@@ -40,39 +36,27 @@ export function Coba() {
       desc: "Kegiatan kunjungan industri ke perusahaan teknologi.",
       tags: ["Foto", "Animasi"],
       info: "Blitar",
-      photos: [
-        "/galeri/eventC1.jpg",
-        "/galeri/eventC2.jpg",
-        "/galeri/eventC3.jpg",
-      ],
+      photos: ["/galeri/eventC1.jpg", "/galeri/eventC2.jpg", "/galeri/eventC3.jpg"],
     },
   ];
 
-  // 🧠 state filter
   const [tags, setCategory] = useState("");
   const [year, setYear] = useState("");
   const [sort, setSort] = useState("");
   const [search, setSearch] = useState("");
 
-  // 🧠 state modal gallery
   const [activeGallery, setActiveGallery] = useState<number | null>(null);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
 
-  // 🪄 fungsi open & close modal
   const openPopup = (index: number) => {
     setActiveGallery(index);
     setCurrentPhotoIndex(0);
   };
 
-  const closePopup = () => {
-    setActiveGallery(null);
-  };
+  const closePopup = () => setActiveGallery(null);
 
-  // filter logic
   const filteredGallery = galleries
-    .filter((item) =>
-      search ? item.title.toLowerCase().includes(search.toLowerCase()) : true
-    )
+    .filter((item) => (search ? item.title.toLowerCase().includes(search.toLowerCase()) : true))
     .filter((item) => (tags ? item.tags.includes(tags) : true))
     .filter((item) => (year ? item.date.includes(year) : true))
     .sort((a, b) => {
@@ -87,11 +71,7 @@ export function Coba() {
     <div className="bg-white min-h-screen">
       <main className="flex items-center justify-center py-10">
         <section id="gallery" className="w-full max-w-6xl mx-auto px-6">
-          
-          {/* filter */}
           <div className="flex flex-wrap md:flex-nowrap gap-4 items-center mb-10">
-            
-            {/* search bar */}
             <div className="flex items-center bg-[#f5ece5] rounded-lg px-3 py-2 shadow-sm flex-1 min-w-[200px]">
               <Search size={18} className="stroke-black mr-2" />
               <input
@@ -103,7 +83,6 @@ export function Coba() {
               />
             </div>
 
-            {/* tags */}
             <div className="flex items-center bg-[#f5ece5] rounded-lg px-3 py-2 shadow-sm w-auto">
               <select
                 className="bg-[#f5ece5] focus:outline-none text-black cursor-pointer"
@@ -119,7 +98,6 @@ export function Coba() {
               </select>
             </div>
 
-            {/* date */}
             <div className="flex items-center bg-[#f5ece5] rounded-lg px-3 py-2 shadow-sm w-auto">
               <select
                 className="bg-[#f5ece5] focus:outline-none text-black cursor-pointer"
@@ -135,7 +113,6 @@ export function Coba() {
               </select>
             </div>
 
-            {/* sort by */}
             <div className="flex items-center bg-[#f5ece5] rounded-lg px-3 py-2 shadow-sm w-auto">
               <Funnel size={18} className="stroke-black mr-1" />
               <select
@@ -154,7 +131,6 @@ export function Coba() {
             </div>
           </div>
 
-          {/* grid cards */}
           <div className="grid md:grid-cols-3 gap-8">
             {filteredGallery.map((item, i) => (
               <div key={i} onClick={() => openPopup(i)}>
@@ -165,83 +141,66 @@ export function Coba() {
         </section>
       </main>
 
-      {/* 🖼️ Modal popup carousel */}
       {activeGallery !== null && (
-      <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[9999] p-4 backdrop-blur-sm">
-        {/* overlay klik luar */}
-        <div
-          className="absolute inset-0 cursor-pointer"
-          onClick={closePopup}
-        />
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[9999] p-4 backdrop-blur-sm">
+          <div className="absolute inset-0 cursor-pointer" onClick={closePopup} />
 
-        {/* isi modal */}
-        <div className="relative bg-white rounded-2xl shadow-2xl max-w-4xl w-full p-4 z-10">
-          {/* tombol close */}
-          <button
-            onClick={closePopup}
-            className="absolute top-4 right-4 bg-black/60 hover:bg-black/80 text-white rounded-full w-10 h-10 flex items-center justify-center text-2xl transition z-50"
-          >
-            ×
-          </button>
-
-
-          {/* carousel container */}
-          <div className="relative flex items-center justify-center">
-            {/* tombol kiri */}
+          <div className="relative bg-white rounded-2xl shadow-2xl max-w-4xl w-full p-4 z-10">
             <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setCurrentPhotoIndex((prev) =>
-                  prev === 0
-                    ? galleries[activeGallery].photos.length - 1
-                    : prev - 1
-                );
-              }}
-              className="absolute left-2 md:left-4 bg-black/60 hover:bg-black/80 text-white rounded-full w-10 h-10 md:w-12 md:h-12 flex items-center justify-center text-3xl font-bold transition"
+              onClick={closePopup}
+              className="absolute top-4 right-4 bg-orange-500 hover:bg-orange-600 text-white rounded-full w-12 h-12 flex items-center justify-center text-3xl font-bold  transition active:scale-90 z-50"
             >
-              ‹
+              ×
             </button>
 
-            {/* gambar utama */}
-            <img
-              src={galleries[activeGallery].photos[currentPhotoIndex]}
-              alt="gallery"
-              className="max-h-[80vh] w-auto object-contain transition-all duration-300"
-            />
-
-            {/* tombol kanan */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setCurrentPhotoIndex((prev) =>
-                  prev === galleries[activeGallery].photos.length - 1
-                    ? 0
-                    : prev + 1
-                );
-              }}
-              className="absolute right-2 md:right-4 bg-black/60 hover:bg-black/80 text-white rounded-full w-10 h-10 md:w-12 md:h-12 flex items-center justify-center text-3xl font-bold transition"
-            >
-              ›
-            </button>
-          </div>
-
-          {/* indikator */}
-          <div className="flex justify-center gap-2 mt-5">
-            {galleries[activeGallery].photos.map((_, i) => (
+            <div className="relative flex items-center justify-center">
               <button
-                key={i}
-                onClick={() => setCurrentPhotoIndex(i)}
-                className={`w-3 h-3 rounded-full transition ${
-                  i === currentPhotoIndex
-                    ? "bg-orange-500 scale-110"
-                    : "bg-gray-300 hover:bg-gray-400"
-                }`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setCurrentPhotoIndex((prev) =>
+                    prev === 0
+                      ? galleries[activeGallery].photos.length - 1
+                      : prev - 1
+                  );
+                }}
+                className="absolute left-2 md:left-4 bg-orange-500 hover:bg-orange-600 text-white rounded-full w-12 h-12 flex items-center justify-center text-3xl font-bold  transition active:scale-90 z-50"
+              >
+                ‹
+              </button>
+
+              <img
+                src={galleries[activeGallery].photos[currentPhotoIndex]}
+                alt="gallery"
+                className="max-h-[80vh] w-auto object-contain transition-all duration-300"
               />
-            ))}
+
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setCurrentPhotoIndex((prev) =>
+                    prev === galleries[activeGallery].photos.length - 1 ? 0 : prev + 1
+                  );
+                }}
+                className="absolute right-2 md:right-4 bg-orange-500 hover:bg-orange-600 text-white rounded-full w-12 h-12 flex items-center justify-center text-3xl font-bold  transition active:scale-90 z-50"
+              >
+                ›
+              </button>
+            </div>
+
+            <div className="flex justify-center gap-2 mt-5">
+              {galleries[activeGallery].photos.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setCurrentPhotoIndex(i)}
+                  className={`w-3 h-3 rounded-full transition ${
+                    i === currentPhotoIndex ? "bg-orange-500 scale-110" : "bg-gray-300 hover:bg-gray-400"
+                  }`}
+                />
+              ))}
+            </div>
           </div>
         </div>
-      </div>
-    )}
+      )}
     </div>
   );
 }

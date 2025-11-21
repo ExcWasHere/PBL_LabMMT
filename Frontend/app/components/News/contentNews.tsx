@@ -1,8 +1,13 @@
+"use client";
+
 import { Funnel, Search } from "lucide-react";
 import { useState } from "react";
 import Card from "../../common/card";
+// import { useRouter } from "next/router";   // <-- Next 11 pakai ini
 
 export default function Coba() {
+  // const router = useRouter();
+
   const galleries = [
     {
       image: "/galeri/eventA.jpg",
@@ -10,7 +15,7 @@ export default function Coba() {
       title: "NEWS A",
       desc: "Kegiatan pelatihan AR/VR bersama anggota lab MMT.",
       tags: ["Berita", "Nama Penulis"],
-      info: "Malang"
+      info: "Malang",
     },
     {
       image: "/galeri/eventB.jpg",
@@ -18,7 +23,7 @@ export default function Coba() {
       title: "NEWS B",
       desc: "Menampilkan hasil karya mahasiswa berbasis Unity.",
       tags: ["Berita", "Nama Penulis"],
-      info: "Darjo"
+      info: "Darjo",
     },
     {
       image: "/galeri/eventC.jpg",
@@ -26,7 +31,7 @@ export default function Coba() {
       title: "NEWS C",
       desc: "Kegiatan kunjungan industri ke perusahaan teknologi.",
       tags: ["Berita", "Nama Penulis"],
-      info: "Blitar"
+      info: "Blitar",
     },
   ];
 
@@ -53,11 +58,11 @@ export default function Coba() {
     <div className="bg-white min-h-screen">
       <main className="flex items-center justify-center py-10">
         <section id="gallery" className="w-full max-w-6xl mx-auto px-6">
-          
+
           {/* filter */}
           <div className="flex flex-wrap md:flex-nowrap gap-4 items-center mb-10">
-            
-            {/* search bar */}
+
+            {/* search */}
             <div className="flex items-center bg-[#f5ece5] rounded-lg px-3 py-2 shadow-sm flex-1 min-w-[200px]">
               <Search size={18} className="stroke-black mr-2" />
               <input
@@ -81,11 +86,10 @@ export default function Coba() {
                 </option>
                 <option value="Video">News</option>
                 <option value="Foto">Workshop</option>
-                
               </select>
             </div>
 
-            {/* date */}
+            {/* year */}
             <div className="flex items-center bg-[#f5ece5] rounded-lg px-3 py-2 shadow-sm w-auto">
               <select
                 className="bg-[#f5ece5] focus:outline-none text-black cursor-pointer"
@@ -120,11 +124,17 @@ export default function Coba() {
             </div>
           </div>
 
+          {/* cards */}
           <div className="grid md:grid-cols-3 gap-8">
             {filteredGallery.map((item, i) => (
-              <Card key={i} {...item} />
+              <Card
+                key={i}
+                {...item}
+                onClick={() => (window.location.href = "/news/display")}
+              />
             ))}
           </div>
+
         </section>
       </main>
     </div>

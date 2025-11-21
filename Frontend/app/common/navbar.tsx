@@ -45,7 +45,7 @@ const Navbar: React.FC<HeaderProps> = () => {
     };
   }, [currentPage.pathname]);
 
-  const navItems = ["Beranda", "Proyek", "Berita", "Galeri", "Masuk"];
+  const navItems = ["Beranda", "Project", "News", "Gallery", "Masuk"];
 
   const toggleDarkMode = () => {
     const newMode = !isDarkMode;
@@ -129,11 +129,11 @@ const Navbar: React.FC<HeaderProps> = () => {
               ? "#1f2937"
               : "#ffffff",
         }}
-        className="w-full top-0 left-0 z-50 fixed h-16 md:h-20 flex justify-between items-center shadow-xl px-4 md:px-10 transition-all duration-500"
+        className="w-full top-0 left-0 z-50 fixed h-16 md:h-16 flex justify-between items-center shadow-xl px-4 md:px-10 transition-all duration-500"
       >
         <div className="flex items-center gap-3">
-          <img src="/logo/jti.png" alt="Logo 1" className="w-10 h-10" />
-          <img src="/logo/labMMT.png" alt="Logo 2" className="w-10 h-13" />
+          <img src="/logo/jti.png" alt="Logo 1" className="w-100% h-8" />
+          <img src="/logo/labMMT.png" alt="Logo 2" className="w-100% h-10" />
 
           {/* Brand MMT */}
           {!isMobileMenuOpen && (
@@ -145,7 +145,7 @@ const Navbar: React.FC<HeaderProps> = () => {
 
         {/* Desktop Ver. */}
         <nav className="hidden md:block">
-          <ul className="flex gap-4 font-semibold items-center">
+          <ul className="flex gap-4 font-medium items-center">
             <NavLinks />
             {/* Dark Mode Button */}
             <li>

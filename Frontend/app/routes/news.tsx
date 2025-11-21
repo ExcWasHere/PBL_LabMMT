@@ -1,8 +1,8 @@
 import Footer from "~/common/footer";
-import type { Route } from "./+types/berita";
+import type { Route } from "./+types/news";
 import Navbar from "~/common/navbar";
-import Roby from "~/components/Berita/section2";
-import IndexHero from "~/components/Berita/section1";
+import Roby from "~/components/News/contentNews";
+import IndexHero from "~/components/News/heroNews";
 
 export function meta({}: Route.MetaArgs) {
   return [

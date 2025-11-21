@@ -1,9 +1,10 @@
+"use client";
 import { motion } from "framer-motion";
 import { Link } from "react-router";
 
 export function Register() {
     return (
-        <section className="bg-white py-50 px-4">
+        <section className="bg-white py-40 px-4">
             <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-6 items-center">
                 <div>
                     <h2 className="md:text-5xl font-bold text-gray-800 mb-8">

@@ -1,4 +1,4 @@
-import Dashboard from "~/components/Berita/display";
+import Dashboard from "~/components/News/detailPageNews";
 import type { Route } from "./+types/dashboard-viewer";
 import Navbar from "~/common/navbar";
 

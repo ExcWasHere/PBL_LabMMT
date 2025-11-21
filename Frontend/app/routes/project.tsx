@@ -1,7 +1,7 @@
 import type { Route } from "./+types/home";
-import { Coba } from "../components/Proyek/coba";
+import { Coba } from "../components/Project/contentProject";
 import Navbar from "~/common/navbar";
-import Header from "~/components/Proyek/header"
+import Header from "~/components/Project/heroProject"
 import Footer from "~/common/footer";
 
 export function meta() {

@@ -22,7 +22,7 @@ export default function Card({
     <div
       onClick={onClick}
       className="group rounded-2xl overflow-hidden 
-                 border border-gray-200 shadow-sm"
+                 border border-gray-200 shadow-sm "
     >
       <div className="relative overflow-hidden">
         {/* gambar */}
@@ -30,7 +30,7 @@ export default function Card({
           src={image}
           alt={title}
           className="w-full aspect-video object-cover transition-transform 
-                     duration-500 group-hover:scale-110"
+                     duration-800 group-hover:scale-105"
         />
 
         {/* overlay gelap */}

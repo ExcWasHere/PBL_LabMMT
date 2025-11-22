@@ -2,61 +2,10 @@ import { Search } from "lucide-react";
 import { Funnel } from "lucide-react";
 import { useState } from "react";
 import Card from "../../common/card";
+import { Link } from "react-router-dom";
+import { projects } from "~/components/Project/dataProjects";
 
 export function Coba() {
-  const projects = [
-    {
-      image: "/proyek/test2.jpg",
-      date: "11 Nov 2025",
-      title: "Project A",
-      desc: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-      tags: ["Unity"],
-      info: "Game",
-    },
-    {
-      image: "/proyek/test2.jpg",
-      date: "11 Nov 2025",
-      title: "Project B",
-      desc: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-      tags: ["Tailwind", "React"],
-      info: "UI/UX",
-    },
-    {
-      image: "/proyek/test2.jpg",
-      date: "11 Nov 2025",
-      title: "Project C",
-      desc: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-      tags: ["Tailwind", "Javascript"],
-      info: "AR/VR",
-    },
-    {
-      image: "/proyek/12.avif",
-      date: "8 Nov 2024",
-      title: "Project D",
-      desc: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-      tags: ["Unity"],
-      info: "AR/VR",
-    },
-    {
-      image: "/proyek/12.avif",
-      date: "10 Nov 2024",
-      title: "Project E",
-      desc: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-      tags: ["Figma"],
-      info: "UI/UX",
-    },
-    {
-      image: "/proyek/12.avif",
-      date: "11 Nov 2024",
-      title: "Project F",
-      desc: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-      tags: ["Unity"],
-      info: "AR/VR",
-    },
-  ];
-
-  const [selectedOption, setSelectedOption] = useState("");
-
   const [category, setCategory] = useState("");
   const [tags, setTags] = useState("");
   const [year, setYear] = useState("");
@@ -108,9 +57,7 @@ export function Coba() {
                     value={category}
                     onChange={(e) => setCategory(e.target.value)}
                   >
-                    <option value="">
-                      Select Category
-                    </option>
+                    <option value="">Select Category</option>
                     <option value="ui/ux">UI/UX</option>
                     <option value="game">Game</option>
                     <option value="ar/vr">AR/VR</option>
@@ -123,9 +70,7 @@ export function Coba() {
                     value={tags}
                     onChange={(e) => setTags(e.target.value)}
                   >
-                    <option value="">
-                      Tags
-                    </option>
+                    <option value="">Tags</option>
                     <option value="React">React</option>
                     <option value="Tailwind">Tailwind</option>
                     <option value="Unity">Unity</option>
@@ -139,9 +84,7 @@ export function Coba() {
                     value={year}
                     onChange={(e) => setYear(e.target.value)}
                   >
-                    <option value="">
-                      Year
-                    </option>
+                    <option value="">Year</option>
                     <option value="2023">2023</option>
                     <option value="2024">2024</option>
                     <option value="2025">2025</option>
@@ -157,9 +100,7 @@ export function Coba() {
                     value={sort}
                     onChange={(e) => setSort(e.target.value)}
                   >
-                    <option value="">
-                      Sort by
-                    </option>
+                    <option value="">Sort by</option>
                     <option value="popular">Popular</option>
                     <option value="oldest">Oldest</option>
                     <option value="latest">Latest</option>
@@ -171,9 +112,15 @@ export function Coba() {
 
               <div className="bg-white px-6 py-4">
                 <div className="grid md:grid-cols-3 gap-8">
-                  {filteredProject.map((e, i) => (
-                    <Card key={i} {...e} />
-                  ))}
+                  {filteredProject.map((e, i) =>
+                    e.title === "Project A" ? (
+                      <Link to="/project/project-detail" key={i}>
+                        <Card {...e} />
+                      </Link>
+                    ) : (
+                      <Card key={i} {...e} />
+                    )
+                  )}
                 </div>
               </div>
             </div>

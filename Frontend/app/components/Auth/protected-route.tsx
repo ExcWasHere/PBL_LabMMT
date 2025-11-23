@@ -16,7 +16,7 @@ export default function ProtectedRoute({
 
     if (!token) {
       console.log("Token tidak ada, redirect ke login");
-      navigate("/login?unauthorized=1", { replace: true });
+      navigate("/masuk?unauthorized=1", { replace: true });
       return;
     }
     const cleanToken = token.trim();
@@ -36,7 +36,7 @@ export default function ProtectedRoute({
           console.error("Auth failed:", errorData);
           localStorage.removeItem("access_token");
           localStorage.removeItem("role");
-          navigate("/login?unauthorized=1", { replace: true });
+          navigate("/masuk?unauthorized=1", { replace: true });
           return;
         }
 
@@ -54,7 +54,7 @@ export default function ProtectedRoute({
         console.error("Network error:", err);
         localStorage.removeItem("access_token");
         localStorage.removeItem("role");
-        navigate("/login?unauthorized=1", { replace: true });
+        navigate("/masuk?unauthorized=1", { replace: true });
       });
   }, [navigate]);
 

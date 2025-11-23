@@ -97,8 +97,8 @@ const Dashboard = ({ userName = "John Doe", userId, userRole }: DashboardProps) 
       avatar: string;
     }[]
   >([]);
-const displayName = user?.name ?? userName ?? "Pengguna";
 
+const displayName = user?.name ?? userName ?? "Pengguna";
 
  useEffect(() => {
   try {
@@ -310,6 +310,12 @@ const displayName = user?.name ?? userName ?? "Pengguna";
     </div>
   );
 
+const chartData = activityData.map((item, index) => ({
+  date: new Date(item.date).toLocaleDateString("id-ID"),
+  value: Math.max(0, 5 - index),
+}));
+
+
   return (
     <div className="min-h-screen bg-white">
       {/* Mobile Sidebar Overlay */}
@@ -402,7 +408,7 @@ const displayName = user?.name ?? userName ?? "Pengguna";
                     Dashboard
                   </h1>
                   <p className="text-gray-600 mt-1 font-medium text-sm">
-                    Selamat datang kembali, {getFirstName(userName)}! ✨
+                    Selamat datang kembali, {getFirstName(displayName)}! ✨
                   </p>
                 </div>
               </div>
@@ -428,11 +434,11 @@ const displayName = user?.name ?? userName ?? "Pengguna";
                   >
                     <div className="w-6 h-6 sm:w-8 sm:h-8 bg-orange-500 rounded-full mr-0 sm:mr-3 flex items-center justify-center">
                       <span className="text-white font-bold text-xs sm:text-sm">
-                        {getInitials(userName ?? "")}
+                        {getInitials(displayName ?? "")}
                       </span>
                     </div>
                     <span className="hidden sm:inline mr-2 font-semibold">
-                      {getFirstName(userName ?? "")}
+                      {getFirstName(displayName ?? "")}
                     </span>
                     <ChevronDown className="w-3 h-3 sm:w-4 sm:h-4" />
                   </button>

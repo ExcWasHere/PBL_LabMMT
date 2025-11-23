@@ -72,28 +72,93 @@ export default function AuthPages() {
     setTimeout(() => startAutoPlay(), 2500);
   };
 
-  const handleLoginSubmit = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-      alert("Login berhasil! Redirect ke dashboard...");
-    }, 1200);
-  };
+  const handleLoginSubmit = async (e: React.MouseEvent<HTMLButtonElement>) => {
+  e.preventDefault();
+  setIsLoading(true);
 
-  const handleRegisterSubmit = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    if (registerPassword !== registerConfirmPassword) {
-      alert("Password dan konfirmasi password tidak cocok!");
+  try {
+    const res = await fetch("http://localhost:3000/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: loginEmail,
+        password: loginPassword,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      alert(data.message || "Email atau password salah");
+      setIsLoading(false);
       return;
     }
-    setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-      alert(`Registrasi berhasil! Redirect ke dashboard ${registerRole}...`);
-    }, 1200);
-  };
+    const token = data.access_token ?? data.token ?? null;
+    const user = data.data ?? data.user ?? { name: "", role: "" };
+    if (typeof window !== "undefined" && token) {
+      localStorage.setItem("access_token", token);
+      localStorage.setItem("user", JSON.stringify(user));
+      localStorage.setItem("role", user.role ?? "");
+    }
+    if (user.role === "admin") window.location.href = "/dashboard-admin";
+    else if (user.role === "dosen") window.location.href = "/dashboard-dosen";
+    else window.location.href = "/dashboard-viewer";
 
+  } catch (err) {
+    alert("Gagal terhubung ke server!");
+    console.error(err);
+  } finally {
+    setIsLoading(false);
+  }
+};
+const handleRegisterSubmit = async (e: React.MouseEvent<HTMLButtonElement>) => {
+  e.preventDefault();
+
+  if (registerPassword !== registerConfirmPassword) {
+    alert("Password dan konfirmasi password tidak cocok!");
+    return;
+  }
+
+  setIsLoading(true);
+
+  try {
+    const res = await fetch("http://localhost:3000/auth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: registerName,
+        email: registerEmail,
+        role: registerRole,
+        password: registerPassword,
+        validationField,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.message || "Registrasi gagal");
+      setIsLoading(false);
+      return;
+    }
+    const token = data.access_token ?? data.token ?? null;
+    const user = data.data ?? data.user ?? { name: registerName, role: registerRole };
+    if (typeof window !== "undefined" && token) {
+      localStorage.setItem("access_token", token);
+      localStorage.setItem("user", JSON.stringify(user));
+      localStorage.setItem("role", user.role ?? registerRole);
+    }
+
+    alert("Registrasi berhasil!");
+    if (user.role === "admin") window.location.href = "/dashboard-admin";
+    else if (user.role === "dosen") window.location.href = "/dashboard-dosen";
+    else window.location.href = "/dashboard-viewer";
+
+  } catch (err) {
+    console.error(err);
+    alert("Gagal terhubung ke server.");
+  } finally {
+    setIsLoading(false);
+  }
+};
   const getValidationLabel = () => {
     switch (registerRole) {
       case "mahasiswa":

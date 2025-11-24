@@ -8,5 +8,5 @@ export default [
     route("news", "routes/news.tsx"),
     route("dashboard-viewer", "routes/dashboard-viewer.tsx"),
     route("news-detail", "routes/news-detail.tsx"),
-    route("project/project-detail", "routes/detail1.tsx"),
+    route("project-detail", "routes/detail1.tsx"),
 ] satisfies RouteConfig;

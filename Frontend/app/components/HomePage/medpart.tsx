@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { motion } from "framer-motion"
 
 export function MediaPartner() {
   const logos = [
@@ -12,12 +13,11 @@ export function MediaPartner() {
     { src: "/logo/logitech.svg", name: "XL Axiata" },
   ]
 
-  // gandakan biar infinite
+
   const items = [...logos, ...logos]
 
   const [index, setIndex] = useState(0)
 
-  // AUTOPLAY STEP BY STEP
   useEffect(() => {
     const interval = setInterval(() => {
       setIndex((prev) => prev + 1)
@@ -26,18 +26,29 @@ export function MediaPartner() {
     return () => clearInterval(interval)
   }, [])
 
-  // kalau index terlalu besar, reset agar tidak overflow (tanpa terlihat oleh user)
   const safeIndex = index % logos.length
 
   return (
-    <section className="bg-white md:py-20 px-10 sm:px-10 lg:px-20">
-      {/* TITLE */}
-      <div className="max-w-7xl mx-auto md:mb-20">
-        <h2 className="text-4xl md:text-5xl font-bold text-gray-900 tracking-tight">
-          Media Partner
-        </h2>
-        <div className="w-12 h-1 bg-orange-600 mt-4"></div>
-      </div>
+   <section className="bg-white text-left pt-5 pb-30 px-4 sm:px-10 lg:px-20">
+       <div className="max-w-7xl mx-auto">
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        viewport={{ once: true }}
+        className="text-4xl md:text-5xl font-bold text-gray-900 tracking-tight"
+      >
+        <h2 className="text-4xl md:text-5xl font-bold text-gray-900 tracking-tight">Media Partner</h2>
+        </motion.div>
+        <div className="mt-4 mb-20 overflow-hidden">
+          <motion.div
+            initial={{ width: 0 }}
+            whileInView={{ width: "3rem" }}  
+            transition={{ duration: 0.5 }}
+            viewport={{ once: true }}
+            className="h-1 bg-orange-600"
+          />
+        </div>
 
       {/* CAROUSEL */}
       <div className="max-w-7xl mx-auto overflow-hidden">
@@ -61,6 +72,8 @@ export function MediaPartner() {
           ))}
         </div>
       </div>
+      </div>
     </section>
+    
   )
 }

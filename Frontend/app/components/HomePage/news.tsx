@@ -32,21 +32,27 @@ export function HomeBerita() {
   ]
 
   return (
-    <section className="bg-white py-16 md:py-20 px-4 sm:px-6 lg:px-20">
+    <section className="bg-white text-left py-25 sm:px-10 lg:px-20">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
         <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          viewport={{ once: true }}
-          className="mb-16 md:mb-20"
-        >
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 tracking-tight">Berita</h2>
-          <div className="w-12 h-1 bg-orange-600 mt-4"></div>
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        viewport={{ once: true }}
+        className="text-4xl md:text-5xl font-bold text-gray-900 tracking-tight"
+      >
+        <h2 className="text-4xl md:text-5xl font-bold text-gray-900 tracking-tight">News</h2>
         </motion.div>
+        <div className="mt-4 mb-10 overflow-hidden">
+          <motion.div
+            initial={{ width: 0 }}
+            whileInView={{ width: "3rem" }}  
+            transition={{ duration: 0.5 }}
+            viewport={{ once: true }}
+            className="h-1 bg-orange-600"
+          />
+        </div>
 
-        {/* Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-10 mb-12 md:mb-16">
           {news.map((item, idx) => (
             <motion.div
@@ -68,19 +74,18 @@ export function HomeBerita() {
           ))}
         </div>
 
-        {/* See All Button */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          viewport={{ once: true }}
-          className="flex justify-center"
+          initial={{ scale: 0.8, opacity: 0 }}
+          whileInView={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.3 }}
         >
-          <a href="/berita">
-            <button className="bg-orange-600 text-white px-8 py-3 rounded-lg font-medium hover:bg-orange-700 transition-colors duration-300">
-              See All
-            </button>
-          </a>
+          <div className="text-center">
+            <a href="/proyek">
+              <button className="bg-orange-500 text-white px-8 py-3 rounded-lg hover:bg-orange-600 duration-300 hover:scale-105">
+                See All
+              </button>
+            </a>
+          </div>
         </motion.div>
       </div>
     </section>

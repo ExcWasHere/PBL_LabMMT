@@ -4,19 +4,29 @@ import { motion } from "framer-motion"
 
 export default function ProfileSingkat() {
   return (
-    <div className="bg-white text-left py-16 md:py-20 px-10 sm:px-10 lg:px-20">
-      <motion.div
-        initial={{ opacity: 0, y: 40 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-        viewport={{ once: true }}
-        className="max-w-7xl mx-auto mb-16 md:mb-20"
-      >
-        <h2 className="text-4xl md:text-5xl font-bold text-gray-900 tracking-tight">Profile Singkat</h2>
-        <div className="w-12 h-1 bg-orange-600 mt-4"></div>
-      </motion.div>
+     <div className="bg-white text-left py-25 sm:px-10 lg:px-20"> {/* Perubahan pada padding */}
+       <div className="max-w-7xl mx-auto">
+         <motion.div
+           initial={{ opacity: 0, y: 30 }}
+           whileInView={{ opacity: 1, y: 0 }}
+           transition={{ duration: 0.5 }}
+           viewport={{ once: true }}
+           className="text-4xl md:text-5xl font-bold text-gray-900 tracking-tight"
+         >
+           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 tracking-tight">Profile Singkat</h2>
+         </motion.div>
 
-      <div className="max-w-7xl mx-auto">
+         <div className="mt-4 mb-10 overflow-hidden">
+           <motion.div
+             initial={{ width: 0 }}
+             whileInView={{ width: "3rem" }}    
+             transition={{ duration: 0.5, }}
+             viewport={{ once: true }}
+             className="h-1 bg-orange-600"
+           />
+         </div>
+    
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 mb-8 md:mb-12">
           {/* SEJARAH */}
           <motion.div

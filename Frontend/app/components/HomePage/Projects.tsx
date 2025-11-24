@@ -1,4 +1,3 @@
-"use client"
 import Card from "../../common/card"
 import { motion } from "framer-motion"
 
@@ -31,18 +30,27 @@ export function HomeProject() {
   ]
 
   return (
-    <section className="bg-white py-10 px-4 sm:px-6 lg:px-20">
+    <section className="bg-white text-left py-5 sm:px-10 lg:px-20">
       <div className="max-w-7xl mx-auto">
         <motion.div
-        initial={{ opacity: 0, y: 40 }}
+        initial={{ opacity: 0, y: 30 }}
         whileInView={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
+        transition={{ duration: 0.5 }}
         viewport={{ once: true }}
-        className="max-w-7xl mx-auto mb-16 md:mb-20"
+        className="text-4xl md:text-5xl font-bold text-gray-900 tracking-tight"
       >
         <h2 className="text-4xl md:text-5xl font-bold text-gray-900 tracking-tight">Projects</h2>
-        <div className="w-12 h-1 bg-orange-600 mt-4"></div>
-      </motion.div>
+        </motion.div>
+        <div className="mt-4 mb-10 overflow-hidden">
+          <motion.div
+            initial={{ width: 0 }}
+            whileInView={{ width: "3rem" }}  
+            transition={{ duration: 0.5 }}
+            viewport={{ once: true }}
+            className="h-1 bg-orange-600"
+          />
+        </div>
+     
 
         <div className="grid md:grid-cols-3 gap-8 mb-12">
           {projects.map((project, index) => (
@@ -78,7 +86,7 @@ export function HomeProject() {
             </a>
           </div>
         </motion.div>
-      </div>
+        </div>
     </section>
   )
 }

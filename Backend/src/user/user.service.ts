@@ -27,7 +27,6 @@ export class UsersService {
       email: dto.email,
       password: hashed,
       role: (dto.role as UserRole) ?? UserRole.MAHASISWA,
-      phoneNumber: dto.phoneNumber ?? null,
       validationField: dto.validationField ?? null,
     };
 

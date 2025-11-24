@@ -130,7 +130,7 @@ export default function Coba() {
               <Card
                 key={i}
                 {...item}
-                onClick={() => (window.location.href = "/news/display")}
+                onClick={() => (window.location.href = "/news-detail")}
               />
             ))}
           </div>

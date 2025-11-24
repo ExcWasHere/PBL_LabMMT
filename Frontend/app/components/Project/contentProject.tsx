@@ -114,7 +114,7 @@ export function Coba() {
                 <div className="grid md:grid-cols-3 gap-8">
                   {filteredProject.map((e, i) =>
                     e.title === "Project A" ? (
-                      <Link to="/project/project-detail" key={i}>
+                      <Link to="/project-detail" key={i}>
                         <Card {...e} />
                       </Link>
                     ) : (

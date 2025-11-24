@@ -28,9 +28,6 @@ export class User {
   })
   role: UserRole;
 
-  @Column({ name: 'phone_number', type: 'varchar', length: 32, nullable: true })
-  phoneNumber?: string | null;
-
   @Column({
     name: 'validation_field',
     type: 'varchar',

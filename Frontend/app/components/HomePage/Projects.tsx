@@ -71,7 +71,7 @@ export function HomeProject() {
           transition={{ duration: 0.3 }}
         >
           <div className="text-center">
-            <a href="/proyek">
+            <a href="/project">
               <button className="bg-orange-500 text-white px-8 py-3 rounded-lg hover:bg-orange-600 duration-300 hover:scale-105">
                 See All
               </button>

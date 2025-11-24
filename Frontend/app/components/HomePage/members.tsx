@@ -27,19 +27,16 @@ export function HomeMember() {
     { image: "/member/person1.jpg", name: "Dewi Rahayu, S.Kom., M.Tech", role: "Data Analyst", tags: ["Analytics", "Data Science"], socials: { linkedin: "https://www.linkedin.com/in", email: "dewi@gmail.com", website: "https://website.com" } },
   ];
 
-  // ==== PER-CARD CAROUSEL ======
   const [index, setIndex] = useState(0);
-  const [shift, setShift] = useState(0); // px per move
+  const [shift, setShift] = useState(0);
 
   const cardRef = useRef<HTMLDivElement | null>(null);
-
-  // --- FIX: DETECT CARD WIDTH USING RESIZE OBSERVER ---
   useEffect(() => {
     if (!cardRef.current) return;
 
     const observer = new ResizeObserver((entries) => {
       const width = entries[0].contentRect.width;
-      const gap = 16.5; // same as tailwind gap
+      const gap = 16.5;
       setShift(width + gap);
     });
 
@@ -85,7 +82,7 @@ export function HomeMember() {
           </motion.div>
         </div>
 
-        {/* ====== CAROUSEL ====== */}
+        {/* CAROUSEL */}
         <div className="flex justify-center items-center gap-[1.5px]">
 
           {/* PREV */}

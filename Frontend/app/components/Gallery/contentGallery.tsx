@@ -1,9 +1,12 @@
 import { Funnel, Search } from "lucide-react";
 import { useState } from "react";
 import Card from "../../common/card";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
-export function Coba() {
-  const galleries = [
+const CARDS_PER_LOAD = 6;
+
+export function ContentGallery() {
+  const baseGalleries = [
     {
       image: "/galeri/eventA.jpg",
       date: "10 Nov 2024",
@@ -40,20 +43,53 @@ export function Coba() {
     },
   ];
 
+  const galleries = [
+    ...baseGalleries,
+    ...baseGalleries.map(item => ({...item, title: item.title + " (Copy 1)", date: "01 Nov 2024"})),
+    ...baseGalleries.map(item => ({...item, title: item.title + " (Copy 2)", date: "01 Feb 2024"})),
+    ...baseGalleries.map(item => ({...item, title: item.title + " (Copy 3)", date: "01 Jan 2024"})),
+  ];
+  
+
   const [tags, setCategory] = useState("");
   const [year, setYear] = useState("");
   const [sort, setSort] = useState("");
   const [search, setSearch] = useState("");
+  
+  const [visibleCount, setVisibleCount] = useState(CARDS_PER_LOAD); 
 
   const [activeGallery, setActiveGallery] = useState<number | null>(null);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
 
   const openPopup = (index: number) => {
-    setActiveGallery(index);
+    const galleryIndex = galleries.findIndex(g => g.title === filteredGallery[index].title && g.date === filteredGallery[index].date);
+    setActiveGallery(galleryIndex);
     setCurrentPhotoIndex(0);
   };
 
   const closePopup = () => setActiveGallery(null);
+
+  const goToNext = () => {
+    if (activeGallery !== null) {
+      setCurrentPhotoIndex((prev) =>
+        prev === galleries[activeGallery].photos.length - 1 ? 0 : prev + 1
+      );
+    }
+  };
+
+  const goToPrev = () => {
+    if (activeGallery !== null) {
+      setCurrentPhotoIndex((prev) =>
+        prev === 0
+          ? galleries[activeGallery].photos.length - 1
+          : prev - 1
+      );
+    }
+  };
+
+  const loadMore = () => {
+    setVisibleCount(prevCount => prevCount + CARDS_PER_LOAD);
+  };
 
   const filteredGallery = galleries
     .filter((item) => (search ? item.title.toLowerCase().includes(search.toLowerCase()) : true))
@@ -66,6 +102,10 @@ export function Coba() {
       if (sort === "z-a") return b.title.localeCompare(a.title);
       return 0;
     });
+
+  const visibleGallery = filteredGallery.slice(0, visibleCount);
+  
+  const showLoadMoreButton = visibleCount < filteredGallery.length;
 
   return (
     <div className="bg-white min-h-screen">
@@ -132,12 +172,24 @@ export function Coba() {
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
-            {filteredGallery.map((item, i) => (
+            {visibleGallery.map((item, i) => (
               <div key={i} onClick={() => openPopup(i)}>
                 <Card {...item} />
               </div>
             ))}
           </div>
+          
+          {showLoadMoreButton && (
+            <div className="flex justify-center mt-10">
+              <button
+                onClick={loadMore}
+                className="bg-orange-500 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-lg shadow-md transition duration-200"
+              >
+                Load More
+              </button>
+            </div>
+          )}
+          
         </section>
       </main>
 
@@ -145,58 +197,48 @@ export function Coba() {
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[9999] p-4 backdrop-blur-sm">
           <div className="absolute inset-0 cursor-pointer" onClick={closePopup} />
 
-          <div className="relative bg-white rounded-2xl shadow-2xl max-w-4xl w-full p-4 z-10">
+          <div className="relative bg-white rounded-2xl shadow-2xl max-w-3xl w-full h-[85vh] p-4 z-10 flex flex-col">
             <button
               onClick={closePopup}
-              className="absolute top-4 right-4 bg-orange-500 hover:bg-orange-600 text-white rounded-full w-12 h-12 flex items-center justify-center text-3xl font-bold  transition active:scale-90 z-50"
+              className="absolute top-4 right-4 text-black text-4xl font-light transition active:scale-90 z-50 p-2"
             >
               ×
             </button>
 
-            <div className="relative flex items-center justify-center">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setCurrentPhotoIndex((prev) =>
-                    prev === 0
-                      ? galleries[activeGallery].photos.length - 1
-                      : prev - 1
-                  );
-                }}
-                className="absolute left-2 md:left-4 bg-orange-500 hover:bg-orange-600 text-white rounded-full w-12 h-12 flex items-center justify-center text-3xl font-bold  transition active:scale-90 z-50"
-              >
-                ‹
-              </button>
-
+            <div className="relative flex items-center justify-center flex-1 overflow-hidden">
               <img
                 src={galleries[activeGallery].photos[currentPhotoIndex]}
                 alt="gallery"
-                className="max-h-[80vh] w-auto object-contain transition-all duration-300"
+                className="max-h-full max-w-full object-contain transition-all duration-300"
               />
+            </div>
+
+            <div className="flex justify-center items-center gap-4 mt-5">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  goToPrev();
+                }}
+                className="text-black hover:text-orange-500 transition active:scale-90 p-2"
+                aria-label="Previous Photo"
+              >
+                <ChevronLeft size={32} />
+              </button>
+
+              <div className="text-xl font-semibold text-gray-700">
+                {currentPhotoIndex + 1} / {galleries[activeGallery].photos.length}
+              </div>
 
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  setCurrentPhotoIndex((prev) =>
-                    prev === galleries[activeGallery].photos.length - 1 ? 0 : prev + 1
-                  );
+                  goToNext();
                 }}
-                className="absolute right-2 md:right-4 bg-orange-500 hover:bg-orange-600 text-white rounded-full w-12 h-12 flex items-center justify-center text-3xl font-bold  transition active:scale-90 z-50"
+                className="text-black hover:text-orange-500 transition active:scale-90 p-2"
+                aria-label="Next Photo"
               >
-                ›
+                <ChevronRight size={32} />
               </button>
-            </div>
-
-            <div className="flex justify-center gap-2 mt-5">
-              {galleries[activeGallery].photos.map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setCurrentPhotoIndex(i)}
-                  className={`w-3 h-3 rounded-full transition ${
-                    i === currentPhotoIndex ? "bg-orange-500 scale-110" : "bg-gray-300 hover:bg-gray-400"
-                  }`}
-                />
-              ))}
             </div>
           </div>
         </div>

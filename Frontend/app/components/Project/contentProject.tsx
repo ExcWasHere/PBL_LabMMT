@@ -5,12 +5,15 @@ import Card from "../../common/card";
 import { Link } from "react-router-dom";
 import { projects } from "~/components/Project/dataProjects";
 
-export function Coba() {
+export function ContentProject() {
   const [category, setCategory] = useState("");
   const [tags, setTags] = useState("");
   const [year, setYear] = useState("");
   const [sort, setSort] = useState("");
   const [search, setSearch] = useState("");
+
+  // card
+  const [visible, setVisible] = useState(6);
 
   const filteredProject = projects
     .filter((item) =>
@@ -32,6 +35,9 @@ export function Coba() {
       if (sort === "z-a") return b.title.localeCompare(a.title);
       return 0;
     });
+
+  // card
+  const showingProjects = filteredProject.slice(0, visible);
 
   return (
     <>
@@ -112,7 +118,7 @@ export function Coba() {
 
               <div className="bg-white px-6 py-4">
                 <div className="grid md:grid-cols-3 gap-8">
-                  {filteredProject.map((e, i) =>
+                  {showingProjects.map((e, i) =>
                     e.title === "Project A" ? (
                       <Link to="/project-detail" key={i}>
                         <Card {...e} />
@@ -122,6 +128,18 @@ export function Coba() {
                     )
                   )}
                 </div>
+
+                {/* load more button */}
+                {visible < filteredProject.length && (
+                  <div className="flex justify-center mt-10">
+                    <button
+                      onClick={() => setVisible(visible + 6)}
+                      className="px-5 py-2 bg-orange-500 text-white rounded-lg hover:bg-gray-800"
+                    >
+                      Load More
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </section>

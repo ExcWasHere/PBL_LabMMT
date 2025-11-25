@@ -3,18 +3,15 @@
 import { Funnel, Search } from "lucide-react";
 import { useState } from "react";
 import Card from "../../common/card";
-// import { useRouter } from "next/router";   // <-- Next 11 pakai ini
 
-export default function Coba() {
-  // const router = useRouter();
-
+export default function ContentNews() {
   const galleries = [
     {
       image: "/galeri/eventA.jpg",
       date: "10 Nov 2024",
       title: "NEWS A",
       desc: "Kegiatan pelatihan AR/VR bersama anggota lab MMT.",
-      tags: ["Berita", "Nama Penulis"],
+      tags: ["News", "Resty"],
       info: "Malang",
     },
     {
@@ -22,7 +19,7 @@ export default function Coba() {
       date: "10 Nov 2024",
       title: "NEWS B",
       desc: "Menampilkan hasil karya mahasiswa berbasis Unity.",
-      tags: ["Berita", "Nama Penulis"],
+      tags: ["Workshop", "Wahyu"],
       info: "Darjo",
     },
     {
@@ -30,7 +27,79 @@ export default function Coba() {
       date: "10 Nov 2024",
       title: "NEWS C",
       desc: "Kegiatan kunjungan industri ke perusahaan teknologi.",
-      tags: ["Berita", "Nama Penulis"],
+      tags: ["News", "Fidel"],
+      info: "Blitar",
+    },
+    {
+      image: "/galeri/eventA.jpg",
+      date: "10 Nov 2024",
+      title: "NEWS A",
+      desc: "Kegiatan pelatihan AR/VR bersama anggota lab MMT.",
+      tags: ["Workshop", "Excel"],
+      info: "Malang",
+    },
+    {
+      image: "/galeri/eventB.jpg",
+      date: "10 Nov 2024",
+      title: "NEWS B",
+      desc: "Menampilkan hasil karya mahasiswa berbasis Unity.",
+      tags: ["News", "Rizki"],
+      info: "Darjo",
+    },
+    {
+      image: "/galeri/eventC.jpg",
+      date: "10 Nov 2024",
+      title: "NEWS C",
+      desc: "Kegiatan kunjungan industri ke perusahaan teknologi.",
+      tags: ["Workshop", "Siti"],
+      info: "Blitar",
+    },
+    {
+      image: "/galeri/eventA.jpg",
+      date: "10 Nov 2024",
+      title: "NEWS A",
+      desc: "Kegiatan pelatihan AR/VR bersama anggota lab MMT.",
+      tags: ["News", "Marquez"],
+      info: "Malang",
+    },
+    {
+      image: "/galeri/eventB.jpg",
+      date: "10 Nov 2024",
+      title: "NEWS B",
+      desc: "Menampilkan hasil karya mahasiswa berbasis Unity.",
+      tags: ["Workshop", "Lando"],
+      info: "Darjo",
+    },
+    {
+      image: "/galeri/eventC.jpg",
+      date: "10 Nov 2024",
+      title: "NEWS C",
+      desc: "Kegiatan kunjungan industri ke perusahaan teknologi.",
+      tags: ["News", "Aulia"],
+      info: "Blitar",
+    },
+    {
+      image: "/galeri/eventA.jpg",
+      date: "10 Nov 2024",
+      title: "NEWS A",
+      desc: "Kegiatan pelatihan AR/VR bersama anggota lab MMT.",
+      tags: ["News", "Aulia Resty Azizah"],
+      info: "Malang",
+    },
+    {
+      image: "/galeri/eventB.jpg",
+      date: "10 Nov 2024",
+      title: "NEWS B",
+      desc: "Menampilkan hasil karya mahasiswa berbasis Unity.",
+      tags: ["Workshop", "Nama Penulis"],
+      info: "Darjo",
+    },
+    {
+      image: "/galeri/eventC.jpg",
+      date: "10 Nov 2024",
+      title: "NEWS C",
+      desc: "Kegiatan kunjungan industri ke perusahaan teknologi.",
+      tags: ["Workshop", "Nama Penulis"],
       info: "Blitar",
     },
   ];
@@ -39,6 +108,8 @@ export default function Coba() {
   const [year, setYear] = useState("");
   const [sort, setSort] = useState("");
   const [search, setSearch] = useState("");
+
+  const [visible, setVisible] = useState(6);
 
   const filteredGallery = galleries
     .filter((item) =>
@@ -53,6 +124,8 @@ export default function Coba() {
       if (sort === "z-a") return b.title.localeCompare(a.title);
       return 0;
     });
+
+  const showing = filteredGallery.slice(0, visible);
 
   return (
     <div className="bg-white min-h-screen">
@@ -84,8 +157,8 @@ export default function Coba() {
                 <option value="" disabled>
                   Select Category
                 </option>
-                <option value="Video">News</option>
-                <option value="Foto">Workshop</option>
+                <option value="News">News</option>
+                <option value="Workshop">Workshop</option>
               </select>
             </div>
 
@@ -126,7 +199,7 @@ export default function Coba() {
 
           {/* cards */}
           <div className="grid md:grid-cols-3 gap-8">
-            {filteredGallery.map((item, i) => (
+            {showing.map((item, i) => (
               <Card
                 key={i}
                 {...item}
@@ -134,6 +207,17 @@ export default function Coba() {
               />
             ))}
           </div>
+
+          {visible < filteredGallery.length && (
+            <div className="flex justify-center mt-10">
+              <button
+                onClick={() => setVisible(visible + 6)}
+                className="px-5 py-2 bg-orange-500 text-white rounded-lg hover:bg-gray-800"
+              >
+                Load More
+              </button>
+            </div>
+          )}
 
         </section>
       </main>

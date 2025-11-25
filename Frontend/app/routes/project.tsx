@@ -1,4 +1,4 @@
-import { Coba } from "../components/Project/contentProject";
+import { ContentProject } from "../components/Project/contentProject";
 import Navbar from "~/common/navbar";
 import Header from "~/components/Project/heroProject"
 
@@ -14,7 +14,7 @@ export default function Proyek() {
     <>
     <Navbar />
     <Header />
-    <Coba />
+    <ContentProject />
     </>
   );
 }

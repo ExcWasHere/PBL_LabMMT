@@ -1,6 +1,6 @@
 import Navbar from "~/common/navbar";
 import Header from "~/components/Gallery/heroGallery";
-import { Coba } from "~/components/Gallery/contentGallery";
+import { ContentGallery } from "~/components/Gallery/contentGallery";
 
 export function meta() {
   return [
@@ -14,7 +14,7 @@ export default function Galeri() {
     <>
       <Navbar />
       <Header />
-      <Coba />
+      <ContentGallery />
     </>
   );
 }

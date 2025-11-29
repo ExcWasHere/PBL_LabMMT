@@ -7,8 +7,7 @@ import {
   Image as ImageIcon,
   ThumbsUp,
   Star,
-}
-  from "lucide-react";
+} from "lucide-react";
 
 type CarouselElement = HTMLDivElement | null;
 
@@ -26,124 +25,75 @@ export function Detail1() {
     "/proyek/test2.jpg",
     "/proyek/images.png",
   ];
+
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  const carouselRef = useRef<CarouselElement>(null);
-  
-  const isDragging = useRef(false);
-  const startPos = useRef(0);
-  const scrollLeft = useRef(0);
+  const nextSlide = () => {
+    setCurrentIndex((prev) =>
+      prev === projectImages.length - 1 ? 0 : prev + 1
+    );
+  };
 
-  useEffect(() => {
-    const carouselElement = carouselRef.current;
-    if (!carouselElement) return;
-
-    const handleMouseDown = (e: MouseEvent) => {
-      isDragging.current = true;
-      carouselElement.style.cursor = 'grabbing';
-      carouselElement.style.userSelect = 'none';
-      startPos.current = e.pageX - carouselElement.offsetLeft;
-      scrollLeft.current = carouselElement.scrollLeft;
-    };
-
-    const handleMouseLeave = () => {
-      isDragging.current = false;
-      carouselElement.style.cursor = 'grab';
-      carouselElement.style.userSelect = 'auto';
-    };
-
-    const handleMouseUp = () => {
-      isDragging.current = false;
-      carouselElement.style.cursor = 'grab';
-      carouselElement.style.userSelect = 'auto';
-    };
-
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!isDragging.current) return;
-      e.preventDefault();
-      const x = e.pageX - carouselElement.offsetLeft;
-      const walk = (x - startPos.current) * 2.5; 
-      carouselElement.scrollLeft = scrollLeft.current - walk;
-    };
-
-    carouselElement.addEventListener('mousedown', handleMouseDown);
-    window.addEventListener('mouseup', handleMouseUp); 
-    carouselElement.addEventListener('mouseleave', handleMouseLeave);
-    carouselElement.addEventListener('mousemove', handleMouseMove);
-
-    return () => {
-      carouselElement.removeEventListener('mousedown', handleMouseDown);
-      window.removeEventListener('mouseup', handleMouseUp);
-      carouselElement.removeEventListener('mouseleave', handleMouseLeave);
-      carouselElement.removeEventListener('mousemove', handleMouseMove);
-    };
-  }, []);
-
-  useEffect(() => {
-    const carouselElement = carouselRef.current;
-    if (!carouselElement) return;
-
-    const handleScroll = () => {
-      const itemWidth = carouselElement.offsetWidth;
-      const scrollPosition = carouselElement.scrollLeft;
-
-      const newIndex = Math.round(scrollPosition / itemWidth);
-
-      if (newIndex !== currentIndex) {
-        setCurrentIndex(newIndex);
-      }
-    };
-
-    carouselElement.addEventListener("scroll", handleScroll);
-
-    return () => {
-      carouselElement.removeEventListener("scroll", handleScroll);
-    };
-  }, [currentIndex]);
+  const prevSlide = () => {
+    setCurrentIndex((prev) =>
+      prev === 0 ? projectImages.length - 1 : prev - 1
+    );
+  };
 
   const goToImage = (index: number) => {
     setCurrentIndex(index);
-    const carouselElement = carouselRef.current;
-    
-    if (carouselElement) {
-      const itemWidth = carouselElement.offsetWidth;
-      carouselElement.scrollTo({
-        left: index * itemWidth,
-        behavior: "smooth",
-      });
+  };
+
+  const [touchStart, setTouchStart] = useState(0);
+  const [touchEnd, setTouchEnd] = useState(0);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (touchStart - touchEnd > 75) {
+      nextSlide(); 
+    }
+    if (touchStart - touchEnd < -75) {
+      prevSlide(); 
     }
   };
 
   // KOMEN
   const [comments, setComments] = useState([
     {
-        id: 1,
-        user: "Mas Ganteng",
-        avatar: "/proyek/12.avif",
-        time: "58 minutes ago",
-        text: "wow keren",
-        rating: 5,
-        likes: 25,
-        replies: [
-            {
-                id: 2,
-                user: "Mbak atmin",
-                avatar: "/proyek/images.png",
-                time: "8 minutes ago",
-                text: "makasih mas",
-                likes: 2,
-            },
-        ],
+      id: 1,
+      user: "Mas Ganteng",
+      avatar: "/proyek/12.avif",
+      time: "58 minutes ago",
+      text: "wow keren",
+      rating: 5,
+      likes: 25,
+      replies: [
+        {
+          id: 2,
+          user: "Mbak atmin",
+          avatar: "/proyek/images.png",
+          time: "8 minutes ago",
+          text: "makasih mas",
+          likes: 2,
+        },
+      ],
     },
     {
-        id: 3,
-        user: "abc",
-        avatar: "/proyek/12.avif",
-        time: "2 hours ago",
-        text: "Lumayan lah.",
-        rating: 4,
-        likes: 2,
-        replies: [],
+      id: 3,
+      user: "abc",
+      avatar: "/proyek/12.avif",
+      time: "2 hours ago",
+      text: "Lumayan lah.",
+      rating: 4,
+      likes: 2,
+      replies: [],
     },
   ]);
   const [userName, setUserName] = useState("");
@@ -151,12 +101,12 @@ export function Detail1() {
   const [userRating, setUserRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
 
-  const totalRating = comments.filter(c => c.rating).reduce((acc, curr) => acc + curr.rating, 0);
-  const userReviewsCount = comments.filter(c => c.rating).length;
+  const totalRating = comments
+    .filter((c) => c.rating)
+    .reduce((acc, curr) => acc + curr.rating, 0);
+  const userReviewsCount = comments.filter((c) => c.rating).length;
   const averageRating =
-    userReviewsCount > 0
-      ? (totalRating / userReviewsCount).toFixed(1)
-      : 0;
+    userReviewsCount > 0 ? (totalRating / userReviewsCount).toFixed(1) : 0;
 
   const projectDetails = [
     { label: "Type", value: "Game" },
@@ -220,36 +170,24 @@ export function Detail1() {
   };
 
   return (
-    <div className="bg-white min-h-screen text-gray-800 pt-20"> 
-      <div className="fixed top-0 left-0 right-0 h-20 z-40 
-          bg-gradient-to-b from-black/70 to-transparent pointer-events-none">
-      </div>
-      
+    <div className="bg-white min-h-screen text-gray-800 pt-20">
+      <div
+        className="fixed top-0 left-0 right-0 h-20 z-40 
+          bg-gradient-to-b from-black/70 to-transparent pointer-events-none"
+      ></div>
+
       <main className="max-w-6xl mx-auto px-6 py-10">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-          
-          <div className="relative w-full aspect-[4/3] rounded-lg overflow-hidden">
+          <div className="relative w-full aspect-[4/3] rounded-xl overflow-hidden shadow-lg bg-gray-100 group">
             <div
-              ref={carouselRef}
-              className="flex w-full h-full overflow-x-scroll scroll-smooth" 
-              style={{
-                cursor: 'grab',
-                WebkitOverflowScrolling: "touch",
-                scrollbarWidth: "none",
-                msOverflowStyle: "none",
-              }}
+              className="flex h-full transition-transform duration-500 ease-out"
+              style={{ transform: `translateX(-${currentIndex * 100}%)` }}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
             >
-              <style dangerouslySetInnerHTML={{__html: `
-                .flex::-webkit-scrollbar {
-                  display: none;
-                }
-              `}}/>
-              
               {projectImages.map((src, i) => (
-                <div
-                  key={i}
-                  className="w-full h-full flex-shrink-0" 
-                >
+                <div key={i} className="min-w-full h-full">
                   <img
                     src={src}
                     className="w-full h-full object-cover"
@@ -259,15 +197,37 @@ export function Detail1() {
               ))}
             </div>
 
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+            <div
+              onClick={prevSlide}
+              className="absolute top-0 left-0 w-1/2 h-full z-10 cursor-pointer opacity-0 hover:opacity-100 transition-opacity duration-300"
+              title="Previous Image"
+            >
+              <div className="w-full h-full bg-gradient-to-r from-black/10 to-transparent"></div>
+            </div>
+
+            <div
+              onClick={nextSlide}
+              className="absolute top-0 right-0 w-1/2 h-full z-10 cursor-pointer opacity-0 hover:opacity-100 transition-opacity duration-300"
+              title="Next Image"
+            >
+              <div className="w-full h-full bg-gradient-to-l from-black/10 to-transparent"></div>
+            </div>
+
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-20">
               {projectImages.map((_, i) => (
-                <div
+                <button
                   key={i}
-                  onClick={() => goToImage(i)}
-                  className={`w-2 h-2 rounded-full cursor-pointer transition-colors ${
-                    i === currentIndex ? "bg-white" : "bg-white/50 hover:bg-white/80"
+                  onClick={(e) => {
+                    e.stopPropagation(); 
+                    goToImage(i);
+                  }}
+                  className={`w-2.5 h-2.5 rounded-full transition-all duration-300 shadow-sm ${
+                    i === currentIndex
+                      ? "bg-white w-6" 
+                      : "bg-white/50 hover:bg-white"
                   }`}
-                ></div>
+                  aria-label={`Go to slide ${i + 1}`}
+                />
               ))}
             </div>
           </div>
@@ -370,7 +330,6 @@ export function Detail1() {
 
         <section id="comments" className="max-w-6xl mx-auto px-[1px]">
           <div className="bg-gray-50 py-6 px-4 rounded-xl border border-gray-200 mb-10 shadow-sm">
-            
             <input
               type="text"
               placeholder="Your Name"
@@ -417,9 +376,9 @@ export function Detail1() {
               onInput={(e) => {
                 const target = e.target;
                 if (target instanceof HTMLTextAreaElement) {
-                    target.style.height = "auto";
-                    target.style.height = `${target.scrollHeight}px`;
-                    setCommentText(target.value);
+                  target.style.height = "auto";
+                  target.style.height = `${target.scrollHeight}px`;
+                  setCommentText(target.value);
                 }
               }}
             />
@@ -552,4 +511,4 @@ export function Detail1() {
       </main>
     </div>
   );
-};
+}

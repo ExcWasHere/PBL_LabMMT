@@ -75,10 +75,8 @@ export default function NewsPage() {
   
   const getStatusColorClass = (status: string) => {
     switch (status) {
-      case "Done": return "text-green-600";
       case "Muted": return "text-red-500";
-      case "Waiting": return "text-yellow-600"; // Mengembalikan ke kuning-600 (sesuai standar warna)
-      case "Review": return "text-blue-600";
+      case "Waiting": return "text-blue-600";
       default: return "text-black";
     }
   };
@@ -87,7 +85,7 @@ export default function NewsPage() {
       setSearchTerm(e.target.value);
   };
 
-  // --- Filtering Logic (Tetap) ---
+  // --- Filtering Logic ---
   const filteredData = useMemo(() => {
     // ... (Logika filtering sama) ...
     let data = [...allTableData];
@@ -116,11 +114,6 @@ export default function NewsPage() {
 
   return (
     <div className="flex">
-      {/* Sidebar - Mengontrol tampilan sidebar menggunakan CSS position absolute dan transform */}
-      {/* Jika sidebar tidak terbuka, geser ke kiri (hidden), jika terbuka, tampilkan. */}
-      {/* Catatan: Karena Sidebar menggunakan 'fixed', menyembunyikannya harus dilakukan di komponen Sidebar itu sendiri atau menggunakan conditional rendering. */}
-      
-      {/* Menggunakan conditional rendering untuk menyembunyikan/menampilkan Sidebar */}
       {isSidebarOpen && <Sidebar />}
 
       {/* Page Content - Mengontrol margin kiri berdasarkan status sidebar */}
@@ -144,7 +137,7 @@ export default function NewsPage() {
           {stats.map((s) => (
             <div
               key={s.label}
-              className={`border-2 rounded-lg p-4 ${s.color}`} 
+              className={`border-1 rounded-lg p-4 ${s.color}`} 
             >
               <div className="text-left"> 
                 <p className="text-sm">{s.label}</p>

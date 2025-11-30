@@ -1,5 +1,3 @@
-"use client";
-
 import { motion } from "framer-motion";
 import { useState, useRef, useEffect } from "react";
 import MemberCard from "../../common/memberCard";
@@ -36,7 +34,7 @@ export function HomeMember() {
 
   const observer = new ResizeObserver((entries) => {
     const width = entries[0].contentRect.width;
-    setShift(width); // shift = width container
+    setShift(width);
   });
 
     observer.observe(cardRef.current);
@@ -115,10 +113,7 @@ export function HomeMember() {
             )
           )}
         </div>
-
       </div>
-
-
     </section >
   );
 }

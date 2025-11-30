@@ -13,7 +13,6 @@ import {
   X,
   LogOut,
   Plus,
-  Phone,
   Gamepad2,
   PenTool,
   Glasses,
@@ -54,13 +53,9 @@ interface ActivityItem {
   date: string;
   status: string;
 }
-
-const Dashboard = ({ 
-  userName = "John Doe", 
-  userId = "12345", 
-  userRole = "Viewer" 
-}: DashboardProps) => {
+const Dashboard = ({ userName = "John Doe", userId, userRole }: DashboardProps) => {
   const [activeTab, setActiveTab] = useState("dashboard");
+  const [user, setUser] = useState<{ name?: string; id?: string; role?: string } | null>(null);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -103,23 +98,21 @@ const Dashboard = ({
     }[]
   >([]);
 
-  useEffect(() => {
-    setRecentActivities(
-      activityData.map((item) => ({
-        id: item.id,
-        type: item.type,
-        activity: item.description || "-",
-        time: new Date(item.date).toLocaleString("id-ID"),
-        status: item.type,
-        avatar: activityIcon[item.type as ActivityType] || "📋",
-      }))
-    );
-  }, []);
+const displayName = user?.name ?? userName ?? "Pengguna";
 
-  const chartData = activityData.map((item, index) => ({
-    date: new Date(item.date).toLocaleDateString("id-ID"),
-    value: 5 - index,
-  }));
+ useEffect(() => {
+  try {
+    if (typeof window !== "undefined") {
+      const raw = localStorage.getItem("user");
+      if (raw) setUser(JSON.parse(raw));
+      else setUser({ name: userName ?? "Pengguna", id: userId, role: userRole });
+    }
+  } catch (err) {
+    console.warn("Gagal parse user dari localStorage:", err);
+    setUser({ name: userName ?? "Pengguna", id: userId, role: userRole });
+  }
+}, [userName, userId, userRole]);
+
 
   useEffect(() => {
     const timer = setTimeout(() => setAnimateStats(true), 300);
@@ -147,7 +140,7 @@ const Dashboard = ({
       id: "dashboard",
       label: "Dashboard",
       icon: Home,
-      href: "#dashboard",
+      href: "/dashboard-viewer",
     },
     {
       id: "projects",
@@ -221,10 +214,16 @@ const Dashboard = ({
   ];
 
   const handleLogout = () => {
-    if (confirm("Apakah kamu yakin ingin logout?")) {
-      alert("Logout berhasil!");
+  if (confirm("Apakah kamu yakin ingin logout?")) {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("user");
+      localStorage.removeItem("role");
     }
-  };
+    window.location.href = "/";
+  }
+};
+
 
   const Logo = () => (
     <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg overflow-hidden bg-white">
@@ -310,6 +309,12 @@ const Dashboard = ({
       </div>
     </div>
   );
+
+const chartData = activityData.map((item, index) => ({
+  date: new Date(item.date).toLocaleDateString("id-ID"),
+  value: Math.max(0, 5 - index),
+}));
+
 
   return (
     <div className="min-h-screen bg-white">
@@ -403,7 +408,7 @@ const Dashboard = ({
                     Dashboard
                   </h1>
                   <p className="text-gray-600 mt-1 font-medium text-sm">
-                    Selamat datang kembali, {getFirstName(userName)}! ✨
+                    Selamat datang kembali, {getFirstName(displayName)}! ✨
                   </p>
                 </div>
               </div>
@@ -429,11 +434,11 @@ const Dashboard = ({
                   >
                     <div className="w-6 h-6 sm:w-8 sm:h-8 bg-orange-500 rounded-full mr-0 sm:mr-3 flex items-center justify-center">
                       <span className="text-white font-bold text-xs sm:text-sm">
-                        {getInitials(userName ?? "")}
+                        {getInitials(displayName ?? "")}
                       </span>
                     </div>
                     <span className="hidden sm:inline mr-2 font-semibold">
-                      {getFirstName(userName ?? "")}
+                      {getFirstName(displayName ?? "")}
                     </span>
                     <ChevronDown className="w-3 h-3 sm:w-4 sm:h-4" />
                   </button>

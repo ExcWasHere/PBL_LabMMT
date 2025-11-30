@@ -1,4 +1,3 @@
-import type { Route } from "./+types/home";
 import Navbar from "~/common/navbar";
 import { Detail1 } from "~/components/Project/detail1"
 

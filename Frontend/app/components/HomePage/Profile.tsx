@@ -1,10 +1,8 @@
-"use client"
-
 import { motion } from "framer-motion"
 
 export default function ProfileSingkat() {
   return (
-     <div className="bg-white text-left py-25 sm:px-10 lg:px-20"> {/* Perubahan pada padding */}
+     <div className="bg-white text-left py-25 sm:px-10 lg:px-20">
        <div className="max-w-7xl mx-auto">
          <motion.div
            initial={{ opacity: 0, y: 30 }}

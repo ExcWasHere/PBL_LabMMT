@@ -1,5 +1,3 @@
-"use client"
-
 import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
 
@@ -12,20 +10,14 @@ export function MediaPartner() {
     { src: "/logo/apple.svg", name: "Intel" },
     { src: "/logo/logitech.svg", name: "XL Axiata" },
   ]
-
-
   const items = [...logos, ...logos]
-
   const [index, setIndex] = useState(0)
-
   useEffect(() => {
     const interval = setInterval(() => {
       setIndex((prev) => prev + 1)
-    }, 1000)
-
+    }, 3000)
     return () => clearInterval(interval)
   }, [])
-
   const safeIndex = index % logos.length
 
   return (

@@ -20,7 +20,10 @@ export default function Footer() {
               Lab<span className="text-orange-300">MMT</span>
             </h2>
             <p className="mt-4 text-sm lg:text-base text-white/80 max-w-md text-justify">
-              p balap lorem ipsum dolor samndut amet
+              Laboratorium Multimedia dan Mobile Technology adalah
+              sebuah laboratorium yang berfokus pada pengembangan teknologi
+              multimedia dan mobile untuk mendukung kegiatan penelitian dan
+              pengembangan di Jurusan Teknologi Informasi, Politeknik Negeri Malang.
             </p>
           </div>
 
@@ -32,11 +35,11 @@ export default function Footer() {
               <Link to="/our-story" className="hover:text-orange-200 transition-colors">
                 Our Story
               </Link>
-              <Link to="/why-labMMT" className="hover:text-orange-200 transition-colors">
-                Why LabMMT?
+              <Link to="/our-sponsorship" className="hover:text-orange-200 transition-colors">
+                Our Sponsorship
               </Link>
-              <Link to="/testimonial" className="hover:text-orange-200 transition-colors">
-                Testimonials
+              <Link to="/gallery" className="hover:text-orange-200 transition-colors">
+                Our Activity
               </Link>
             </div>
 

@@ -6,7 +6,11 @@ export default [
     route("masuk", "routes/masuk.tsx"),
     route("gallery", "routes/gallery.tsx"),
     route("news", "routes/news.tsx"),
-    route("dashboard-viewer", "routes/dashboard-viewer.tsx"),
+    route("dashboard-viewer", "routes/dashboard-viewer/dashboard.tsx"),
+    route("dashboard-viewer-news", "routes/dashboard-viewer/news.tsx"),
+    route("dashboard-viewer-project", "routes/dashboard-viewer/project.tsx"),
+    route("dashboard-viewer-gallery", "routes/dashboard-viewer/gallery.tsx"),
+    route("dashboard-viewer-member", "routes/dashboard-viewer/member.tsx"),
     route("news-detail", "routes/news-detail.tsx"),
-    route("project-detail", "routes/detail1.tsx"),
+    route("project-detail", "routes/project-detail.tsx"),
 ] satisfies RouteConfig;

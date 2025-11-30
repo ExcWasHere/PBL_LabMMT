@@ -39,21 +39,28 @@ const DropdownFilter: React.FC<DropdownFilterProps> = ({ label, options, current
     </div>
   );
 };
-export default function NewsPage() {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+// --- NewsPage Component ---
+
+export default function ProjectPage() {
+  // STATE BARU untuk mengontrol sidebar
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true); // Default terbuka
+
   const [selectedYear, setSelectedYear] = useState("Semua Tahun"); 
   const [selectedKategori, setSelectedKategori] = useState("Semua"); 
   const [selectedSort, setSelectedSort] = useState("Terbaru");
   const [searchTerm, setSearchTerm] = useState("");
   
   const allTableData = useMemo(() => [
-    { title: "Pengenalan React Hooks", kategori: "Workshop", year: "2 des 2025", publisher: "Aulia Resty Azizah", status: "Done" },
-    { title: "Berita Teknologi Terbaru Q4", kategori: "Berita", year: "15 nov 2024", publisher: "Budi Santoso", status: "Review" },
-    { title: "Tips & Trik Menulis Artikel SEO", kategori: "Artikel", year: "28 feb 2025", publisher: "Citra Dewi", status: "Waiting" },
-    { title: "Pelatihan Dasar Desain Grafis", kategori: "Pelatihan", year: "10 jul 2023", publisher: "Aulia Resty Azizah", status: "Done" },
-    { title: "Workshop Keamanan Siber", kategori: "Workshop", year: "30 jan 2025", publisher: "Dani Setiawan", status: "Muted" },
-    { title: "Sertifikasi AWS Cloud Practitioner", kategori: "Sertifikasi", year: "5 apr 2024", publisher: "Budi Santoso", status: "Review" },
-    { title: "Artikel Mendalam tentang AI", kategori: "Artikel", year: "1 aug 2025", publisher: "Citra Dewi", status: "Done" },
+    { title: "Proyek Redesign E-Commerce Mobile", kategori: "UI/UX", year: "12 jun 2025", publisher: "Dani Setiawan", stars: "5", status: "Done" },
+    { title: "Simulasi Pelatihan VR Keselamatan Kerja", kategori: "VR", year: "22 mar 2024", publisher: "Aulia Resty Azizah", stars: "3", status: "Review" },
+    { title: "Implementasi 3D Modeling di Unity", kategori: "Game", year: "18 sep 2024", publisher: "Budi Santoso", stars: "4", status: "Done" },
+    { title: "Optimalisasi Performa Web dengan Next.js", kategori: "Frontend", year: "7 feb 2025", publisher: "Citra Dewi", stars: "5", status: "Done" },
+    { title: "Studi Kasus Accessibility Web App", kategori: "UI/UX", year: "9 nov 2023", publisher: "Dani Setiawan", stars: "4", status: "Waiting" },
+    { title: "Pengembangan Game Edukasi AR untuk Anak", kategori: "Game", year: "3 jul 2025", publisher: "Aulia Resty Azizah", stars: "5", status: "Review" },
+    { title: "Migrasi Aplikasi Legacy ke Vue.js 3", kategori: "Frontend", year: "20 jan 2024", publisher: "Budi Santoso", stars: "3", status: "Muted" },
+    { title: "Integrasi Sensor Fisik dengan VR Headset", kategori: "VR", year: "14 des 2025", publisher: "Citra Dewi", stars: "4", status: "Waiting" },
+    { title: "Workshop Design System Menggunakan Figma", kategori: "UI/UX", year: "1 mar 2023", publisher: "Aulia Resty Azizah", stars: "5", status: "Done" },
   ], []);
 
   const stats = [
@@ -74,7 +81,10 @@ export default function NewsPage() {
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       setSearchTerm(e.target.value);
   };
+
+  // --- Filtering Logic ---
   const filteredData = useMemo(() => {
+    // ... (Logika filtering sama) ...
     let data = [...allTableData];
     const getYearFromString = (dateString: string) => {
         const parts = dateString.trim().split(' ');
@@ -103,11 +113,11 @@ export default function NewsPage() {
     <div className="flex">
       {isSidebarOpen && <Sidebar />}
 
-      {/* Page Content */}
+      {/* Page Content - Mengontrol margin kiri berdasarkan status sidebar */}
       <div 
         className={`w-full p-8 transition-all duration-300 ease-in-out ${isSidebarOpen ? 'ml-64' : 'ml-0'}`}
       >
-        {/* Header */}
+        {/* Header dengan Tombol Toggle */}
         <div className="flex items-center mb-6">
             {/* TOMBOL TOGGLE */}
             <button
@@ -116,7 +126,7 @@ export default function NewsPage() {
             >
                 <Menu size={24} />
             </button>
-            <h1 className="text-3xl font-bold text-orange-600">News</h1>
+            <h1 className="text-3xl font-bold text-orange-600">Project</h1>
         </div>
 
         {/* --- Stats Section --- */}
@@ -134,7 +144,7 @@ export default function NewsPage() {
           ))}
         </div>
         
-        {/* --- Filters Section --- */}
+        {/* --- Filters Section --- (Tetap) */}
         <div className="flex items-center gap-3 mb-6">
             <div className="flex items-center flex-1 border border-black rounded-lg bg-white px-4 py-2">
                 <svg className="w-5 h-5 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -150,7 +160,7 @@ export default function NewsPage() {
             </div>
           
           <DropdownFilter label="Tahun" options={["Semua Tahun", "2025", "2024", "2023"]} currentFilter={selectedYear} onSelect={setSelectedYear} />
-          <DropdownFilter label="Kategori" options={["Semua", "Berita", "Pelatihan", "Workshop", "Sertifikasi", "Artikel"]} currentFilter={selectedKategori} onSelect={setSelectedKategori} />
+          <DropdownFilter label="Kategori" options={["Semua", "UI/UX", "Game", "Frontend", "AR", "VR"]} currentFilter={selectedKategori} onSelect={setSelectedKategori} />
           <DropdownFilter label="Urutkan" options={["A-Z", "Z-A", "Terpopuler", "Terbaru"]} currentFilter={selectedSort} onSelect={setSelectedSort} />
         </div>
 
@@ -161,8 +171,9 @@ export default function NewsPage() {
               <tr>
                 <th className="py-3">Title</th>
                 <th className="py-3">Kategori</th>
-                <th className="py-3">Year</th>
+                <th className="py-3">Date</th>
                 <th className="py-3">Publisher</th>
+                <th className="py-3">Stars</th>
                 <th className="py-3">Status</th>
               </tr>
             </thead>
@@ -177,6 +188,7 @@ export default function NewsPage() {
                     <td className={`py-3 ${borderClass} text-center`}>{row.kategori}</td>
                     <td className={`py-3 ${borderClass} text-center`}>{row.year}</td>
                     <td className={`py-3 ${borderClass} text-center`}>{row.publisher}</td>
+                    <td className={`py-3 ${borderClass} text-center`}>{row.stars}</td>
                     <td className={`py-3 ${borderClass} font-medium text-center ${getStatusColorClass(row.status)}`}>{row.status}</td>
                   </tr>
                 );

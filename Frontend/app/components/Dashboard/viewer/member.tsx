@@ -39,28 +39,32 @@ const DropdownFilter: React.FC<DropdownFilterProps> = ({ label, options, current
     </div>
   );
 };
-export default function NewsPage() {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+// --- NewsPage Component ---
+
+export default function MemberPage() {
+  // STATE BARU untuk mengontrol sidebar
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true); // Default terbuka
+
   const [selectedYear, setSelectedYear] = useState("Semua Tahun"); 
-  const [selectedKategori, setSelectedKategori] = useState("Semua"); 
+  const [selectedRole, setselectedRole] = useState("Semua"); 
   const [selectedSort, setSelectedSort] = useState("Terbaru");
   const [searchTerm, setSearchTerm] = useState("");
   
   const allTableData = useMemo(() => [
-    { title: "Pengenalan React Hooks", kategori: "Workshop", year: "2 des 2025", publisher: "Aulia Resty Azizah", status: "Done" },
-    { title: "Berita Teknologi Terbaru Q4", kategori: "Berita", year: "15 nov 2024", publisher: "Budi Santoso", status: "Review" },
-    { title: "Tips & Trik Menulis Artikel SEO", kategori: "Artikel", year: "28 feb 2025", publisher: "Citra Dewi", status: "Waiting" },
-    { title: "Pelatihan Dasar Desain Grafis", kategori: "Pelatihan", year: "10 jul 2023", publisher: "Aulia Resty Azizah", status: "Done" },
-    { title: "Workshop Keamanan Siber", kategori: "Workshop", year: "30 jan 2025", publisher: "Dani Setiawan", status: "Muted" },
-    { title: "Sertifikasi AWS Cloud Practitioner", kategori: "Sertifikasi", year: "5 apr 2024", publisher: "Budi Santoso", status: "Review" },
-    { title: "Artikel Mendalam tentang AI", kategori: "Artikel", year: "1 aug 2025", publisher: "Citra Dewi", status: "Done" },
+    { name: "Aulia Resty Azizah", identityNum: "244107020015", role: "Game Developer", startDate: "31 Agustus 2025", position: "Researcher" },
+    { name: "Resty Azizah", identityNum: "244107020015", role: "Frontend Developer", startDate: "1 Agustus 2025", position: "Researcher" },
+    { name: "Budi Budi arto", identityNum: "244107020015", role: "UI/UX Designer", startDate: "31 Mei 2025", position: "Researcher" },
+    { name: "Lando Norris", identityNum: "244107020015", role: "Frontend Developer", startDate: "31 Agustus 2023", position: "Researcher" },
+    { name: "Marc marquez", identityNum: "244107020015", role: "UI/UX Designer", startDate: "20 Agustus 2025", position: "Researcher" },
+    { name: "Muhammad Wahyu", identityNum: "244107020015", role: "UI/UX Designer", startDate: "31 Agustus 2024", position: "Researcher" },
+    { name: "Fidela", identityNum: "244107020015", role: "Game Developer", startDate: "5 Agustus 2025", position: "Researcher" },
   ], []);
 
   const stats = [
-    { label: "Published", value: 40, color: "border-orange-400 text-orange-500" },
-    { label: "Review", value: 40, color: "border-blue-400 text-blue-500" },
-    { label: "Wait To Publish", value: 40, color: "border-green-400 text-green-500" },
-    { label: "Muted", value: 9, color: "border-red-400 text-red-500" },
+    { label: "Lecturer", value: 40, color: "border-orange-400 text-orange-500" },
+    { label: "Student", value: 40, color: "border-blue-400 text-blue-500" },
+    { label: "Alumni", value: 40, color: "border-green-400 text-green-500" },
   ];
   
   const getStatusColorClass = (status: string) => {
@@ -74,40 +78,43 @@ export default function NewsPage() {
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       setSearchTerm(e.target.value);
   };
+
+  // --- Filtering Logic ---
   const filteredData = useMemo(() => {
+    // ... (Logika filtering sama) ...
     let data = [...allTableData];
     const getYearFromString = (dateString: string) => {
         const parts = dateString.trim().split(' ');
         return parts[parts.length - 1]; 
     };
     
-    if (selectedKategori !== "Semua") { data = data.filter(row => row.kategori === selectedKategori); }
-    if (selectedYear !== "Semua Tahun") { data = data.filter(row => getYearFromString(row.year) === selectedYear); }
+    if (selectedRole !== "Semua") { data = data.filter(row => row.role === selectedRole); }
+    if (selectedYear !== "Semua Tahun") { data = data.filter(row => getYearFromString(row.startDate) === selectedYear); }
 
     if (searchTerm) {
       const lowerCaseQuery = searchTerm.toLowerCase();
       data = data.filter(row => 
-        row.title.toLowerCase().includes(lowerCaseQuery) ||
-        row.publisher.toLowerCase().includes(lowerCaseQuery)
+        row.name.toLowerCase().includes(lowerCaseQuery) ||
+        row.role.toLowerCase().includes(lowerCaseQuery)
       );
     }
 
-    if (selectedSort === "A-Z") { data.sort((a, b) => a.title.localeCompare(b.title)); } 
-    else if (selectedSort === "Z-A") { data.sort((a, b) => b.title.localeCompare(a.title)); }
+    if (selectedSort === "A-Z") { data.sort((a, b) => a.name.localeCompare(b.name)); } 
+    else if (selectedSort === "Z-A") { data.sort((a, b) => b.name.localeCompare(a.name)); }
 
     return data;
-  }, [allTableData, selectedYear, selectedKategori, searchTerm, selectedSort]);
+  }, [allTableData, selectedYear, selectedRole, searchTerm, selectedSort]);
 
 
   return (
     <div className="flex">
       {isSidebarOpen && <Sidebar />}
 
-      {/* Page Content */}
+      {/* Page Content - Mengontrol margin kiri berdasarkan status sidebar */}
       <div 
         className={`w-full p-8 transition-all duration-300 ease-in-out ${isSidebarOpen ? 'ml-64' : 'ml-0'}`}
       >
-        {/* Header */}
+        {/* Header dengan Tombol Toggle */}
         <div className="flex items-center mb-6">
             {/* TOMBOL TOGGLE */}
             <button
@@ -116,11 +123,11 @@ export default function NewsPage() {
             >
                 <Menu size={24} />
             </button>
-            <h1 className="text-3xl font-bold text-orange-600">News</h1>
+            <h1 className="text-3xl font-bold text-orange-600">Member</h1>
         </div>
 
         {/* --- Stats Section --- */}
-        <div className="grid grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-3 gap-4 mb-6">
           {stats.map((s) => (
             <div
               key={s.label}
@@ -134,7 +141,7 @@ export default function NewsPage() {
           ))}
         </div>
         
-        {/* --- Filters Section --- */}
+        {/* --- Filters Section --- (Tetap) */}
         <div className="flex items-center gap-3 mb-6">
             <div className="flex items-center flex-1 border border-black rounded-lg bg-white px-4 py-2">
                 <svg className="w-5 h-5 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -150,7 +157,7 @@ export default function NewsPage() {
             </div>
           
           <DropdownFilter label="Tahun" options={["Semua Tahun", "2025", "2024", "2023"]} currentFilter={selectedYear} onSelect={setSelectedYear} />
-          <DropdownFilter label="Kategori" options={["Semua", "Berita", "Pelatihan", "Workshop", "Sertifikasi", "Artikel"]} currentFilter={selectedKategori} onSelect={setSelectedKategori} />
+          <DropdownFilter label="Kategori" options={["Semua", "UI/UX Designer", "Game Developer", "Frontend Developer"]} currentFilter={selectedRole} onSelect={setselectedRole} />
           <DropdownFilter label="Urutkan" options={["A-Z", "Z-A", "Terpopuler", "Terbaru"]} currentFilter={selectedSort} onSelect={setSelectedSort} />
         </div>
 
@@ -159,11 +166,11 @@ export default function NewsPage() {
           <table className="w-full text-sm">
             <thead className="bg-orange-50">
               <tr>
-                <th className="py-3">Title</th>
-                <th className="py-3">Kategori</th>
-                <th className="py-3">Year</th>
-                <th className="py-3">Publisher</th>
-                <th className="py-3">Status</th>
+                <th className="py-3">Name</th>
+                <th className="py-3">NIM/NIDN</th>
+                <th className="py-3">Role</th>
+                <th className="py-3">Start Date</th>
+                <th className="py-3">Position</th>
               </tr>
             </thead>
             <tbody>
@@ -173,11 +180,11 @@ export default function NewsPage() {
 
                 return (
                   <tr key={index}> 
-                    <td className={`py-3 ${borderClass} text-center`}>{row.title}</td>
-                    <td className={`py-3 ${borderClass} text-center`}>{row.kategori}</td>
-                    <td className={`py-3 ${borderClass} text-center`}>{row.year}</td>
-                    <td className={`py-3 ${borderClass} text-center`}>{row.publisher}</td>
-                    <td className={`py-3 ${borderClass} font-medium text-center ${getStatusColorClass(row.status)}`}>{row.status}</td>
+                    <td className={`py-3 ${borderClass} text-center`}>{row.name}</td>
+                    <td className={`py-3 ${borderClass} text-center`}>{row.identityNum}</td>
+                    <td className={`py-3 ${borderClass} text-center`}>{row.role}</td>
+                    <td className={`py-3 ${borderClass} text-center`}>{row.startDate}</td>
+                    <td className={`py-3 ${borderClass} font-medium text-center ${getStatusColorClass(row.position)}`}>{row.position}</td>
                   </tr>
                 );
               })}

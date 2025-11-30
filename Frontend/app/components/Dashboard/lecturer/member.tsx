@@ -1,4 +1,4 @@
-import Sidebar from "~/components/Dashboard/viewer/sidebar";
+import Sidebar from "~/components/Dashboard/lecturer/sidebar";
 import { useState, useMemo } from "react";
 import { Menu } from 'lucide-react';
 interface DropdownFilterProps {

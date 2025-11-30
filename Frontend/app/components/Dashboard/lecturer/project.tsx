@@ -1,4 +1,4 @@
-import Sidebar from "~/components/Dashboard/viewer/sidebar";
+import Sidebar from "~/components/Dashboard/lecturer/sidebar";
 import { useState, useMemo } from "react";
 import { Menu } from 'lucide-react';
 interface DropdownFilterProps {
@@ -42,29 +42,25 @@ const DropdownFilter: React.FC<DropdownFilterProps> = ({ label, options, current
 
 // --- NewsPage Component ---
 
-export default function MemberPage() {
+export default function ProjectPage() {
   // STATE BARU untuk mengontrol sidebar
   const [isSidebarOpen, setIsSidebarOpen] = useState(true); // Default terbuka
 
   const [selectedYear, setSelectedYear] = useState("Semua Tahun"); 
-  const [selectedRole, setselectedRole] = useState("Semua"); 
+  const [selectedKategori, setSelectedKategori] = useState("Semua"); 
   const [selectedSort, setSelectedSort] = useState("Terbaru");
   const [searchTerm, setSearchTerm] = useState("");
   
   const allTableData = useMemo(() => [
-    { name: "Aulia Resty Azizah", identityNum: "244107020015", role: "Game Developer", startDate: "31 Agustus 2025", position: "Researcher" },
-    { name: "Resty Azizah", identityNum: "244107020015", role: "Frontend Developer", startDate: "1 Agustus 2025", position: "Researcher" },
-    { name: "Budi Budi arto", identityNum: "244107020015", role: "UI/UX Designer", startDate: "31 Mei 2025", position: "Researcher" },
-    { name: "Lando Norris", identityNum: "244107020015", role: "Frontend Developer", startDate: "31 Agustus 2023", position: "Researcher" },
-    { name: "Marc marquez", identityNum: "244107020015", role: "UI/UX Designer", startDate: "20 Agustus 2025", position: "Researcher" },
-    { name: "Muhammad Wahyu", identityNum: "244107020015", role: "UI/UX Designer", startDate: "31 Agustus 2024", position: "Researcher" },
-    { name: "Fidela", identityNum: "244107020015", role: "Game Developer", startDate: "5 Agustus 2025", position: "Researcher" },
+    { title: "Proyek Redesign E-Commerce Mobile", kategori: "UI/UX", year: "12 jun 2025", publisher: "Dani Setiawan", stars: "5", status: "Done" },
+    { title: "Studi Kasus Accessibility Web App", kategori: "UI/UX", year: "9 nov 2023", publisher: "Dani Setiawan", stars: "4", status: "Waiting" },
   ], []);
 
   const stats = [
-    { label: "Lecturer", value: 40, color: "border-orange-400 text-orange-500" },
-    { label: "Student", value: 40, color: "border-blue-400 text-blue-500" },
-    { label: "Alumni", value: 40, color: "border-green-400 text-green-500" },
+    { label: "Published", value: 1, color: "border-orange-400 text-orange-500" },
+    { label: "Review", value: 1, color: "border-blue-400 text-blue-500" },
+    { label: "Wait To Publish", value: 0, color: "border-green-400 text-green-500" },
+    { label: "Muted", value: 0, color: "border-red-400 text-red-500" },
   ];
   
   const getStatusColorClass = (status: string) => {
@@ -88,22 +84,22 @@ export default function MemberPage() {
         return parts[parts.length - 1]; 
     };
     
-    if (selectedRole !== "Semua") { data = data.filter(row => row.role === selectedRole); }
-    if (selectedYear !== "Semua Tahun") { data = data.filter(row => getYearFromString(row.startDate) === selectedYear); }
+    if (selectedKategori !== "Semua") { data = data.filter(row => row.kategori === selectedKategori); }
+    if (selectedYear !== "Semua Tahun") { data = data.filter(row => getYearFromString(row.year) === selectedYear); }
 
     if (searchTerm) {
       const lowerCaseQuery = searchTerm.toLowerCase();
       data = data.filter(row => 
-        row.name.toLowerCase().includes(lowerCaseQuery) ||
-        row.role.toLowerCase().includes(lowerCaseQuery)
+        row.title.toLowerCase().includes(lowerCaseQuery) ||
+        row.publisher.toLowerCase().includes(lowerCaseQuery)
       );
     }
 
-    if (selectedSort === "A-Z") { data.sort((a, b) => a.name.localeCompare(b.name)); } 
-    else if (selectedSort === "Z-A") { data.sort((a, b) => b.name.localeCompare(a.name)); }
+    if (selectedSort === "A-Z") { data.sort((a, b) => a.title.localeCompare(b.title)); } 
+    else if (selectedSort === "Z-A") { data.sort((a, b) => b.title.localeCompare(a.title)); }
 
     return data;
-  }, [allTableData, selectedYear, selectedRole, searchTerm, selectedSort]);
+  }, [allTableData, selectedYear, selectedKategori, searchTerm, selectedSort]);
 
 
   return (
@@ -123,11 +119,11 @@ export default function MemberPage() {
             >
                 <Menu size={24} />
             </button>
-            <h1 className="text-3xl font-bold text-orange-600">Member</h1>
+            <h1 className="text-3xl font-bold text-orange-600">Project</h1>
         </div>
 
         {/* --- Stats Section --- */}
-        <div className="grid grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-4 gap-4 mb-6">
           {stats.map((s) => (
             <div
               key={s.label}
@@ -157,7 +153,7 @@ export default function MemberPage() {
             </div>
           
           <DropdownFilter label="Tahun" options={["Semua Tahun", "2025", "2024", "2023"]} currentFilter={selectedYear} onSelect={setSelectedYear} />
-          <DropdownFilter label="Kategori" options={["Semua", "UI/UX Designer", "Game Developer", "Frontend Developer"]} currentFilter={selectedRole} onSelect={setselectedRole} />
+          <DropdownFilter label="Kategori" options={["Semua", "UI/UX", "Game", "Frontend", "AR", "VR"]} currentFilter={selectedKategori} onSelect={setSelectedKategori} />
           <DropdownFilter label="Urutkan" options={["A-Z", "Z-A", "Terpopuler", "Terbaru"]} currentFilter={selectedSort} onSelect={setSelectedSort} />
         </div>
 
@@ -166,11 +162,12 @@ export default function MemberPage() {
           <table className="w-full text-sm">
             <thead className="bg-orange-50">
               <tr>
-                <th className="py-3">Name</th>
-                <th className="py-3">NIM/NIDN</th>
-                <th className="py-3">Role</th>
-                <th className="py-3">Start Date</th>
-                <th className="py-3">Position</th>
+                <th className="py-3">Title</th>
+                <th className="py-3">Kategori</th>
+                <th className="py-3">Date</th>
+                <th className="py-3">Publisher</th>
+                <th className="py-3">Stars</th>
+                <th className="py-3">Status</th>
               </tr>
             </thead>
             <tbody>
@@ -180,11 +177,12 @@ export default function MemberPage() {
 
                 return (
                   <tr key={index}> 
-                    <td className={`py-3 ${borderClass} text-center`}>{row.name}</td>
-                    <td className={`py-3 ${borderClass} text-center`}>{row.identityNum}</td>
-                    <td className={`py-3 ${borderClass} text-center`}>{row.role}</td>
-                    <td className={`py-3 ${borderClass} text-center`}>{row.startDate}</td>
-                    <td className={`py-3 ${borderClass} font-medium text-center ${getStatusColorClass(row.position)}`}>{row.position}</td>
+                    <td className={`py-3 ${borderClass} text-center`}>{row.title}</td>
+                    <td className={`py-3 ${borderClass} text-center`}>{row.kategori}</td>
+                    <td className={`py-3 ${borderClass} text-center`}>{row.year}</td>
+                    <td className={`py-3 ${borderClass} text-center`}>{row.publisher}</td>
+                    <td className={`py-3 ${borderClass} text-center`}>{row.stars}</td>
+                    <td className={`py-3 ${borderClass} font-medium text-center ${getStatusColorClass(row.status)}`}>{row.status}</td>
                   </tr>
                 );
               })}

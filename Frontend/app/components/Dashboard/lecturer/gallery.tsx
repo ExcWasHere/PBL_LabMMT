@@ -1,4 +1,4 @@
-import Sidebar from "~/components/Dashboard/viewer/sidebar";
+import Sidebar from "~/components/Dashboard/lecturer/sidebar";
 import { useState, useMemo } from "react";
 import { Menu } from 'lucide-react';
 interface DropdownFilterProps {
@@ -57,10 +57,10 @@ export default function GalleryPage() {
     ], []);
 
     const stats = [
-        { label: "Published", value: 40, color: "border-orange-400 text-orange-500" },
-        { label: "Review", value: 40, color: "border-blue-400 text-blue-500" },
-        { label: "Wait To Publish", value: 40, color: "border-green-400 text-green-500" },
-        { label: "Muted", value: 9, color: "border-red-400 text-red-500" },
+        { label: "Published", value: 0, color: "border-orange-400 text-orange-500" },
+        { label: "Review", value: 0, color: "border-blue-400 text-blue-500" },
+        { label: "Wait To Publish", value: 0, color: "border-green-400 text-green-500" },
+        { label: "Muted", value: 0, color: "border-red-400 text-red-500" },
     ];
 
     const getStatusColorClass = (status: string) => {

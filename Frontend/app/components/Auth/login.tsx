@@ -99,7 +99,7 @@ export default function AuthPages() {
       localStorage.setItem("role", user.role ?? "");
     }
     if (user.role === "admin") window.location.href = "/dashboard-admin";
-    else if (user.role === "dosen") window.location.href = "/dashboard-dosen";
+    else if (user.role === "dosen") window.location.href = "/dashboard-lecturer";
     else window.location.href = "/dashboard-viewer";
 
   } catch (err) {

@@ -11,6 +11,11 @@ export default [
     route("dashboard-viewer-project", "routes/dashboard-viewer/project.tsx"),
     route("dashboard-viewer-gallery", "routes/dashboard-viewer/gallery.tsx"),
     route("dashboard-viewer-member", "routes/dashboard-viewer/member.tsx"),
+    route("dashboard-lecturer", "routes/dashboard-lecturer/dashboard.tsx"),
+    route("dashboard-lecturer-news", "routes/dashboard-lecturer/news.tsx"),
+    route("dashboard-lecturer-project", "routes/dashboard-lecturer/project.tsx"),
+    route("dashboard-lecturer-gallery", "routes/dashboard-lecturer/gallery.tsx"),
+    route("dashboard-lecturer-member", "routes/dashboard-lecturer/member.tsx"),
     route("news-detail", "routes/news-detail.tsx"),
     route("project-detail", "routes/project-detail.tsx"),
 ] satisfies RouteConfig;

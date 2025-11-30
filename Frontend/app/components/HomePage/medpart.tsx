@@ -66,5 +66,6 @@ export function MediaPartner() {
       </div>
       </div>
     </section>
+    
   )
 }

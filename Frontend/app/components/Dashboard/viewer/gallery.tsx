@@ -40,11 +40,8 @@ const DropdownFilter: React.FC<DropdownFilterProps> = ({ label, options, current
     );
 };
 
-// --- NewsPage Component ---
-
-export default function NewsPage() {
-    // STATE BARU untuk mengontrol sidebar
-    const [isSidebarOpen, setIsSidebarOpen] = useState(true); // Default terbuka
+export default function GalleryPage() {
+    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
     const [selectedYear, setSelectedYear] = useState("Semua Tahun");
     const [selectedKategori, setSelectedKategori] = useState("Semua");
@@ -121,7 +118,7 @@ export default function NewsPage() {
                     >
                         <Menu size={24} />
                     </button>
-                    <h1 className="text-3xl font-bold text-orange-600">News</h1>
+                    <h1 className="text-3xl font-bold text-orange-600">Gallery</h1>
                 </div>
 
                 {/* --- Stats Section --- */}

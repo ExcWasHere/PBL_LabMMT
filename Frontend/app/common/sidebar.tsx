@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { FC, ReactNode } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   LayoutGrid,
   FolderKanban,
@@ -21,23 +21,37 @@ interface MenuItem {
 
 const Sidebar: FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [active, setActive] = useState<string>("Dashboard");
 
   const menuTop: MenuItem[] = [
     { name: "Dashboard", route: "/dashboard-viewer", icon: <LayoutGrid size={18} /> },
-    { name: "Project", route: "/project", icon: <FolderKanban size={18} /> },
+    { name: "Project", route: "/dashboard-viewer-project", icon: <FolderKanban size={18} /> },
     { name: "News", route: "/dashboard-viewer-news", icon: <Newspaper size={18} /> },
-    { name: "Gallery", route: "/gallery", icon: <ImageIcon size={18} /> },
-    { name: "Members", route: "/members", icon: <Users2 size={18} /> },
+    { name: "Gallery", route: "/dashboard-viewer-gallery", icon: <ImageIcon size={18} /> },
+    { name: "Members", route: "/dashboard-viewer-member", icon: <Users2 size={18} /> },
   ];
 
   const menuBottom: MenuItem[] = [
     { name: "Beranda", route: "/", icon: <Home size={18} /> },
     { name: "Keluar", route: "/masuk", icon: <LogOut size={18} />, danger: true },
   ];
+  useEffect(() => {
+    const currentPath = location.pathname;
+    const activeTopMenu = menuTop.find(m => m.route === currentPath);
+    if (activeTopMenu) {
+      setActive(activeTopMenu.name);
+      return;
+    }
+    const activeBottomMenu = menuBottom.find(m => m.route === currentPath);
+    if (activeBottomMenu) {
+      setActive(activeBottomMenu.name);
+      return;
+    }
+    setActive("Dashboard");
+  }, [location.pathname]);
 
   const handleNavigation = (menuItem: MenuItem) => {
-    setActive(menuItem.name);
     if (menuItem.route) {
       navigate(menuItem.route);
     }

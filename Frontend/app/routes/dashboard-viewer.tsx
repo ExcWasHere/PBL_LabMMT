@@ -1,4 +1,4 @@
-import Dashboard from "~/components/Dashboard/viewer";
+import Dashboard from "~/components/Dashboard/viewer/news";
 import type { Route } from "./+types/dashboard-viewer";
 import ProtectedRoute from "~/components/Auth/protected-route";
 

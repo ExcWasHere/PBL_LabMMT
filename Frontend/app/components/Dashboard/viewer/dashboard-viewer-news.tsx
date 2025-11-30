@@ -39,13 +39,8 @@ const DropdownFilter: React.FC<DropdownFilterProps> = ({ label, options, current
     </div>
   );
 };
-
-// --- NewsPage Component ---
-
 export default function NewsPage() {
-  // STATE BARU untuk mengontrol sidebar
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true); // Default terbuka
-
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [selectedYear, setSelectedYear] = useState("Semua Tahun"); 
   const [selectedKategori, setSelectedKategori] = useState("Semua"); 
   const [selectedSort, setSelectedSort] = useState("Terbaru");
@@ -79,10 +74,7 @@ export default function NewsPage() {
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       setSearchTerm(e.target.value);
   };
-
-  // --- Filtering Logic ---
   const filteredData = useMemo(() => {
-    // ... (Logika filtering sama) ...
     let data = [...allTableData];
     const getYearFromString = (dateString: string) => {
         const parts = dateString.trim().split(' ');
@@ -111,11 +103,11 @@ export default function NewsPage() {
     <div className="flex">
       {isSidebarOpen && <Sidebar />}
 
-      {/* Page Content - Mengontrol margin kiri berdasarkan status sidebar */}
+      {/* Page Content */}
       <div 
         className={`w-full p-8 transition-all duration-300 ease-in-out ${isSidebarOpen ? 'ml-64' : 'ml-0'}`}
       >
-        {/* Header dengan Tombol Toggle */}
+        {/* Header */}
         <div className="flex items-center mb-6">
             {/* TOMBOL TOGGLE */}
             <button
@@ -142,7 +134,7 @@ export default function NewsPage() {
           ))}
         </div>
         
-        {/* --- Filters Section --- (Tetap) */}
+        {/* --- Filters Section --- */}
         <div className="flex items-center gap-3 mb-6">
             <div className="flex items-center flex-1 border border-black rounded-lg bg-white px-4 py-2">
                 <svg className="w-5 h-5 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">

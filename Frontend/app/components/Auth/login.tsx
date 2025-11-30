@@ -149,7 +149,7 @@ const handleRegisterSubmit = async (e: React.MouseEvent<HTMLButtonElement>) => {
 
     alert("Registrasi berhasil!");
     if (user.role === "admin") window.location.href = "/dashboard-admin";
-    else if (user.role === "dosen") window.location.href = "/dashboard-dosen";
+    else if (user.role === "dosen") window.location.href = "/dashboard-lecturer";
     else window.location.href = "/dashboard-viewer";
 
   } catch (err) {
@@ -195,7 +195,7 @@ const handleRegisterSubmit = async (e: React.MouseEvent<HTMLButtonElement>) => {
       {isAnimating && (
         <div className="fixed inset-0 bg-white z-50 flex items-center justify-center">
           <h1 className="text-5xl md:text-6xl font-bold text-center">
-            <span className="bg-gradient-to-r from-orange-600 to-orange-500 bg-clip-text text-transparent">
+            <span className="bg-linear-to-r from-orange-600 to-orange-500 bg-clip-text text-transparent">
               {displayText}
             </span>
             <span className="cursor-blink ml-1 text-orange-500">|</span>
@@ -234,7 +234,7 @@ const handleRegisterSubmit = async (e: React.MouseEvent<HTMLButtonElement>) => {
               {/* Greetings */}
               <div className="text-center mb-6">
                 <h1 className="text-3xl md:text-4xl font-bold mb-2">
-                  <span className="bg-gradient-to-r from-orange-600 to-orange-400 bg-clip-text text-transparent">
+                  <span className="bg-linear-to-r from-orange-600 to-orange-400 bg-clip-text text-transparent">
                     Laboratorium MMT
                   </span>
                 </h1>

@@ -42,12 +42,6 @@ export function HomeMember() {
     return () => observer.disconnect();
   }, []);
 
-  const next = () =>
-    setIndex((prev) => (prev < teamMembers.length - 3 ? prev + 1 : 0));
-
-  const prev = () =>
-    setIndex((prev) => (prev === 0 ? teamMembers.length - 3 : prev - 1));
-
   return (
     <section className="bg-white text-left py-15 sm:px-10 lg:px-20">
       <div className="max-w-7xl mx-auto">

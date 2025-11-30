@@ -1,10 +1,6 @@
-"use client";
-
-import Sidebar from "../../../common/sidebar"; // Pastikan path ini benar
+import Sidebar from "app/common/sidebar";
 import { useState, useMemo } from "react";
-import { Menu } from 'lucide-react'; // Import ikon Menu untuk tombol toggle
-
-// --- DropdownFilter Component (tetap) ---
+import { Menu } from 'lucide-react';
 interface DropdownFilterProps {
   label: string;
   options: string[];
@@ -14,7 +10,6 @@ interface DropdownFilterProps {
 
 const DropdownFilter: React.FC<DropdownFilterProps> = ({ label, options, currentFilter, onSelect }) => {
   const [isOpen, setIsOpen] = useState(false);
-  // ... (kode DropdownFilter tetap sama)
   return (
     <div className="relative">
       <button
@@ -167,7 +162,7 @@ export default function NewsPage() {
           <DropdownFilter label="Urutkan" options={["A-Z", "Z-A", "Terpopuler", "Terbaru"]} currentFilter={selectedSort} onSelect={setSelectedSort} />
         </div>
 
-        {/* --- Table Section --- (Tetap) */}
+        {/* --- Table Section --- */}
         <div className="border border-black rounded-lg overflow-hidden">
           <table className="w-full text-sm">
             <thead className="bg-orange-50">

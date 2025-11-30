@@ -1,10 +1,10 @@
-import type { Route } from "../dashboard-viewer/+types/news.tsx";
+import type { Route } from "../dashboard-viewer/+types/member.tsx";
 import ProtectedRoute from "~/components/Auth/protected-route";
-import NewsPage from "~/components/Dashboard/viewer/news.js";
+import MemberPage from "~/components/Dashboard/viewer/member.js";
 
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: "MMT | Dashboard-News" },
+    { title: "MMT | Dashboard-Viewer" },
     { name: "Masuk", content: "Welcome to Lab MMT JTI!" },
   ];
 }
@@ -13,7 +13,7 @@ export default function Viewer() {
   return (
     <>
     <ProtectedRoute>
-    <NewsPage />
+    <MemberPage />
     </ProtectedRoute>
     </>
   );

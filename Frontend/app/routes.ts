@@ -8,6 +8,9 @@ export default [
     route("news", "routes/news.tsx"),
     route("dashboard-viewer", "routes/dashboard-viewer/dashboard.tsx"),
     route("dashboard-viewer-news", "routes/dashboard-viewer/news.tsx"),
+    route("dashboard-viewer-project", "routes/dashboard-viewer/project.tsx"),
+    route("dashboard-viewer-gallery", "routes/dashboard-viewer/gallery.tsx"),
+    route("dashboard-viewer-member", "routes/dashboard-viewer/member.tsx"),
     route("news-detail", "routes/news-detail.tsx"),
     route("project-detail", "routes/project-detail.tsx"),
 ] satisfies RouteConfig;

@@ -42,7 +42,7 @@ const DropdownFilter: React.FC<DropdownFilterProps> = ({ label, options, current
 
 // --- NewsPage Component ---
 
-export default function NewsPage() {
+export default function MemberPage() {
   // STATE BARU untuk mengontrol sidebar
   const [isSidebarOpen, setIsSidebarOpen] = useState(true); // Default terbuka
 

@@ -45,7 +45,7 @@ export default function Dashboard() {
           >
             <Menu size={24} />
           </button>
-          <h1 className="text-3xl font-bold text-orange-600">Dasbor</h1>
+          <h1 className="text-3xl font-bold text-orange-600">Dashboard</h1>
         </div>
 
         {/* Stats Cards */}
@@ -53,7 +53,7 @@ export default function Dashboard() {
           {stats.map((stat) => (
             <div
               key={stat.label}
-              className={`bg-white border-2 rounded-lg p-6 ${stat.color} hover:shadow-md transition`}
+              className={`bg-white border rounded-lg p-6 ${stat.color} hover:shadow-md transition`}
             >
               <div className="flex flex-col items-center text-center">
                 <div className="text-orange-500 mb-2">{stat.icon}</div>
@@ -67,7 +67,7 @@ export default function Dashboard() {
         {/* Traffic & Recent Activity */}
         <div className="grid grid-cols-3 gap-6">
           {/* Total Traffic */}
-          <div className="col-span-2 bg-white border-2 border-orange-400 rounded-lg p-6">
+          <div className="col-span-2 bg-white border border-orange-400 rounded-lg p-6">
             <h3 className="text-xl font-semibold text-orange-600 mb-4">Total Traffic</h3>
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={trafficData}>
@@ -104,7 +104,7 @@ export default function Dashboard() {
           </div>
 
           {/* Recent Activity */}
-          <div className="bg-white border-2 border-orange-400 rounded-lg p-6">
+          <div className="bg-white border border-orange-400 rounded-lg p-6">
             <h3 className="text-xl font-semibold text-orange-600 mb-4">Recent Activity</h3>
             <div className="space-y-4">
               {recentActivities.map((activity, index) => (

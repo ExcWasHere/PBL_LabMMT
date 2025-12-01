@@ -23,33 +23,79 @@ const Sidebar: FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [active, setActive] = useState<string>("Dashboard");
+  const [profile, setProfile] = useState<{
+    name?: string;
+    email?: string;
+  } | null>(null);
 
   const menuTop: MenuItem[] = [
-    { name: "Dashboard", route: "/dashboard-viewer", icon: <LayoutGrid size={18} /> },
-    { name: "Project", route: "/dashboard-viewer-project", icon: <FolderKanban size={18} /> },
-    { name: "News", route: "/dashboard-viewer-news", icon: <Newspaper size={18} /> },
-    { name: "Gallery", route: "/dashboard-viewer-gallery", icon: <ImageIcon size={18} /> },
-    { name: "Members", route: "/dashboard-viewer-member", icon: <Users2 size={18} /> },
+    {
+      name: "Dashboard",
+      route: "/dashboard-viewer",
+      icon: <LayoutGrid size={18} />,
+    },
+    {
+      name: "Project",
+      route: "/dashboard-viewer-project",
+      icon: <FolderKanban size={18} />,
+    },
+    {
+      name: "News",
+      route: "/dashboard-viewer-news",
+      icon: <Newspaper size={18} />,
+    },
+    {
+      name: "Gallery",
+      route: "/dashboard-viewer-gallery",
+      icon: <ImageIcon size={18} />,
+    },
+    {
+      name: "Members",
+      route: "/dashboard-viewer-member",
+      icon: <Users2 size={18} />,
+    },
   ];
 
   const menuBottom: MenuItem[] = [
     { name: "Beranda", route: "/", icon: <Home size={18} /> },
-    { name: "Keluar", route: "/masuk", icon: <LogOut size={18} />, danger: true },
+    {
+      name: "Keluar",
+      route: "/masuk",
+      icon: <LogOut size={18} />,
+      danger: true,
+    },
   ];
   useEffect(() => {
     const currentPath = location.pathname;
-    const activeTopMenu = menuTop.find(m => m.route === currentPath);
+    const activeTopMenu = menuTop.find((m) => m.route === currentPath);
     if (activeTopMenu) {
       setActive(activeTopMenu.name);
       return;
     }
-    const activeBottomMenu = menuBottom.find(m => m.route === currentPath);
+    const activeBottomMenu = menuBottom.find((m) => m.route === currentPath);
     if (activeBottomMenu) {
       setActive(activeBottomMenu.name);
       return;
     }
     setActive("Dashboard");
   }, [location.pathname]);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("user");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        setProfile({
+          name: parsed.name ?? parsed.fullname ?? parsed.username ?? "KetuaLab",
+          email: parsed.email ?? "user@gmail.com",
+        });
+      } else {
+        setProfile({ name: "KetuaLab", email: "user@gmail.com" });
+      }
+    } catch (e) {
+      setProfile({ name: "KetuaLab", email: "user@gmail.com" });
+    }
+  }, []);
 
   const handleNavigation = (menuItem: MenuItem) => {
     if (menuItem.route) {
@@ -68,8 +114,12 @@ const Sidebar: FC = () => {
             alt="profile"
           />
           <div>
-            <h3 className="font-semibold text-gray-900 text-base">KetuaLab</h3>
-            <p className="text-xs text-gray-600">user@gmail.com</p>
+            <h3 className="font-semibold text-gray-900 text-base">
+              {profile?.name ?? "KetuaLab"}
+            </h3>
+            <p className="text-xs text-gray-600">
+              {profile?.email ?? "user@gmail.com"}
+            </p>
           </div>
         </div>
 

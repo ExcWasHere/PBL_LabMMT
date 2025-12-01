@@ -1,15 +1,43 @@
-"use client";
-
 import { Gamepad2, PenTool, Glasses } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export default function IndexHero() {
   const [isVisible, setIsVisible] = useState(false);
-
   useEffect(() => {
-    const timer = setTimeout(() => setIsVisible(true), 200);
-    return () => clearTimeout(timer);
-  }, []);
+  const timer = setTimeout(() => setIsVisible(true), 200);
+  try {
+    let sessionId = localStorage.getItem("pv_session");
+    if (!sessionId) {
+      sessionId = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+      localStorage.setItem("pv_session", sessionId);
+    }
+    const payload = JSON.stringify({ path: "/", sessionId });
+    if (navigator.sendBeacon) {
+      try {
+        const blob = new Blob([payload], { type: "application/json" });
+        const ok = navigator.sendBeacon("http://localhost:3000/api/analytics/view", blob);
+        console.log("analytics: beacon sent?", ok);
+      } catch (err) {
+        console.warn("analytics: sendBeacon failed - fallback to fetch", err);
+        fetch("http://localhost:3000/api/analytics/view", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: payload,
+        }).catch(console.error);
+      }
+    } else {
+      fetch("http://localhost:3000/api/analytics/view", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: payload,
+      }).catch(console.error);
+    }
+  } catch (err) {
+    console.error("analytics error", err);
+  }
+  return () => clearTimeout(timer);
+}, []);
+
 
   return (
     <div className="relative h-[calc(100vh-4rem)] md:h-screen w-full mx-auto overflow-hidden">
@@ -23,7 +51,7 @@ export default function IndexHero() {
         />
 
         {/* Soft Gradient */}
-        <div className="h-full w-full absolute inset-0 bg-gradient-to-t from-orange-500/30 via-transparent to-transparent" />
+        <div className="h-full w-full absolute inset-0 bg-linear-to-t from-orange-500/30 via-transparent to-transparent" />
 
         {/* Content */}
         <div className="absolute inset-0 flex flex-col justify-center items-center text-center px-4 md:px-8">

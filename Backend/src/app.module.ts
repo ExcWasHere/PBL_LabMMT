@@ -5,6 +5,10 @@ import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
+import { AnalyticsController } from './chart-view/analytics.controller';
+import { AnalyticsService } from './chart-view/analytics.service';
+import { AnalyticsGateway } from './chart-view/analytics.gateway';
+import { PageView } from './chart-view/page-view.entity';
 
 @Module({
   imports: [
@@ -21,8 +25,9 @@ import { AuthModule } from './auth/auth.module';
     }),
     UsersModule,
     AuthModule,
+    TypeOrmModule.forFeature([PageView]),
   ],
-  controllers: [AppController],
-  providers: [AppService],
+  controllers: [AppController, AnalyticsController],
+  providers: [AppService, AnalyticsService, AnalyticsGateway],
 })
 export class AppModule {}

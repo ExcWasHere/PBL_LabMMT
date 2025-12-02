@@ -1,5 +1,5 @@
 import Navbar from "~/common/navbar";
-import { Detail1 } from "~/components/Project/detail1"
+import { Detail1 } from "~/components/Project/project-detail/index"
 
 export function meta() {
   return [

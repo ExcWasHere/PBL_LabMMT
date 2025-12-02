@@ -1,6 +1,7 @@
 import Sidebar from "~/components/Dashboard/viewer/sidebar";
 import { useState, useMemo } from "react";
 import { Menu } from 'lucide-react';
+
 interface DropdownFilterProps {
   label: string;
   options: string[];
@@ -40,15 +41,25 @@ const DropdownFilter: React.FC<DropdownFilterProps> = ({ label, options, current
   );
 };
 
-// --- NewsPage Component ---
+const MONTHS: { [key: string]: number } = {
+  januari: 0, februari: 1, maret: 2, april: 3, mei: 4, juni: 5,
+  juli: 6, agustus: 7, september: 8, oktober: 9, november: 10, desember: 11
+};
+
+const parseDate = (dateStr: string): number => {
+  const parts = dateStr.toLowerCase().split(" ");
+  const day = parseInt(parts[0]);
+  const month = MONTHS[parts[1]];
+  const year = parseInt(parts[2]);
+  return new Date(year, month, day).getTime();
+};
 
 export default function MemberPage() {
-  // STATE BARU untuk mengontrol sidebar
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true); // Default terbuka
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
-  const [selectedYear, setSelectedYear] = useState("Semua Tahun"); 
-  const [selectedRole, setselectedRole] = useState("Semua"); 
-  const [selectedSort, setSelectedSort] = useState("Terbaru");
+  const [selectedYear, setSelectedYear] = useState("All Years"); 
+  const [selectedRole, setselectedRole] = useState("All"); 
+  const [selectedSort, setSelectedSort] = useState("A-Z");
   const [searchTerm, setSearchTerm] = useState("");
   
   const allTableData = useMemo(() => [
@@ -79,17 +90,15 @@ export default function MemberPage() {
       setSearchTerm(e.target.value);
   };
 
-  // --- Filtering Logic ---
   const filteredData = useMemo(() => {
-    // ... (Logika filtering sama) ...
     let data = [...allTableData];
     const getYearFromString = (dateString: string) => {
         const parts = dateString.trim().split(' ');
         return parts[parts.length - 1]; 
     };
     
-    if (selectedRole !== "Semua") { data = data.filter(row => row.role === selectedRole); }
-    if (selectedYear !== "Semua Tahun") { data = data.filter(row => getYearFromString(row.startDate) === selectedYear); }
+    if (selectedRole !== "All") { data = data.filter(row => row.role === selectedRole); }
+    if (selectedYear !== "All Years") { data = data.filter(row => getYearFromString(row.startDate) === selectedYear); }
 
     if (searchTerm) {
       const lowerCaseQuery = searchTerm.toLowerCase();
@@ -99,8 +108,15 @@ export default function MemberPage() {
       );
     }
 
-    if (selectedSort === "A-Z") { data.sort((a, b) => a.name.localeCompare(b.name)); } 
-    else if (selectedSort === "Z-A") { data.sort((a, b) => b.name.localeCompare(a.name)); }
+    if (selectedSort === "A-Z") { 
+      data.sort((a, b) => a.name.localeCompare(b.name)); 
+    } else if (selectedSort === "Z-A") { 
+      data.sort((a, b) => b.name.localeCompare(a.name)); 
+    } else if (selectedSort === "Newest") {
+      data.sort((a, b) => parseDate(b.startDate) - parseDate(a.startDate));
+    } else if (selectedSort === "Oldest") {
+      data.sort((a, b) => parseDate(a.startDate) - parseDate(b.startDate));
+    }
 
     return data;
   }, [allTableData, selectedYear, selectedRole, searchTerm, selectedSort]);
@@ -110,13 +126,10 @@ export default function MemberPage() {
     <div className="flex">
       {isSidebarOpen && <Sidebar />}
 
-      {/* Page Content - Mengontrol margin kiri berdasarkan status sidebar */}
       <div 
         className={`w-full p-8 transition-all duration-300 ease-in-out ${isSidebarOpen ? 'ml-64' : 'ml-0'}`}
       >
-        {/* Header dengan Tombol Toggle */}
         <div className="flex items-center mb-6">
-            {/* TOMBOL TOGGLE */}
             <button
                 onClick={() => setIsSidebarOpen(!isSidebarOpen)}
                 className="p-2 mr-4 text-gray-700 hover:text-orange-600 transition"
@@ -126,7 +139,6 @@ export default function MemberPage() {
             <h1 className="text-3xl font-bold text-orange-600">Member</h1>
         </div>
 
-        {/* --- Stats Section --- */}
         <div className="grid grid-cols-3 gap-4 mb-6">
           {stats.map((s) => (
             <div
@@ -141,7 +153,6 @@ export default function MemberPage() {
           ))}
         </div>
         
-        {/* --- Filters Section --- (Tetap) */}
         <div className="flex items-center gap-3 mb-6">
             <div className="flex items-center flex-1 border border-black rounded-lg bg-white px-4 py-2">
                 <svg className="w-5 h-5 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -156,12 +167,11 @@ export default function MemberPage() {
                 />
             </div>
           
-          <DropdownFilter label="Tahun" options={["Semua Tahun", "2025", "2024", "2023"]} currentFilter={selectedYear} onSelect={setSelectedYear} />
-          <DropdownFilter label="Kategori" options={["Semua", "UI/UX Designer", "Game Developer", "Frontend Developer"]} currentFilter={selectedRole} onSelect={setselectedRole} />
-          <DropdownFilter label="Urutkan" options={["A-Z", "Z-A", "Terpopuler", "Terbaru"]} currentFilter={selectedSort} onSelect={setSelectedSort} />
+          <DropdownFilter label="Tahun" options={["All Years", "2025", "2024", "2023"]} currentFilter={selectedYear} onSelect={setSelectedYear} />
+          <DropdownFilter label="Kategori" options={["All", "UI/UX Designer", "Game Developer", "Frontend Developer"]} currentFilter={selectedRole} onSelect={setselectedRole} />
+          <DropdownFilter label="Urutkan" options={["A-Z", "Z-A", "Newest", "Oldest"]} currentFilter={selectedSort} onSelect={setSelectedSort} />
         </div>
 
-        {/* --- Table Section --- */}
         <div className="border border-black rounded-lg overflow-hidden">
           <table className="w-full text-sm">
             <thead className="bg-orange-50">
@@ -191,7 +201,7 @@ export default function MemberPage() {
               {filteredData.length === 0 && (
                  <tr>
                     <td colSpan={5} className="py-8 text-center text-gray-500">
-                        Tidak ada data yang cocok dengan filter yang diterapkan.
+                        No data matches the applied filter.
                     </td>
                  </tr>
               )}

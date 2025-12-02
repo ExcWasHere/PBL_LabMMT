@@ -61,7 +61,6 @@ const DropdownFilter: React.FC<DropdownFilterProps> = ({
   );
 };
 
-// HARUS cocok sama format string "12 jun 2025" yg kamu pakai di viewer
 const MONTHS: { [key: string]: number } = {
   jan: 0,
   feb: 1,
@@ -107,7 +106,7 @@ interface ProjectRow {
   id?: string;
   title: string;
   kategori: string;
-  year: string; // "12 jun 2025"
+  year: string;
   publisher: string;
   stars: number;
   status: string;
@@ -115,11 +114,11 @@ interface ProjectRow {
 
 const formatDateForViewer = (raw: string | Date): string => {
   const d = new Date(raw);
-  if (isNaN(d.getTime())) return ""; // fallback kalau ada data aneh
+  if (isNaN(d.getTime())) return "";
 
   const day = d.getDate();
   const year = d.getFullYear();
-  const monthIndex = d.getMonth(); // 0-11
+  const monthIndex = d.getMonth();
 
   const monthLabels = [
     "jan",
@@ -151,7 +150,6 @@ export default function ProjectPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // === FETCH DATA DARI BACKEND ===
   useEffect(() => {
     const fetchProjects = async () => {
       setIsLoading(true);
@@ -159,8 +157,6 @@ export default function ProjectPage() {
 
       try {
         const res = await fetch("http://localhost:3000/project", {
-          // kalau backend kamu butuh token:
-          // headers: { Authorization: `Bearer ${token}` },
         });
 
         if (!res.ok) {

@@ -21,42 +21,59 @@ import {
 
 type TrafficPoint = { date: string; dayLabel?: string; views: number };
 
+interface StatsData {
+  totalProject: number;
+  totalNews: number;
+  totalVideo: number;
+  totalPhoto: number;
+  totalMembers: number;
+}
+
 export default function Dashboard() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [trafficData, setTrafficData] = useState<TrafficPoint[]>([]);
   const [isLoadingTraffic, setIsLoadingTraffic] = useState(true);
-  const [connectionStatus, setConnectionStatus] = useState<
+  const [connectionStatus ,setConnectionStatus] = useState<
     "connected" | "disconnected" | "connecting"
   >("connecting");
+
+  const [statsData, setStatsData] = useState<StatsData>({
+    totalProject: 0,
+    totalNews: 0,
+    totalVideo: 0,
+    totalPhoto: 0,
+    totalMembers: 0,
+  });
+  const [isLoadingStats, setIsLoadingStats] = useState(true);
 
   const stats = [
     {
       label: "Total Project",
-      value: 40,
+      value: statsData.totalProject,
       icon: <FolderKanban size={24} />,
       color: "border-orange-400",
     },
     {
       label: "Total News",
-      value: 40,
+      value: statsData.totalNews,
       icon: <Newspaper size={24} />,
       color: "border-orange-400",
     },
     {
       label: "Total Video",
-      value: 40,
+      value: statsData.totalVideo,
       icon: <Video size={24} />,
       color: "border-orange-400",
     },
     {
       label: "Total Photo",
-      value: 40,
+      value: statsData.totalPhoto,
       icon: <Image size={24} />,
       color: "border-orange-400",
     },
     {
       label: "Total Members",
-      value: 40,
+      value: statsData.totalMembers,
       icon: <Users2 size={24} />,
       color: "border-orange-400",
     },
@@ -109,6 +126,36 @@ export default function Dashboard() {
 
     return points;
   }
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      setIsLoadingStats(true);
+      try {
+        const res = await fetch("http://localhost:3000/stats");
+        
+        if (!res.ok) {
+          console.error("Failed to fetch stats");
+          return;
+        }
+        const data = await res.json();
+        setStatsData({
+          totalProject: data.totalProject || 0,
+          totalNews: data.totalNews || 0,
+          totalVideo: data.totalVideo || 0,
+          totalPhoto: data.totalPhoto || 0,
+          totalMembers: data.totalMembers || 0,
+        });
+      } catch (err) {
+        console.error("Failed to fetch stats:", err);
+      } finally {
+        setIsLoadingStats(false);
+      }
+    };
+
+    fetchStats();
+    const interval = setInterval(fetchStats, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const fetchTraffic = async () => {
@@ -208,9 +255,13 @@ export default function Dashboard() {
               <div className="flex flex-col items-center text-center">
                 <div className="text-orange-500 mb-2">{stat.icon}</div>
                 <p className="text-sm text-gray-600 mb-1">{stat.label}</p>
-                <h2 className="text-4xl font-bold text-orange-500">
-                  {stat.value}
-                </h2>
+                {isLoadingStats ? (
+                  <div className="h-10 w-16 animate-pulse bg-gray-200 rounded mt-1"></div>
+                ) : (
+                  <h2 className="text-4xl font-bold text-orange-500">
+                    {stat.value}
+                  </h2>
+                )}
               </div>
             </div>
           ))}

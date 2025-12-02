@@ -12,7 +12,7 @@ import { UsersService } from '../user/user.service';
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
-    private configService: ConfigService,
+    configService: ConfigService,
     private usersService: UsersService,
   ) {
     super({

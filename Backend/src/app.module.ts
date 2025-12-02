@@ -9,6 +9,12 @@ import { AnalyticsController } from './chart-view/analytics.controller';
 import { AnalyticsService } from './chart-view/analytics.service';
 import { AnalyticsGateway } from './chart-view/analytics.gateway';
 import { PageView } from './chart-view/page-view.entity';
+import { ProjectModule } from './project/project.module';
+import { NewsModule } from './news/news.module';
+import { VideoModule } from './video/video.module';
+import { PhotoModule } from './photo/photo.module';
+import { MemberModule } from './member/member.module';
+import { StatsModule } from './stats/stats.module';
 
 @Module({
   imports: [
@@ -26,6 +32,12 @@ import { PageView } from './chart-view/page-view.entity';
     UsersModule,
     AuthModule,
     TypeOrmModule.forFeature([PageView]),
+    ProjectModule,
+    NewsModule,
+    VideoModule,
+    PhotoModule,
+    MemberModule,
+    StatsModule,
   ],
   controllers: [AppController, AnalyticsController],
   providers: [AppService, AnalyticsService, AnalyticsGateway],

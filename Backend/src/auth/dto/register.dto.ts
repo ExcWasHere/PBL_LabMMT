@@ -19,4 +19,7 @@ export class RegisterDto {
 
   @IsOptional()
   validationField?: string;
+
+  @IsOptional()
+  cvPath?: string;
 }

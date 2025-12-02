@@ -35,4 +35,12 @@ export class User {
     nullable: true,
   })
   validationField?: string | null;
+
+  @Column({
+    name: 'cv_path',
+    type: 'varchar',
+    length: 255,
+    nullable: true,
+  })
+  cvPath?: string | null;
 }

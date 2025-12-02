@@ -2,15 +2,30 @@ import Sidebar from "~/components/Dashboard/lecturer/sidebar";
 import { useState } from "react";
 import { Menu, FolderKanban, Newspaper, Image, Users2, Video } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { project_dummy, news_dummy, gallery_dummy } from "./dataDummy";
 
 export default function Dashboard() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
+  const sumProperty = (data: any[], key: string) => {
+    return data.reduce((acc, curr) => acc + (parseInt(curr[key]) || 0), 0);
+  };
+
+  const publishedProperty = (data: any[], key: string) => {
+  return data
+    .filter(item => item.status === "Published")
+    .reduce((acc, curr) => acc + (parseInt(curr[key]) || 0), 0); 
+};
+
+  const countPublishedOnly = (data: any[]) => {
+    return data.filter(item => item.status === "Published").length;
+  };
+
   const stats = [
-    { label: "Total Project", value: 40, icon: <FolderKanban size={24} />, color: "border-orange-400" },
-    { label: "Total News", value: 40, icon: <Newspaper size={24} />, color: "border-orange-400" },
-    { label: "Total Video", value: 40, icon: <Video size={24} />, color: "border-orange-400" },
-    { label: "Total Photo", value: 40, icon: <Image size={24} />, color: "border-orange-400" },
+    { label: "Total Project", value: countPublishedOnly(project_dummy), icon: <FolderKanban size={24} />, color: "border-orange-400" },
+    { label: "Total News", value: countPublishedOnly(news_dummy), icon: <Newspaper size={24} />, color: "border-orange-400" },
+    { label: "Total Video", value: publishedProperty(gallery_dummy, "video"), icon: <Video size={24} />, color: "border-orange-400" },
+    { label: "Total Photo", value: publishedProperty(gallery_dummy, "photo"), icon: <Image size={24} />, color: "border-orange-400" },
     { label: "Total Members", value: 40, icon: <Users2 size={24} />, color: "border-orange-400" },
   ];
 

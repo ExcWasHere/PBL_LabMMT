@@ -1,6 +1,8 @@
 import Sidebar from "~/components/Dashboard/lecturer/sidebar";
 import { useState, useMemo } from "react";
-import { Menu } from 'lucide-react';
+import { Menu, Plus, Eye, EyeOff, Pencil, Trash } from 'lucide-react';
+import { news_dummy } from "./dataDummy";
+
 interface DropdownFilterProps {
   label: string;
   options: string[];
@@ -39,28 +41,47 @@ const DropdownFilter: React.FC<DropdownFilterProps> = ({ label, options, current
     </div>
   );
 };
+
 export default function NewsPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [selectedYear, setSelectedYear] = useState("Semua Tahun"); 
-  const [selectedKategori, setSelectedKategori] = useState("Semua"); 
-  const [selectedSort, setSelectedSort] = useState("Terbaru");
-  const [searchTerm, setSearchTerm] = useState("");
   
-  const allTableData = useMemo(() => [
-    { title: "Workshop Keamanan Siber", kategori: "Workshop", year: "30 jan 2025", publisher: "Dani Setiawan", status: "Muted" },
-  ], []);
+  const [selectedYear, setSelectedYear] = useState("All Year"); 
+  const [selectedKategori, setSelectedKategori] = useState("All"); 
+  const [selectedSort, setSelectedSort] = useState("Latest");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState("All Status");
+  
+  const [newsList, setNewsList] = useState(news_dummy);
 
   const stats = [
-    { label: "Published", value: 0, color: "border-orange-400 text-orange-500" },
-    { label: "Review", value: 0, color: "border-blue-400 text-blue-500" },
-    { label: "Wait To Publish", value: 0, color: "border-green-400 text-green-500" },
-    { label: "Muted", value: 1, color: "border-red-400 text-red-500" },
+    { 
+        label: "Published", 
+        value: newsList.filter(n => n.status === "Published").length, 
+        color: "border-orange-400 text-orange-500" 
+    },
+    { 
+        label: "Review", 
+        value: newsList.filter(n => n.status === "Review").length, 
+        color: "border-blue-400 text-blue-500" 
+    },
+    { 
+        label: "Wait To Publish", 
+        value: newsList.filter(n => n.status === "Waiting").length, 
+        color: "border-green-400 text-green-500" 
+    },
+    { 
+        label: "Muted", 
+        value: newsList.filter(n => n.status === "Muted").length, 
+        color: "border-red-400 text-red-500" 
+    },
   ];
   
   const getStatusColorClass = (status: string) => {
     switch (status) {
       case "Muted": return "text-red-500";
-      case "Waiting": return "text-blue-600";
+      case "Waiting": return "text-green-500"; 
+      case "Review": return "text-blue-500";
+      case "Published": return "text-orange-500";
       default: return "text-black";
     }
   };
@@ -68,15 +89,28 @@ export default function NewsPage() {
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       setSearchTerm(e.target.value);
   };
+
+  const handleToggleMute = (id: number) => {
+    setNewsList((prevNews) =>
+      prevNews.map((news) => {
+        if (news.id === id) {
+          const newStatus = news.status === "Muted" ? "Published" : "Muted";
+          return { ...news, status: newStatus };
+        }
+        return news;
+      })
+    );
+  };
+
   const filteredData = useMemo(() => {
-    let data = [...allTableData];
+    let data = [...newsList];
     const getYearFromString = (dateString: string) => {
         const parts = dateString.trim().split(' ');
         return parts[parts.length - 1]; 
     };
     
-    if (selectedKategori !== "Semua") { data = data.filter(row => row.kategori === selectedKategori); }
-    if (selectedYear !== "Semua Tahun") { data = data.filter(row => getYearFromString(row.year) === selectedYear); }
+    if (selectedKategori !== "All") { data = data.filter(row => row.kategori === selectedKategori); }
+    if (selectedYear !== "All Year") { data = data.filter(row => getYearFromString(row.year) === selectedYear); }
 
     if (searchTerm) {
       const lowerCaseQuery = searchTerm.toLowerCase();
@@ -88,9 +122,16 @@ export default function NewsPage() {
 
     if (selectedSort === "A-Z") { data.sort((a, b) => a.title.localeCompare(b.title)); } 
     else if (selectedSort === "Z-A") { data.sort((a, b) => b.title.localeCompare(a.title)); }
+    else if (selectedSort === "Latest") {
+      data.sort((a, b) => new Date(b.year).getTime() - new Date(a.year).getTime());
+    }
+
+    if (selectedStatus !== "All Status") { 
+        data = data.filter(row => row.status === selectedStatus); 
+    }
 
     return data;
-  }, [allTableData, selectedYear, selectedKategori, searchTerm, selectedSort]);
+  }, [newsList, selectedYear, selectedKategori, searchTerm, selectedSort, selectedStatus]);
 
 
   return (
@@ -103,7 +144,6 @@ export default function NewsPage() {
       >
         {/* Header */}
         <div className="flex items-center mb-6">
-            {/* TOMBOL TOGGLE */}
             <button
                 onClick={() => setIsSidebarOpen(!isSidebarOpen)}
                 className="p-2 mr-4 text-gray-700 hover:text-orange-600 transition"
@@ -143,9 +183,18 @@ export default function NewsPage() {
                 />
             </div>
           
-          <DropdownFilter label="Tahun" options={["Semua Tahun", "2025", "2024", "2023"]} currentFilter={selectedYear} onSelect={setSelectedYear} />
-          <DropdownFilter label="Kategori" options={["Semua", "Berita", "Pelatihan", "Workshop", "Sertifikasi", "Artikel"]} currentFilter={selectedKategori} onSelect={setSelectedKategori} />
-          <DropdownFilter label="Urutkan" options={["A-Z", "Z-A", "Terpopuler", "Terbaru"]} currentFilter={selectedSort} onSelect={setSelectedSort} />
+          <DropdownFilter label="Tahun" options={["All Year", "2025", "2024", "2023"]} currentFilter={selectedYear} onSelect={setSelectedYear} />
+          <DropdownFilter label="Kategori" options={["All", "Berita", "Pelatihan", "Workshop", "Sertifikasi", "Artikel"]} currentFilter={selectedKategori} onSelect={setSelectedKategori} />
+          <DropdownFilter label="Urutkan" options={["A-Z", "Z-A", "Latest"]} currentFilter={selectedSort} onSelect={setSelectedSort} />
+          <DropdownFilter label="Status" options={["All Status", "Published", "Waiting", "Review", "Muted"]} currentFilter={selectedStatus} onSelect={setSelectedStatus} />
+
+          <button
+            className="flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg transition-colors shadow-sm whitespace-nowrap"
+            onClick={() => console.log("Test")} // buat testing doang
+          >
+            <Plus size={20} />
+            <span>Add News</span>
+          </button>
         </div>
 
         {/* --- Table Section --- */}
@@ -154,16 +203,23 @@ export default function NewsPage() {
             <thead className="bg-orange-50">
               <tr>
                 <th className="py-3">Title</th>
-                <th className="py-3">Kategori</th>
+                <th className="py-3">Category</th>
                 <th className="py-3">Year</th>
                 <th className="py-3">Publisher</th>
                 <th className="py-3">Status</th>
+                <th className="py-3">Action</th>
               </tr>
             </thead>
             <tbody>
               {filteredData.map((row, index) => {
                 const isLastRow = index === filteredData.length - 1;
                 const borderClass = isLastRow ? '' : 'border-b border-gray-200';
+
+                const isReview = row.status === "Review";
+                const isMuted = row.status === "Muted";
+                const isWaiting = row.status === "Waiting";
+                
+                const disabledStyle = "text-gray-300 cursor-not-allowed";
 
                 return (
                   <tr key={index}> 
@@ -172,13 +228,49 @@ export default function NewsPage() {
                     <td className={`py-3 ${borderClass} text-center`}>{row.year}</td>
                     <td className={`py-3 ${borderClass} text-center`}>{row.publisher}</td>
                     <td className={`py-3 ${borderClass} font-medium text-center ${getStatusColorClass(row.status)}`}>{row.status}</td>
+                    
+                    <td className={`py-3 ${borderClass} text-center`}>
+                      <div className="flex items-center justify-center gap-2">
+                        <button
+                          className={`transition-colors ${isReview ? disabledStyle : "text-gray-600 hover:text-blue-600"}`}
+                          onClick={() => !isReview && handleToggleMute(row.id)}
+                          disabled={isReview}
+                          title={isMuted ? "Unmute News" : "Mute News"}
+                        >
+                          {isMuted ? <EyeOff size={18} /> : <Eye size={18} />}
+                        </button>
+
+                        <button
+                          className={`transition-colors ${isReview || isWaiting || isMuted ? disabledStyle : "text-gray-600 hover:text-orange-600"}`}
+                          onClick={() =>
+                            !(isReview || isWaiting || isMuted) &&
+                            console.log("Edit", row.title)
+                          }
+                          disabled={isReview || isWaiting || isMuted}
+                          title="Edit"
+                        >
+                          <Pencil size={18} />
+                        </button>
+
+                        <button
+                          className={`transition-colors ${isReview ? disabledStyle : "text-gray-600 hover:text-red-600"}`}
+                          onClick={() =>
+                            !isReview && console.log("Delete", row.title)
+                          }
+                          disabled={isReview}
+                          title="Hapus"
+                        >
+                          <Trash size={18} />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 );
               })}
               {filteredData.length === 0 && (
                  <tr>
-                    <td colSpan={5} className="py-8 text-center text-gray-500">
-                        Tidak ada data yang cocok dengan filter yang diterapkan.
+                    <td colSpan={6} className="py-8 text-center text-gray-500">
+                        No matching data found.
                     </td>
                  </tr>
               )}

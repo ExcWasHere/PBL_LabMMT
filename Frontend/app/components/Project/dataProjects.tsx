@@ -6,6 +6,7 @@
       desc: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
       tags: ["Unity"],
       info: "Game",
+      repository: "https://github.com/username/project-a",
     },
     {
       image: "/proyek/images.png",

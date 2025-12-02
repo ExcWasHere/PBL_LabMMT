@@ -1,6 +1,7 @@
 import Sidebar from "~/components/Dashboard/viewer/sidebar";
 import { useState, useMemo } from "react";
 import { Menu } from 'lucide-react';
+
 interface DropdownFilterProps {
   label: string;
   options: string[];
@@ -39,34 +40,66 @@ const DropdownFilter: React.FC<DropdownFilterProps> = ({ label, options, current
     </div>
   );
 };
+
+const MONTHS: { [key: string]: number } = {
+  jan: 0, feb: 1, mar: 2, apr: 3, mei: 4, jun: 5,
+  jul: 6, aug: 7, sep: 8, okt: 9, nov: 10, des: 11
+};
+
+const parseDate = (dateStr: string): number => {
+  const parts = dateStr.toLowerCase().split(" ");
+  const day = parseInt(parts[0]);
+  const month = MONTHS[parts[1]];
+  const year = parseInt(parts[2]);
+  return new Date(year, month, day).getTime();
+};
+
 export default function NewsPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [selectedYear, setSelectedYear] = useState("Semua Tahun"); 
-  const [selectedKategori, setSelectedKategori] = useState("Semua"); 
-  const [selectedSort, setSelectedSort] = useState("Terbaru");
+  const [selectedYear, setSelectedYear] = useState("All Years"); 
+  const [selectedKategori, setSelectedKategori] = useState("All"); 
+  const [selectedSort, setSelectedSort] = useState("Newest");
+  const [selectedStatus, setSelectedStatus] = useState("All");
   const [searchTerm, setSearchTerm] = useState("");
   
   const allTableData = useMemo(() => [
-    { title: "Pengenalan React Hooks", kategori: "Workshop", year: "2 des 2025", publisher: "Aulia Resty Azizah", status: "Done" },
-    { title: "Berita Teknologi Terbaru Q4", kategori: "Berita", year: "15 nov 2024", publisher: "Budi Santoso", status: "Review" },
-    { title: "Tips & Trik Menulis Artikel SEO", kategori: "Artikel", year: "28 feb 2025", publisher: "Citra Dewi", status: "Waiting" },
-    { title: "Pelatihan Dasar Desain Grafis", kategori: "Pelatihan", year: "10 jul 2023", publisher: "Aulia Resty Azizah", status: "Done" },
+    { title: "Pengenalan React Hooks", kategori: "Workshop", year: "2 des 2025", publisher: "Aulia Resty Azizah", status: "Published" },
+    { title: "Berita Teknologi Terbaru Q4", kategori: "News", year: "15 nov 2024", publisher: "Budi Santoso", status: "Review" },
+    { title: "Tips & Trik Menulis Artikel SEO", kategori: "Articles", year: "28 feb 2025", publisher: "Citra Dewi", status: "Waiting" },
+    { title: "Pelatihan Dasar Desain Grafis", kategori: "Workshop", year: "10 jul 2023", publisher: "Aulia Resty Azizah", status: "Published" },
     { title: "Workshop Keamanan Siber", kategori: "Workshop", year: "30 jan 2025", publisher: "Dani Setiawan", status: "Muted" },
-    { title: "Sertifikasi AWS Cloud Practitioner", kategori: "Sertifikasi", year: "5 apr 2024", publisher: "Budi Santoso", status: "Review" },
-    { title: "Artikel Mendalam tentang AI", kategori: "Artikel", year: "1 aug 2025", publisher: "Citra Dewi", status: "Done" },
+    { title: "Sertifikasi AWS Cloud Practitioner", kategori: "Certification", year: "5 apr 2024", publisher: "Budi Santoso", status: "Review" },
+    { title: "Artikel Mendalam tentang AI", kategori: "Articles", year: "1 aug 2025", publisher: "Citra Dewi", status: "Published" },
   ], []);
 
-  const stats = [
-    { label: "Published", value: 40, color: "border-orange-400 text-orange-500" },
-    { label: "Review", value: 40, color: "border-blue-400 text-blue-500" },
-    { label: "Wait To Publish", value: 40, color: "border-green-400 text-green-500" },
-    { label: "Muted", value: 9, color: "border-red-400 text-red-500" },
-  ];
+  const stats = useMemo(() => {
+    const counts = {
+      Published: 0,
+      Review: 0,
+      Waiting: 0,
+      Muted: 0,
+    };
+
+    allTableData.forEach((item) => {
+      if (item.status in counts) {
+        counts[item.status as keyof typeof counts]++;
+      }
+    });
+
+    return [
+      { label: "Published", statusKey: "Published", value: counts.Published, color: "border-orange-400 text-orange-500" },
+      { label: "Review", statusKey: "Review", value: counts.Review, color: "border-blue-400 text-blue-500" },
+      { label: "Wait To Publish", statusKey: "Waiting", value: counts.Waiting, color: "border-green-400 text-green-500" },
+      { label: "Muted", statusKey: "Muted", value: counts.Muted, color: "border-red-400 text-red-500" },
+    ];
+  }, [allTableData]);
   
   const getStatusColorClass = (status: string) => {
     switch (status) {
+      case "Published": return "text-orange-500";
+      case "Review": return "text-blue-500";
+      case "Waiting": return "text-green-500";
       case "Muted": return "text-red-500";
-      case "Waiting": return "text-blue-600";
       default: return "text-black";
     }
   };
@@ -74,6 +107,7 @@ export default function NewsPage() {
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       setSearchTerm(e.target.value);
   };
+
   const filteredData = useMemo(() => {
     let data = [...allTableData];
     const getYearFromString = (dateString: string) => {
@@ -81,8 +115,9 @@ export default function NewsPage() {
         return parts[parts.length - 1]; 
     };
     
-    if (selectedKategori !== "Semua") { data = data.filter(row => row.kategori === selectedKategori); }
-    if (selectedYear !== "Semua Tahun") { data = data.filter(row => getYearFromString(row.year) === selectedYear); }
+    if (selectedKategori !== "All") { data = data.filter(row => row.kategori === selectedKategori); }
+    if (selectedYear !== "All Years") { data = data.filter(row => getYearFromString(row.year) === selectedYear); }
+    if (selectedStatus !== "All") { data = data.filter(row => row.status === selectedStatus); }
 
     if (searchTerm) {
       const lowerCaseQuery = searchTerm.toLowerCase();
@@ -92,24 +127,28 @@ export default function NewsPage() {
       );
     }
 
-    if (selectedSort === "A-Z") { data.sort((a, b) => a.title.localeCompare(b.title)); } 
-    else if (selectedSort === "Z-A") { data.sort((a, b) => b.title.localeCompare(a.title)); }
+    if (selectedSort === "A-Z") { 
+      data.sort((a, b) => a.title.localeCompare(b.title)); 
+    } else if (selectedSort === "Z-A") { 
+      data.sort((a, b) => b.title.localeCompare(a.title)); 
+    } else if (selectedSort === "Newest") {
+      data.sort((a, b) => parseDate(b.year) - parseDate(a.year));
+    } else if (selectedSort === "Oldest") {
+      data.sort((a, b) => parseDate(a.year) - parseDate(b.year));
+    }
 
     return data;
-  }, [allTableData, selectedYear, selectedKategori, searchTerm, selectedSort]);
+  }, [allTableData, selectedYear, selectedKategori, selectedStatus, searchTerm, selectedSort]);
 
 
   return (
     <div className="flex">
       {isSidebarOpen && <Sidebar />}
 
-      {/* Page Content */}
       <div 
         className={`w-full p-8 transition-all duration-300 ease-in-out ${isSidebarOpen ? 'ml-64' : 'ml-0'}`}
       >
-        {/* Header */}
         <div className="flex items-center mb-6">
-            {/* TOMBOL TOGGLE */}
             <button
                 onClick={() => setIsSidebarOpen(!isSidebarOpen)}
                 className="p-2 mr-4 text-gray-700 hover:text-orange-600 transition"
@@ -119,22 +158,21 @@ export default function NewsPage() {
             <h1 className="text-3xl font-bold text-orange-600">News</h1>
         </div>
 
-        {/* --- Stats Section --- */}
+        {/* stats */}
         <div className="grid grid-cols-4 gap-4 mb-6">
           {stats.map((s) => (
-            <div
+            <button
               key={s.label}
-              className={`border-1 rounded-lg p-4 ${s.color}`} 
+              onClick={() => setSelectedStatus(s.statusKey)}
+              className={`border-1 rounded-lg p-4 ${s.color} text-left transition`} 
             >
-              <div className="text-left"> 
-                <p className="text-sm">{s.label}</p>
-                <h2 className="text-3xl font-semibold">{s.value}</h2> 
-              </div>
-            </div>
+              <p className="text-sm">{s.label}</p>
+              <h2 className="text-3xl font-semibold">{s.value}</h2> 
+            </button>
           ))}
         </div>
         
-        {/* --- Filters Section --- */}
+        {/* filters */}
         <div className="flex items-center gap-3 mb-6">
             <div className="flex items-center flex-1 border border-black rounded-lg bg-white px-4 py-2">
                 <svg className="w-5 h-5 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -149,19 +187,20 @@ export default function NewsPage() {
                 />
             </div>
           
-          <DropdownFilter label="Tahun" options={["Semua Tahun", "2025", "2024", "2023"]} currentFilter={selectedYear} onSelect={setSelectedYear} />
-          <DropdownFilter label="Kategori" options={["Semua", "Berita", "Pelatihan", "Workshop", "Sertifikasi", "Artikel"]} currentFilter={selectedKategori} onSelect={setSelectedKategori} />
-          <DropdownFilter label="Urutkan" options={["A-Z", "Z-A", "Terpopuler", "Terbaru"]} currentFilter={selectedSort} onSelect={setSelectedSort} />
+          <DropdownFilter label="Year" options={["All Years", "2025", "2024", "2023"]} currentFilter={selectedYear} onSelect={setSelectedYear} />
+          <DropdownFilter label="Category" options={["All", "News", "Workshop", "Certification", "Articles"]} currentFilter={selectedKategori} onSelect={setSelectedKategori} />
+          <DropdownFilter label="Sorting" options={["A-Z", "Z-A", "Newest", "Oldest"]} currentFilter={selectedSort} onSelect={setSelectedSort} />
+          <DropdownFilter label="Status" options={["All", "Published", "Review", "Waiting", "Muted"]} currentFilter={selectedStatus} onSelect={setSelectedStatus} />
         </div>
 
-        {/* --- Table Section --- */}
+        {/* table */}
         <div className="border border-black rounded-lg overflow-hidden">
           <table className="w-full text-sm">
             <thead className="bg-orange-50">
               <tr>
                 <th className="py-3">Title</th>
                 <th className="py-3">Kategori</th>
-                <th className="py-3">Year</th>
+                <th className="py-3">Date</th>
                 <th className="py-3">Publisher</th>
                 <th className="py-3">Status</th>
               </tr>
@@ -184,7 +223,7 @@ export default function NewsPage() {
               {filteredData.length === 0 && (
                  <tr>
                     <td colSpan={5} className="py-8 text-center text-gray-500">
-                        Tidak ada data yang cocok dengan filter yang diterapkan.
+                        No data matches the applied filter.
                     </td>
                  </tr>
               )}

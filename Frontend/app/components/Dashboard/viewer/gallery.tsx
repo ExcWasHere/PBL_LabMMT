@@ -1,6 +1,7 @@
 import Sidebar from "~/components/Dashboard/viewer/sidebar";
 import { useState, useMemo } from "react";
 import { Menu } from 'lucide-react';
+
 interface DropdownFilterProps {
     label: string;
     options: string[];
@@ -40,33 +41,64 @@ const DropdownFilter: React.FC<DropdownFilterProps> = ({ label, options, current
     );
 };
 
+const MONTHS: { [key: string]: number } = {
+    jan: 0, feb: 1, mar: 2, apr: 3, mei: 4, jun: 5,
+    jul: 6, aug: 7, sep: 8, okt: 9, nov: 10, des: 11
+};
+
+const parseDate = (dateStr: string): number => {
+    const parts = dateStr.toLowerCase().split(" ");
+    const day = parseInt(parts[0]);
+    const month = MONTHS[parts[1]];
+    const year = parseInt(parts[2]);
+    return new Date(year, month, day).getTime();
+};
+
 export default function GalleryPage() {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
-    const [selectedYear, setSelectedYear] = useState("Semua Tahun");
-    const [selectedKategori, setSelectedKategori] = useState("Semua");
-    const [selectedSort, setSelectedSort] = useState("Terbaru");
+    const [selectedYear, setSelectedYear] = useState("All Years");
+    const [selectedKategori, setSelectedKategori] = useState("All");
+    const [selectedSort, setSelectedSort] = useState("Newest");
+    const [selectedStatus, setSelectedStatus] = useState("All");
     const [searchTerm, setSearchTerm] = useState("");
 
     const allTableData = useMemo(() => [
         { title: "Open Recruitment Lab MMT ", photo: "50", video: "68", animation: "34", date: "31 Aug 2025", publisher: "Budi Santoso", status: "Review" },
         { title: "Game Jam MMC", photo: "12", video: "30", animation: "15", date: "15 Sep 2025", publisher: "Citra Dewi", status: "Published" },
-        { title: "Play IT Polinema 2025", photo: "90", video: "110", animation: "55", date: "05 Okt 2024", publisher: "Andi Wijaya", status: "Draft" },
-        { title: "11th Dies Natalis", photo: "35", video: "42", animation: "20", date: "22 Okt 2023", publisher: "Dewi Lestari", status: "Published" },
+        { title: "Play IT Polinema 2025", photo: "90", video: "110", animation: "55", date: "05 Okt 2024", publisher: "Andi Wijaya", status: "Waiting" },
+        { title: "11th Dies Natalis", photo: "35", video: "42", animation: "20", date: "22 Okt 2023", publisher: "Dewi Lestari", status: "Muted" },
         { title: "Workshop Game Unity", photo: "60", video: "75", animation: "40", date: "10 Nov 2025", publisher: "Eko Prasetyo", status: "Review" },
     ], []);
 
-    const stats = [
-        { label: "Published", value: 40, color: "border-orange-400 text-orange-500" },
-        { label: "Review", value: 40, color: "border-blue-400 text-blue-500" },
-        { label: "Wait To Publish", value: 40, color: "border-green-400 text-green-500" },
-        { label: "Muted", value: 9, color: "border-red-400 text-red-500" },
-    ];
+    const stats = useMemo(() => {
+        const counts = {
+            Published: 0,
+            Review: 0,
+            Waiting: 0,
+            Muted: 0,
+        };
+
+        allTableData.forEach((item) => {
+            if (item.status in counts) {
+                counts[item.status as keyof typeof counts]++;
+            }
+        });
+
+        return [
+            { label: "Published", statusKey: "Published", value: counts.Published, color: "border-orange-400 text-orange-500" },
+            { label: "Review", statusKey: "Review", value: counts.Review, color: "border-blue-400 text-blue-500" },
+            { label: "Wait To Publish", statusKey: "Waiting", value: counts.Waiting, color: "border-green-400 text-green-500" },
+            { label: "Muted", statusKey: "Muted", value: counts.Muted, color: "border-red-400 text-red-500" },
+        ];
+    }, [allTableData]);
 
     const getStatusColorClass = (status: string) => {
         switch (status) {
+            case "Published": return "text-orange-500";
+            case "Review": return "text-blue-500";
+            case "Waiting": return "text-green-500";
             case "Muted": return "text-red-500";
-            case "Waiting": return "text-blue-600";
             default: return "text-black";
         }
     };
@@ -75,16 +107,15 @@ export default function GalleryPage() {
         setSearchTerm(e.target.value);
     };
 
-    // --- Filtering Logic ---
     const filteredData = useMemo(() => {
-        // ... (Logika filtering sama) ...
         let data = [...allTableData];
         const getYearFromString = (dateString: string) => {
             const parts = dateString.trim().split(' ');
             return parts[parts.length - 1];
         };
         
-        if (selectedYear !== "Semua Tahun") { data = data.filter(row => getYearFromString(row.date) === selectedYear); }
+        if (selectedYear !== "All Years") { data = data.filter(row => getYearFromString(row.date) === selectedYear); }
+        if (selectedStatus !== "All") { data = data.filter(row => row.status === selectedStatus); }
 
         if (searchTerm) {
             const lowerCaseQuery = searchTerm.toLowerCase();
@@ -94,24 +125,28 @@ export default function GalleryPage() {
             );
         }
 
-        if (selectedSort === "A-Z") { data.sort((a, b) => a.title.localeCompare(b.title)); }
-        else if (selectedSort === "Z-A") { data.sort((a, b) => b.title.localeCompare(a.title)); }
+        if (selectedSort === "A-Z") { 
+            data.sort((a, b) => a.title.localeCompare(b.title)); 
+        } else if (selectedSort === "Z-A") { 
+            data.sort((a, b) => b.title.localeCompare(a.title)); 
+        } else if (selectedSort === "Newest") {
+            data.sort((a, b) => parseDate(b.date) - parseDate(a.date));
+        } else if (selectedSort === "Oldest") {
+            data.sort((a, b) => parseDate(a.date) - parseDate(b.date));
+        }
 
         return data;
-    }, [allTableData, selectedYear, selectedKategori, searchTerm, selectedSort]);
+    }, [allTableData, selectedYear, selectedKategori, selectedStatus, searchTerm, selectedSort]);
 
 
     return (
         <div className="flex">
             {isSidebarOpen && <Sidebar />}
 
-            {/* Page Content - Mengontrol margin kiri berdasarkan status sidebar */}
             <div
                 className={`w-full p-8 transition-all duration-300 ease-in-out ${isSidebarOpen ? 'ml-64' : 'ml-0'}`}
             >
-                {/* Header dengan Tombol Toggle */}
                 <div className="flex items-center mb-6">
-                    {/* TOMBOL TOGGLE */}
                     <button
                         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
                         className="p-2 mr-4 text-gray-700 hover:text-orange-600 transition"
@@ -121,22 +156,21 @@ export default function GalleryPage() {
                     <h1 className="text-3xl font-bold text-orange-600">Gallery</h1>
                 </div>
 
-                {/* --- Stats Section --- */}
+                {/* stats */}
                 <div className="grid grid-cols-4 gap-4 mb-6">
                     {stats.map((s) => (
-                        <div
+                        <button
                             key={s.label}
-                            className={`border-1 rounded-lg p-4 ${s.color}`}
+                            onClick={() => setSelectedStatus(s.statusKey)}
+                            className={`border-1 rounded-lg p-4 ${s.color} text-left transition`}
                         >
-                            <div className="text-left">
-                                <p className="text-sm">{s.label}</p>
-                                <h2 className="text-3xl font-semibold">{s.value}</h2>
-                            </div>
-                        </div>
+                            <p className="text-sm">{s.label}</p>
+                            <h2 className="text-3xl font-semibold">{s.value}</h2>
+                        </button>
                     ))}
                 </div>
 
-                {/* --- Filters Section --- (Tetap) */}
+                {/* filters */}
                 <div className="flex items-center gap-3 mb-6">
                     <div className="flex items-center flex-1 border border-black rounded-lg bg-white px-4 py-2">
                         <svg className="w-5 h-5 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -151,11 +185,12 @@ export default function GalleryPage() {
                         />
                     </div>
 
-                    <DropdownFilter label="Tahun" options={["Semua Tahun", "2025", "2024", "2023"]} currentFilter={selectedYear} onSelect={setSelectedYear} />
-                    <DropdownFilter label="Urutkan" options={["A-Z", "Z-A", "Terpopuler", "Terbaru"]} currentFilter={selectedSort} onSelect={setSelectedSort} />
+                    <DropdownFilter label="Year" options={["All Years", "2025", "2024", "2023"]} currentFilter={selectedYear} onSelect={setSelectedYear} />
+                    <DropdownFilter label="Sorting" options={["A-Z", "Z-A", "Newest", "Oldest"]} currentFilter={selectedSort} onSelect={setSelectedSort} />
+                    <DropdownFilter label="Status" options={["All", "Published", "Review", "Waiting", "Muted"]} currentFilter={selectedStatus} onSelect={setSelectedStatus} />
                 </div>
 
-                {/* --- Table Section --- */}
+                {/* table */}
                 <div className="border border-black rounded-lg overflow-hidden">
                     <table className="w-full text-sm">
                         <thead className="bg-orange-50">
@@ -188,8 +223,8 @@ export default function GalleryPage() {
                             })}
                             {filteredData.length === 0 && (
                                 <tr>
-                                    <td colSpan={5} className="py-8 text-center text-gray-500">
-                                        Tidak ada data yang cocok dengan filter yang diterapkan.
+                                    <td colSpan={7} className="py-8 text-center text-gray-500">
+                                        No data matches the applied filter.
                                     </td>
                                 </tr>
                             )}

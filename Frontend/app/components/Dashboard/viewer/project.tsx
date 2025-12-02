@@ -1,5 +1,5 @@
 import Sidebar from "~/components/Dashboard/viewer/sidebar";
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { Menu } from "lucide-react";
 
 interface DropdownFilterProps {
@@ -61,9 +61,20 @@ const DropdownFilter: React.FC<DropdownFilterProps> = ({
   );
 };
 
+// HARUS cocok sama format string "12 jun 2025" yg kamu pakai di viewer
 const MONTHS: { [key: string]: number } = {
-  jan: 0, feb: 1, mar: 2, apr: 3, mei: 4, jun: 5,
-  jul: 6, aug: 7, sep: 8, okt: 9, nov: 10, des: 11
+  jan: 0,
+  feb: 1,
+  mar: 2,
+  apr: 3,
+  mei: 4,
+  jun: 5,
+  jul: 6,
+  aug: 7,
+  sep: 8,
+  okt: 9,
+  nov: 10,
+  des: 11,
 };
 
 const parseDate = (dateStr: string): number => {
@@ -74,7 +85,8 @@ const parseDate = (dateStr: string): number => {
   return new Date(year, month, day).getTime();
 };
 
-const getYearFromString = (str: string): string => str.trim().split(" ").pop() || "";
+const getYearFromString = (str: string): string =>
+  str.trim().split(" ").pop() || "";
 
 const getStatusColorClass = (status: string): string => {
   switch (status) {
@@ -91,6 +103,42 @@ const getStatusColorClass = (status: string): string => {
   }
 };
 
+interface ProjectRow {
+  id?: string;
+  title: string;
+  kategori: string;
+  year: string; // "12 jun 2025"
+  publisher: string;
+  stars: number;
+  status: string;
+}
+
+const formatDateForViewer = (raw: string | Date): string => {
+  const d = new Date(raw);
+  if (isNaN(d.getTime())) return ""; // fallback kalau ada data aneh
+
+  const day = d.getDate();
+  const year = d.getFullYear();
+  const monthIndex = d.getMonth(); // 0-11
+
+  const monthLabels = [
+    "jan",
+    "feb",
+    "mar",
+    "apr",
+    "mei",
+    "jun",
+    "jul",
+    "aug",
+    "sep",
+    "okt",
+    "nov",
+    "des",
+  ];
+
+  return `${day} ${monthLabels[monthIndex]} ${year}`;
+};
+
 export default function ProjectPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [selectedYear, setSelectedYear] = useState("All Years");
@@ -99,26 +147,62 @@ export default function ProjectPage() {
   const [selectedStatus, setSelectedStatus] = useState("All");
   const [searchTerm, setSearchTerm] = useState("");
 
-  const allTableData = useMemo(
-    () => [
-      { title: "Proyek Redesign E-Commerce Mobile", kategori: "UI/UX", year: "12 jun 2025", publisher: "Dani Setiawan", stars: "5", status: "Published" },
-      { title: "Simulasi Pelatihan VR Keselamatan Kerja", kategori: "VR", year: "22 mar 2024", publisher: "Aulia Resty Azizah", stars: "3", status: "Review" },
-      { title: "Implementasi 3D Modeling di Unity", kategori: "Game", year: "18 sep 2024", publisher: "Budi Santoso", stars: "4", status: "Published" },
-      { title: "Optimalisasi Performa Web dengan Next.js", kategori: "Frontend", year: "7 feb 2025", publisher: "Citra Dewi", stars: "5", status: "Published" },
-      { title: "Studi Kasus Accessibility Web App", kategori: "UI/UX", year: "9 nov 2023", publisher: "Dani Setiawan", stars: "4", status: "Waiting" },
-      { title: "Pengembangan Game Edukasi AR untuk Anak", kategori: "Game", year: "3 jul 2025", publisher: "Aulia Resty Azizah", stars: "5", status: "Review" },
-      { title: "Migrasi Aplikasi Legacy ke Vue.js 3", kategori: "Frontend", year: "20 jan 2024", publisher: "Budi Santoso", stars: "3", status: "Muted" },
-      { title: "Integrasi Sensor Fisik dengan VR Headset", kategori: "VR", year: "14 des 2025", publisher: "Citra Dewi", stars: "4", status: "Waiting" },
-      { title: "Workshop Design System Menggunakan Figma", kategori: "UI/UX", year: "1 mar 2023", publisher: "Aulia Resty Azizah", stars: "5", status: "Published" },
-    ],
-    []
-  );
+  const [allTableData, setAllTableData] = useState<ProjectRow[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // === FETCH DATA DARI BACKEND ===
+  useEffect(() => {
+    const fetchProjects = async () => {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const res = await fetch("http://localhost:3000/project", {
+          // kalau backend kamu butuh token:
+          // headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (!res.ok) {
+          throw new Error("Failed to fetch projects");
+        }
+
+        const data = await res.json();
+
+        const mapped: ProjectRow[] = (Array.isArray(data) ? data : []).map(
+          (p: any) => ({
+            id: p.id,
+            title: p.title ?? "-",
+            kategori: p.kategori ?? "-",
+            year: p.year ? formatDateForViewer(p.year) : "",
+            publisher: p.publisher ?? "-",
+            stars:
+              typeof p.stars === "number"
+                ? p.stars
+                : Number(p.stars ?? 0),
+            status: p.status ?? "Waiting",
+          })
+        );
+
+        setAllTableData(mapped);
+      } catch (err) {
+        console.error(err);
+        setError("Gagal memuat data project.");
+        setAllTableData([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProjects();
+  }, []);
 
   const dataWithParsedDates = useMemo(
-    () => allTableData.map(item => ({
-      ...item,
-      timestamp: parseDate(item.year)
-    })),
+    () =>
+      allTableData.map((item) => ({
+        ...item,
+        timestamp: item.year ? parseDate(item.year) : 0,
+      })),
     [allTableData]
   );
 
@@ -137,16 +221,39 @@ export default function ProjectPage() {
     });
 
     return [
-      { label: "Published", statusKey: "Published", value: counts.Published, color: "border-orange-400 text-orange-500" },
-      { label: "Review", statusKey: "Review", value: counts.Review, color: "border-blue-400 text-blue-500" },
-      { label: "Wait To Publish", statusKey: "Waiting", value: counts.Waiting, color: "border-green-400 text-green-500" },
-      { label: "Muted", statusKey: "Muted", value: counts.Muted, color: "border-red-400 text-red-500" },
+      {
+        label: "Published",
+        statusKey: "Published",
+        value: counts.Published,
+        color: "border-orange-400 text-orange-500",
+      },
+      {
+        label: "Review",
+        statusKey: "Review",
+        value: counts.Review,
+        color: "border-blue-400 text-blue-500",
+      },
+      {
+        label: "Wait To Publish",
+        statusKey: "Waiting",
+        value: counts.Waiting,
+        color: "border-green-400 text-green-500",
+      },
+      {
+        label: "Muted",
+        statusKey: "Muted",
+        value: counts.Muted,
+        color: "border-red-400 text-red-500",
+      },
     ];
   }, [allTableData]);
 
-  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-  }, []);
+  const handleSearchChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setSearchTerm(e.target.value);
+    },
+    []
+  );
 
   const filteredData = useMemo(() => {
     let data = [...dataWithParsedDates];
@@ -156,7 +263,9 @@ export default function ProjectPage() {
     }
 
     if (selectedYear !== "All Years") {
-      data = data.filter((row) => getYearFromString(row.year) === selectedYear);
+      data = data.filter(
+        (row) => getYearFromString(row.year) === selectedYear
+      );
     }
 
     if (selectedStatus !== "All") {
@@ -183,7 +292,14 @@ export default function ProjectPage() {
     }
 
     return data;
-  }, [dataWithParsedDates, selectedKategori, selectedYear, selectedStatus, searchTerm, selectedSort]);
+  }, [
+    dataWithParsedDates,
+    selectedKategori,
+    selectedYear,
+    selectedStatus,
+    searchTerm,
+    selectedSort,
+  ]);
 
   return (
     <div className="flex">
@@ -219,8 +335,18 @@ export default function ProjectPage() {
 
         <div className="flex items-center gap-3 mb-6">
           <div className="flex items-center flex-1 border border-black rounded-lg bg-white px-4 py-2">
-            <svg className="w-5 h-5 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            <svg
+              className="w-5 h-5 text-gray-400 mr-2"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              ></path>
             </svg>
             <input
               type="text"
@@ -231,10 +357,30 @@ export default function ProjectPage() {
             />
           </div>
 
-          <DropdownFilter label="Year" options={["All Years", "2025", "2024", "2023"]} currentFilter={selectedYear} onSelect={setSelectedYear} />
-          <DropdownFilter label="Category" options={["All", "UI/UX", "Game", "Frontend", "AR", "VR"]} currentFilter={selectedKategori} onSelect={setSelectedKategori} />
-          <DropdownFilter label="Sort" options={["A-Z", "Z-A", "Newest", "Oldest"]} currentFilter={selectedSort} onSelect={setSelectedSort} />
-          <DropdownFilter label="Status" options={["All", "Published", "Review", "Waiting", "Muted"]} currentFilter={selectedStatus} onSelect={setSelectedStatus} />
+          <DropdownFilter
+            label="Year"
+            options={["All Years", "2025", "2024", "2023"]}
+            currentFilter={selectedYear}
+            onSelect={setSelectedYear}
+          />
+          <DropdownFilter
+            label="Category"
+            options={["All", "UI/UX", "Game", "Frontend", "AR", "VR"]}
+            currentFilter={selectedKategori}
+            onSelect={setSelectedKategori}
+          />
+          <DropdownFilter
+            label="Sort"
+            options={["A-Z", "Z-A", "Newest", "Oldest"]}
+            currentFilter={selectedSort}
+            onSelect={setSelectedSort}
+          />
+          <DropdownFilter
+            label="Status"
+            options={["All", "Published", "Review", "Waiting", "Muted"]}
+            currentFilter={selectedStatus}
+            onSelect={setSelectedStatus}
+          />
         </div>
 
         <div className="border border-black rounded-lg overflow-hidden">
@@ -250,22 +396,95 @@ export default function ProjectPage() {
               </tr>
             </thead>
             <tbody>
-              {filteredData.map((row, index) => (
-                <tr key={index}>
-                  <td className={`py-3 text-center ${index !== filteredData.length - 1 ? "border-b border-gray-200" : ""}`}>{row.title}</td>
-                  <td className={`py-3 text-center ${index !== filteredData.length - 1 ? "border-b border-gray-200" : ""}`}>{row.kategori}</td>
-                  <td className={`py-3 text-center ${index !== filteredData.length - 1 ? "border-b border-gray-200" : ""}`}>{row.year}</td>
-                  <td className={`py-3 text-center ${index !== filteredData.length - 1 ? "border-b border-gray-200" : ""}`}>{row.publisher}</td>
-                  <td className={`py-3 text-center ${index !== filteredData.length - 1 ? "border-b border-gray-200" : ""}`}>{row.stars}</td>
-                  <td className={`py-3 font-medium text-center ${index !== filteredData.length - 1 ? "border-b border-gray-200" : ""} ${getStatusColorClass(row.status)}`}>
-                    {row.status}
+              {isLoading && (
+                <tr>
+                  <td
+                    colSpan={6}
+                    className="py-8 text-center text-gray-500"
+                  >
+                    Loading projects...
                   </td>
                 </tr>
-              ))}
+              )}
 
-              {filteredData.length === 0 && (
+              {!isLoading && error && (
                 <tr>
-                  <td colSpan={6} className="py-8 text-center text-gray-500">
+                  <td
+                    colSpan={6}
+                    className="py-8 text-center text-red-500"
+                  >
+                    {error}
+                  </td>
+                </tr>
+              )}
+
+              {!isLoading &&
+                !error &&
+                filteredData.map((row, index) => (
+                  <tr key={row.id ?? index}>
+                    <td
+                      className={`py-3 text-center ${
+                        index !== filteredData.length - 1
+                          ? "border-b border-gray-200"
+                          : ""
+                      }`}
+                    >
+                      {row.title}
+                    </td>
+                    <td
+                      className={`py-3 text-center ${
+                        index !== filteredData.length - 1
+                          ? "border-b border-gray-200"
+                          : ""
+                      }`}
+                    >
+                      {row.kategori}
+                    </td>
+                    <td
+                      className={`py-3 text-center ${
+                        index !== filteredData.length - 1
+                          ? "border-b border-gray-200"
+                          : ""
+                      }`}
+                    >
+                      {row.year}
+                    </td>
+                    <td
+                      className={`py-3 text-center ${
+                        index !== filteredData.length - 1
+                          ? "border-b border-gray-200"
+                          : ""
+                      }`}
+                    >
+                      {row.publisher}
+                    </td>
+                    <td
+                      className={`py-3 text-center ${
+                        index !== filteredData.length - 1
+                          ? "border-b border-gray-200"
+                          : ""
+                      }`}
+                    >
+                      {row.stars}
+                    </td>
+                    <td
+                      className={`py-3 font-medium text-center ${
+                        index !== filteredData.length - 1
+                          ? "border-b border-gray-200"
+                          : ""
+                      } ${getStatusColorClass(row.status)}`}
+                    >
+                      {row.status}
+                    </td>
+                  </tr>
+                ))}
+
+              {!isLoading && !error && filteredData.length === 0 && (
+                <tr>
+                  <td
+                    colSpan={6}
+                    className="py-8 text-center text-gray-500"
+                  >
                     No data matches the applied filter.
                   </td>
                 </tr>

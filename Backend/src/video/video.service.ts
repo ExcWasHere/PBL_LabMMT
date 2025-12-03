@@ -1,26 +1,39 @@
 import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Video } from './entities/video.entity';
 import { CreateVideoDto } from './dto/create-video.dto';
 import { UpdateVideoDto } from './dto/update-video.dto';
 
 @Injectable()
 export class VideoService {
-  create(createVideoDto: CreateVideoDto) {
-    return 'This action adds a new video';
+  constructor(
+    @InjectRepository(Video)
+    private readonly videoRepo: Repository<Video>,
+  ) {}
+
+  create(dto: CreateVideoDto) {
+    const video = this.videoRepo.create(dto);
+    return this.videoRepo.save(video);
   }
 
   findAll() {
-    return `This action returns all video`;
+    return this.videoRepo.find({
+      order: { createdAt: 'DESC' },
+    });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} video`;
+  findOne(id: string) {
+    return this.videoRepo.findOne({ where: { id } });
   }
 
-  update(id: number, updateVideoDto: UpdateVideoDto) {
-    return `This action updates a #${id} video`;
+  async update(id: string, dto: UpdateVideoDto) {
+    await this.videoRepo.update(id, dto);
+    return this.findOne(id);
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} video`;
+  async remove(id: string) {
+    await this.videoRepo.delete(id);
+    return { message: 'Video deleted' };
   }
 }

@@ -282,7 +282,7 @@ export default function MemberPage() {
           {stats.map((s) => (
             <div
               key={s.label}
-              className={`border-1 rounded-lg p-4 ${s.color}`}
+              className={`border rounded-lg p-4 ${s.color}`}
             >
               <div className="text-left">
                 <p className="text-sm">{s.label}</p>

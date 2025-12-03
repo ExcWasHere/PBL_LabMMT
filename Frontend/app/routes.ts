@@ -8,6 +8,7 @@ export default [
     route("news", "routes/news.tsx"),
     route("news-detail", "routes/news-detail.tsx"),
     route("masuk", "routes/masuk.tsx"),
+    route("profil", "routes/profil.tsx"),
     route("dashboard-viewer", "routes/dashboard-viewer/dashboard.tsx"),
     route("dashboard-viewer-news", "routes/dashboard-viewer/news.tsx"),
     route("dashboard-viewer-project", "routes/dashboard-viewer/project.tsx"),

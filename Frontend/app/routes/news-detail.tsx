@@ -1,5 +1,5 @@
 import Dashboard from "~/components/News/detailPageNews";
-import type { Route } from "./+types/dashboard-viewer";
+import type { Route } from "./+types/news-detail";
 import Navbar from "~/common/navbar";
 
 export function meta({}: Route.MetaArgs) {

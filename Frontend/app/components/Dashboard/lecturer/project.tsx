@@ -20,7 +20,7 @@ const DropdownFilter: React.FC<DropdownFilterProps> = ({
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="border border-black rounded-lg px-4 py-2 bg-white text-gray-700 hover:bg-gray-50 focus:outline-none flex items-center justify-between min-w-[120px]"
+        className="border border-orange-500 rounded-lg px-4 py-2 bg-white text-gray-700 hover:bg-gray-50 focus:outline-none flex items-center justify-between min-w-[120px]"
       >
         {currentFilter || label}
         <svg
@@ -201,7 +201,7 @@ export default function ProjectPage() {
         </div>
 
         <div className="flex items-center gap-3 mb-6">
-          <div className="flex items-center flex-1 border border-black rounded-lg bg-white px-4 py-2">
+          <div className="flex items-center flex-1 border border-orange-500 rounded-lg bg-white px-4 py-2">
             <svg
               className="w-5 h-5 text-gray-400 mr-2"
               fill="none"
@@ -260,7 +260,7 @@ export default function ProjectPage() {
         </div>
 
         {/* --- Table Section --- */}
-        <div className="border border-black rounded-lg overflow-hidden">
+        <div className="border border-orange-500 rounded-lg overflow-hidden">
           <table className="w-full text-sm">
             <thead className="bg-orange-50">
               <tr>
@@ -318,7 +318,7 @@ export default function ProjectPage() {
                         </button>
 
                         <button
-                          className={`transition-colors ${isReview || isWaiting || isMuted ? disabledStyle : "text-gray-600 hover:text-orange-600"}`}
+                          className={`transition-colors ${isReview || isWaiting || isMuted ? disabledStyle : "text-gray-600 hover:text-green-500"}`}
                           onClick={() =>
                             !(isReview || isWaiting || isMuted) &&
                             console.log("Edit", row.title)

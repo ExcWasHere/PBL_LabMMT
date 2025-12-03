@@ -1,6 +1,6 @@
 import Sidebar from "~/components/Dashboard/viewer/sidebar";
-import { useState, useMemo } from "react";
-import { Menu } from 'lucide-react';
+import { useState, useMemo, useEffect, useCallback } from "react";
+import { Menu } from "lucide-react";
 
 interface DropdownFilterProps {
   label: string;
@@ -9,7 +9,12 @@ interface DropdownFilterProps {
   onSelect: (value: string) => void;
 }
 
-const DropdownFilter: React.FC<DropdownFilterProps> = ({ label, options, currentFilter, onSelect }) => {
+const DropdownFilter: React.FC<DropdownFilterProps> = ({
+  label,
+  options,
+  currentFilter,
+  onSelect,
+}) => {
   const [isOpen, setIsOpen] = useState(false);
   return (
     <div className="relative">
@@ -18,11 +23,25 @@ const DropdownFilter: React.FC<DropdownFilterProps> = ({ label, options, current
         className="border border-black rounded-lg px-4 py-2 bg-white text-gray-700 hover:bg-gray-50 focus:outline-none flex items-center justify-between min-w-[120px]"
       >
         {currentFilter || label}
-        <svg className={`w-4 h-4 ml-2 transition-transform ${isOpen ? 'transform rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+        <svg
+          className={`w-4 h-4 ml-2 transition-transform ${
+            isOpen ? "transform rotate-180" : ""
+          }`}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+            d="M19 9l-7 7-7-7"
+          ></path>
+        </svg>
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg z-10"> 
+        <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg z-10">
           {options.map((option) => (
             <button
               key={option}
@@ -42,8 +61,18 @@ const DropdownFilter: React.FC<DropdownFilterProps> = ({ label, options, current
 };
 
 const MONTHS: { [key: string]: number } = {
-  jan: 0, feb: 1, mar: 2, apr: 3, mei: 4, jun: 5,
-  jul: 6, aug: 7, sep: 8, okt: 9, nov: 10, des: 11
+  jan: 0,
+  feb: 1,
+  mar: 2,
+  apr: 3,
+  mei: 4,
+  jun: 5,
+  jul: 6,
+  aug: 7,
+  sep: 8,
+  okt: 9,
+  nov: 10,
+  des: 11,
 };
 
 const parseDate = (dateStr: string): number => {
@@ -54,23 +83,107 @@ const parseDate = (dateStr: string): number => {
   return new Date(year, month, day).getTime();
 };
 
+const getYearFromString = (dateString: string) => {
+  const parts = dateString.trim().split(" ");
+  return parts[parts.length - 1];
+};
+
+const getStatusColorClass = (status: string) => {
+  switch (status) {
+    case "Published":
+      return "text-orange-500";
+    case "Review":
+      return "text-blue-500";
+    case "Waiting":
+      return "text-green-500";
+    case "Muted":
+      return "text-red-500";
+    default:
+      return "text-black";
+  }
+};
+
+const formatDateForViewer = (raw: string | Date): string => {
+  const d = new Date(raw);
+  if (isNaN(d.getTime())) return "";
+
+  const day = d.getDate();
+  const year = d.getFullYear();
+  const monthIndex = d.getMonth();
+  const monthLabels = [
+    "jan",
+    "feb",
+    "mar",
+    "apr",
+    "mei",
+    "jun",
+    "jul",
+    "aug",
+    "sep",
+    "okt",
+    "nov",
+    "des",
+  ];
+
+  return `${day} ${monthLabels[monthIndex]} ${year}`;
+};
+
+interface NewsRow {
+  id?: string;
+  title: string;
+  kategori: string;
+  year: string;
+  publisher: string;
+  status: string;
+}
+
 export default function NewsPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [selectedYear, setSelectedYear] = useState("All Years"); 
-  const [selectedKategori, setSelectedKategori] = useState("All"); 
+  const [selectedYear, setSelectedYear] = useState("All Years");
+  const [selectedKategori, setSelectedKategori] = useState("All");
   const [selectedSort, setSelectedSort] = useState("Newest");
   const [selectedStatus, setSelectedStatus] = useState("All");
   const [searchTerm, setSearchTerm] = useState("");
-  
-  const allTableData = useMemo(() => [
-    { title: "Pengenalan React Hooks", kategori: "Workshop", year: "2 des 2025", publisher: "Aulia Resty Azizah", status: "Published" },
-    { title: "Berita Teknologi Terbaru Q4", kategori: "News", year: "15 nov 2024", publisher: "Budi Santoso", status: "Review" },
-    { title: "Tips & Trik Menulis Artikel SEO", kategori: "Articles", year: "28 feb 2025", publisher: "Citra Dewi", status: "Waiting" },
-    { title: "Pelatihan Dasar Desain Grafis", kategori: "Workshop", year: "10 jul 2023", publisher: "Aulia Resty Azizah", status: "Published" },
-    { title: "Workshop Keamanan Siber", kategori: "Workshop", year: "30 jan 2025", publisher: "Dani Setiawan", status: "Muted" },
-    { title: "Sertifikasi AWS Cloud Practitioner", kategori: "Certification", year: "5 apr 2024", publisher: "Budi Santoso", status: "Review" },
-    { title: "Artikel Mendalam tentang AI", kategori: "Articles", year: "1 aug 2025", publisher: "Citra Dewi", status: "Published" },
-  ], []);
+
+  const [allTableData, setAllTableData] = useState<NewsRow[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchNews = async () => {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const res = await fetch("http://localhost:3000/news");
+        if (!res.ok) {
+          throw new Error("Failed to fetch news");
+        }
+
+        const data = await res.json();
+        const mapped: NewsRow[] = (Array.isArray(data) ? data : []).map(
+          (n: any) => ({
+            id: n.id,
+            title: n.title ?? "-",
+            kategori: n.kategori ?? "-",
+            year: n.year ? formatDateForViewer(n.year) : "",
+            publisher: n.publisher ?? "-",
+            status: n.status ?? "Waiting",
+          })
+        );
+
+        setAllTableData(mapped);
+      } catch (err) {
+        console.error(err);
+        setError("Gagal memuat data news.");
+        setAllTableData([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchNews();
+  }, []);
 
   const stats = useMemo(() => {
     const counts = {
@@ -87,50 +200,68 @@ export default function NewsPage() {
     });
 
     return [
-      { label: "Published", statusKey: "Published", value: counts.Published, color: "border-orange-400 text-orange-500" },
-      { label: "Review", statusKey: "Review", value: counts.Review, color: "border-blue-400 text-blue-500" },
-      { label: "Wait To Publish", statusKey: "Waiting", value: counts.Waiting, color: "border-green-400 text-green-500" },
-      { label: "Muted", statusKey: "Muted", value: counts.Muted, color: "border-red-400 text-red-500" },
+      {
+        label: "Published",
+        statusKey: "Published",
+        value: counts.Published,
+        color: "border-orange-400 text-orange-500",
+      },
+      {
+        label: "Review",
+        statusKey: "Review",
+        value: counts.Review,
+        color: "border-blue-400 text-blue-500",
+      },
+      {
+        label: "Wait To Publish",
+        statusKey: "Waiting",
+        value: counts.Waiting,
+        color: "border-green-400 text-green-500",
+      },
+      {
+        label: "Muted",
+        statusKey: "Muted",
+        value: counts.Muted,
+        color: "border-red-400 text-red-500",
+      },
     ];
   }, [allTableData]);
-  
-  const getStatusColorClass = (status: string) => {
-    switch (status) {
-      case "Published": return "text-orange-500";
-      case "Review": return "text-blue-500";
-      case "Waiting": return "text-green-500";
-      case "Muted": return "text-red-500";
-      default: return "text-black";
-    }
-  };
-  
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+
+  const handleSearchChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
       setSearchTerm(e.target.value);
-  };
+    },
+    []
+  );
 
   const filteredData = useMemo(() => {
     let data = [...allTableData];
-    const getYearFromString = (dateString: string) => {
-        const parts = dateString.trim().split(' ');
-        return parts[parts.length - 1]; 
-    };
-    
-    if (selectedKategori !== "All") { data = data.filter(row => row.kategori === selectedKategori); }
-    if (selectedYear !== "All Years") { data = data.filter(row => getYearFromString(row.year) === selectedYear); }
-    if (selectedStatus !== "All") { data = data.filter(row => row.status === selectedStatus); }
+
+    if (selectedKategori !== "All") {
+      data = data.filter((row) => row.kategori === selectedKategori);
+    }
+    if (selectedYear !== "All Years") {
+      data = data.filter(
+        (row) => getYearFromString(row.year) === selectedYear
+      );
+    }
+    if (selectedStatus !== "All") {
+      data = data.filter((row) => row.status === selectedStatus);
+    }
 
     if (searchTerm) {
-      const lowerCaseQuery = searchTerm.toLowerCase();
-      data = data.filter(row => 
-        row.title.toLowerCase().includes(lowerCaseQuery) ||
-        row.publisher.toLowerCase().includes(lowerCaseQuery)
+      const lower = searchTerm.toLowerCase();
+      data = data.filter(
+        (row) =>
+          row.title.toLowerCase().includes(lower) ||
+          row.publisher.toLowerCase().includes(lower)
       );
     }
 
-    if (selectedSort === "A-Z") { 
-      data.sort((a, b) => a.title.localeCompare(b.title)); 
-    } else if (selectedSort === "Z-A") { 
-      data.sort((a, b) => b.title.localeCompare(a.title)); 
+    if (selectedSort === "A-Z") {
+      data.sort((a, b) => a.title.localeCompare(b.title));
+    } else if (selectedSort === "Z-A") {
+      data.sort((a, b) => b.title.localeCompare(a.title));
     } else if (selectedSort === "Newest") {
       data.sort((a, b) => parseDate(b.year) - parseDate(a.year));
     } else if (selectedSort === "Oldest") {
@@ -138,24 +269,32 @@ export default function NewsPage() {
     }
 
     return data;
-  }, [allTableData, selectedYear, selectedKategori, selectedStatus, searchTerm, selectedSort]);
-
+  }, [
+    allTableData,
+    selectedYear,
+    selectedKategori,
+    selectedStatus,
+    searchTerm,
+    selectedSort,
+  ]);
 
   return (
     <div className="flex">
       {isSidebarOpen && <Sidebar />}
 
-      <div 
-        className={`w-full p-8 transition-all duration-300 ease-in-out ${isSidebarOpen ? 'ml-64' : 'ml-0'}`}
+      <div
+        className={`w-full p-8 transition-all duration-300 ease-in-out ${
+          isSidebarOpen ? "ml-64" : "ml-0"
+        }`}
       >
         <div className="flex items-center mb-6">
-            <button
-                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                className="p-2 mr-4 text-gray-700 hover:text-orange-600 transition"
-            >
-                <Menu size={24} />
-            </button>
-            <h1 className="text-3xl font-bold text-orange-600">News</h1>
+          <button
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            className="p-2 mr-4 text-gray-700 hover:text-orange-600 transition"
+          >
+            <Menu size={24} />
+          </button>
+          <h1 className="text-3xl font-bold text-orange-600">News</h1>
         </div>
 
         {/* stats */}
@@ -164,33 +303,63 @@ export default function NewsPage() {
             <button
               key={s.label}
               onClick={() => setSelectedStatus(s.statusKey)}
-              className={`border-1 rounded-lg p-4 ${s.color} text-left transition`} 
+              className={`border rounded-lg p-4 ${s.color} text-left transition`}
             >
               <p className="text-sm">{s.label}</p>
-              <h2 className="text-3xl font-semibold">{s.value}</h2> 
+              <h2 className="text-3xl font-semibold">{s.value}</h2>
             </button>
           ))}
         </div>
-        
+
         {/* filters */}
         <div className="flex items-center gap-3 mb-6">
-            <div className="flex items-center flex-1 border border-black rounded-lg bg-white px-4 py-2">
-                <svg className="w-5 h-5 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                </svg>
-                <input
-                    type="text"
-                    placeholder="Search"
-                    value={searchTerm}
-                    onChange={handleSearchChange} 
-                    className="flex-1 outline-none text-gray-700 bg-transparent"
-                />
-            </div>
-          
-          <DropdownFilter label="Year" options={["All Years", "2025", "2024", "2023"]} currentFilter={selectedYear} onSelect={setSelectedYear} />
-          <DropdownFilter label="Category" options={["All", "News", "Workshop", "Certification", "Articles"]} currentFilter={selectedKategori} onSelect={setSelectedKategori} />
-          <DropdownFilter label="Sorting" options={["A-Z", "Z-A", "Newest", "Oldest"]} currentFilter={selectedSort} onSelect={setSelectedSort} />
-          <DropdownFilter label="Status" options={["All", "Published", "Review", "Waiting", "Muted"]} currentFilter={selectedStatus} onSelect={setSelectedStatus} />
+          <div className="flex items-center flex-1 border border-black rounded-lg bg-white px-4 py-2">
+            <svg
+              className="w-5 h-5 text-gray-400 mr-2"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              ></path>
+            </svg>
+            <input
+              type="text"
+              placeholder="Search"
+              value={searchTerm}
+              onChange={handleSearchChange}
+              className="flex-1 outline-none text-gray-700 bg-transparent"
+            />
+          </div>
+
+          <DropdownFilter
+            label="Year"
+            options={["All Years", "2025", "2024", "2023"]}
+            currentFilter={selectedYear}
+            onSelect={setSelectedYear}
+          />
+          <DropdownFilter
+            label="Category"
+            options={["All", "News", "Workshop", "Certification", "Articles"]}
+            currentFilter={selectedKategori}
+            onSelect={setSelectedKategori}
+          />
+          <DropdownFilter
+            label="Sorting"
+            options={["A-Z", "Z-A", "Newest", "Oldest"]}
+            currentFilter={selectedSort}
+            onSelect={setSelectedSort}
+          />
+          <DropdownFilter
+            label="Status"
+            options={["All", "Published", "Review", "Waiting", "Muted"]}
+            currentFilter={selectedStatus}
+            onSelect={setSelectedStatus}
+          />
         </div>
 
         {/* table */}
@@ -206,26 +375,70 @@ export default function NewsPage() {
               </tr>
             </thead>
             <tbody>
-              {filteredData.map((row, index) => {
-                const isLastRow = index === filteredData.length - 1;
-                const borderClass = isLastRow ? '' : 'border-b border-gray-200';
+              {isLoading && (
+                <tr>
+                  <td
+                    colSpan={5}
+                    className="py-8 text-center text-gray-500"
+                  >
+                    Loading news...
+                  </td>
+                </tr>
+              )}
 
-                return (
-                  <tr key={index}> 
-                    <td className={`py-3 ${borderClass} text-center`}>{row.title}</td>
-                    <td className={`py-3 ${borderClass} text-center`}>{row.kategori}</td>
-                    <td className={`py-3 ${borderClass} text-center`}>{row.year}</td>
-                    <td className={`py-3 ${borderClass} text-center`}>{row.publisher}</td>
-                    <td className={`py-3 ${borderClass} font-medium text-center ${getStatusColorClass(row.status)}`}>{row.status}</td>
-                  </tr>
-                );
-              })}
-              {filteredData.length === 0 && (
-                 <tr>
-                    <td colSpan={5} className="py-8 text-center text-gray-500">
-                        No data matches the applied filter.
-                    </td>
-                 </tr>
+              {!isLoading && error && (
+                <tr>
+                  <td
+                    colSpan={5}
+                    className="py-8 text-center text-red-500"
+                  >
+                    {error}
+                  </td>
+                </tr>
+              )}
+
+              {!isLoading &&
+                !error &&
+                filteredData.map((row, index) => {
+                  const isLastRow = index === filteredData.length - 1;
+                  const borderClass = isLastRow
+                    ? ""
+                    : "border-b border-gray-200";
+
+                  return (
+                    <tr key={row.id ?? index}>
+                      <td className={`py-3 ${borderClass} text-center`}>
+                        {row.title}
+                      </td>
+                      <td className={`py-3 ${borderClass} text-center`}>
+                        {row.kategori}
+                      </td>
+                      <td className={`py-3 ${borderClass} text-center`}>
+                        {row.year}
+                      </td>
+                      <td className={`py-3 ${borderClass} text-center`}>
+                        {row.publisher}
+                      </td>
+                      <td
+                        className={`py-3 ${borderClass} font-medium text-center ${getStatusColorClass(
+                          row.status
+                        )}`}
+                      >
+                        {row.status}
+                      </td>
+                    </tr>
+                  );
+                })}
+
+              {!isLoading && !error && filteredData.length === 0 && (
+                <tr>
+                  <td
+                    colSpan={5}
+                    className="py-8 text-center text-gray-500"
+                  >
+                    No data matches the applied filter.
+                  </td>
+                </tr>
               )}
             </tbody>
           </table>

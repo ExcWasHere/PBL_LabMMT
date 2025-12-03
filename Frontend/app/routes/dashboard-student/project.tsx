@@ -4,7 +4,7 @@ import ProjectPage from "~/components/Dashboard/student/project.js";
 
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: "MMT | Dashboard-Viewer" },
+    { title: "MMT | Dashboard-Student" },
     { name: "Masuk", content: "Welcome to Lab MMT JTI!" },
   ];
 }

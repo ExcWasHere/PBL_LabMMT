@@ -25,11 +25,11 @@ const Sidebar: FC = () => {
   const [active, setActive] = useState<string>("Dashboard");
 
   const menuTop: MenuItem[] = [
-    { name: "Dashboard", route: "/dashboard-viewer", icon: <LayoutGrid size={18} /> },
-    { name: "Project", route: "/dashboard-viewer-project", icon: <FolderKanban size={18} /> },
-    { name: "News", route: "/dashboard-viewer-news", icon: <Newspaper size={18} /> },
-    { name: "Gallery", route: "/dashboard-viewer-gallery", icon: <ImageIcon size={18} /> },
-    { name: "Members", route: "/dashboard-viewer-member", icon: <Users2 size={18} /> },
+    { name: "Dashboard", route: "/dashboard-student", icon: <LayoutGrid size={18} /> },
+    { name: "Project", route: "/dashboard-student-project", icon: <FolderKanban size={18} /> },
+    { name: "News", route: "/dashboard-student-news", icon: <Newspaper size={18} /> },
+    { name: "Gallery", route: "/dashboard-student-gallery", icon: <ImageIcon size={18} /> },
+    { name: "Members", route: "/dashboard-student-member", icon: <Users2 size={18} /> },
   ];
 
   const menuBottom: MenuItem[] = [

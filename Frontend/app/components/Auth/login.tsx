@@ -151,6 +151,7 @@ export default function AuthPages() {
       }
       if (user.role === "admin") window.location.href = "/dashboard-admin";
       else if (user.role === "dosen") window.location.href = "/dashboard-lecturer";
+      else if (user.role === "mahasiswa") window.location.href = "/dashboard-student"
       else window.location.href = "/dashboard-viewer";
 
     } catch (err) {

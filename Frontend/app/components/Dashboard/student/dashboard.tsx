@@ -1,4 +1,4 @@
-import Sidebar from "~/components/Dashboard/viewer/sidebar";
+import Sidebar from "~/components/Dashboard/student/sidebar";
 import { useState } from "react";
 import { Menu, FolderKanban, Newspaper, Image, Users2, Video } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';

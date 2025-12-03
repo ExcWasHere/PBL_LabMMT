@@ -29,11 +29,57 @@ interface StatsData {
   totalMembers: number;
 }
 
+type RecentActivity = {
+  user: string;
+  activity: string;
+  at: string;
+  type: string;
+};
+
+function formatTimeAgo(dateStr: string): string {
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return dateStr;
+
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffSec = Math.floor(diffMs / 1000);
+  const diffMin = Math.floor(diffSec / 60);
+  const diffHours = Math.floor(diffMin / 60);
+  const diffDays = Math.floor(diffHours / 24);
+
+  if (diffSec < 60) return "baru saja";
+  if (diffMin < 60) return `${diffMin} menit yang lalu`;
+  if (diffHours < 24) return `${diffHours} jam yang lalu`;
+  if (diffDays < 7) return `${diffDays} hari yang lalu`;
+  return date.toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+function getActivityColor(type: string): string {
+  switch (type) {
+    case "project":
+      return "bg-orange-500";
+    case "news":
+      return "bg-blue-500";
+    case "photo":
+      return "bg-green-500";
+    case "video":
+      return "bg-purple-500";
+    case "member":
+      return "bg-pink-500";
+    default:
+      return "bg-gray-400";
+  }
+}
+
 export default function Dashboard() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [trafficData, setTrafficData] = useState<TrafficPoint[]>([]);
   const [isLoadingTraffic, setIsLoadingTraffic] = useState(true);
-  const [connectionStatus ,setConnectionStatus] = useState<
+  const [connectionStatus, setConnectionStatus] = useState<
     "connected" | "disconnected" | "connecting"
   >("connecting");
 
@@ -45,6 +91,9 @@ export default function Dashboard() {
     totalMembers: 0,
   });
   const [isLoadingStats, setIsLoadingStats] = useState(true);
+
+  const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([]);
+  const [isLoadingActivity, setIsLoadingActivity] = useState(true);
 
   const stats = [
     {
@@ -76,27 +125,6 @@ export default function Dashboard() {
       value: statsData.totalMembers,
       icon: <Users2 size={24} />,
       color: "border-orange-400",
-    },
-  ];
-
-  const recentActivities = [
-    {
-      user: "resty",
-      activity: "Workshop Mobile",
-      time: "2 jam yang lalu",
-      color: "bg-orange-500",
-    },
-    {
-      user: "budi speed",
-      activity: "Update Berita A1",
-      time: "5 jam yang lalu",
-      color: "bg-blue-500",
-    },
-    {
-      user: "ariel tatum",
-      activity: "Upload Gallery Event",
-      time: "1 hari yang lalu",
-      color: "bg-green-500",
     },
   ];
 
@@ -132,7 +160,7 @@ export default function Dashboard() {
       setIsLoadingStats(true);
       try {
         const res = await fetch("http://localhost:3000/stats");
-        
+
         if (!res.ok) {
           console.error("Failed to fetch stats");
           return;
@@ -225,6 +253,36 @@ export default function Dashboard() {
     };
   }, []);
 
+  useEffect(() => {
+    const fetchActivities = async () => {
+      setIsLoadingActivity(true);
+      try {
+        const res = await fetch(
+          "http://localhost:3000/activity/recent?limit=3"
+        );
+        if (!res.ok) {
+          setRecentActivities([]);
+          return;
+        }
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          setRecentActivities(data);
+        } else {
+          setRecentActivities([]);
+        }
+      } catch (err) {
+        console.error("Failed to fetch recent activities:", err);
+        setRecentActivities([]);
+      } finally {
+        setIsLoadingActivity(false);
+      }
+    };
+
+    fetchActivities();
+    const interval = setInterval(fetchActivities, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
   const totalViews = trafficData.reduce((sum, p) => sum + p.views, 0);
 
   return (
@@ -232,9 +290,10 @@ export default function Dashboard() {
       {isSidebarOpen && <Sidebar />}
 
       <div
-        className={`w-full p-8 transition-all duration-300 ease-in-out bg-white min-h-screen ${isSidebarOpen ? "ml-64" : "ml-0"}`}
+        className={`w-full p-8 transition-all duration-300 ease-in-out bg-white min-h-screen ${
+          isSidebarOpen ? "ml-64" : "ml-0"
+        }`}
       >
-        {/* Header */}
         <div className="flex items-center mb-6">
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -245,7 +304,6 @@ export default function Dashboard() {
           <h1 className="text-3xl font-bold text-orange-600">Dashboard</h1>
         </div>
 
-        {/* Stats Cards */}
         <div className="grid grid-cols-5 gap-4 mb-6">
           {stats.map((stat) => (
             <div
@@ -267,9 +325,7 @@ export default function Dashboard() {
           ))}
         </div>
 
-        {/* Traffic & Recent Activity */}
         <div className="grid grid-cols-3 gap-6">
-          {/* Total Views */}
           <div className="col-span-2 bg-white border border-orange-400 rounded-lg p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-xl font-semibold text-orange-600">
@@ -298,7 +354,6 @@ export default function Dashboard() {
               </div>
             ) : (
               <>
-                {/* Total Views Summary */}
                 <div className="mb-6 text-center rounded-lg p-4">
                   <p className="text-4xl font-bold text-orange-600 mb-1">
                     {totalViews.toLocaleString("id-ID")}
@@ -309,7 +364,6 @@ export default function Dashboard() {
                   </p>
                 </div>
 
-                {/* Chart */}
                 <ResponsiveContainer width="100%" height={280}>
                   <LineChart data={trafficData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
@@ -349,38 +403,70 @@ export default function Dashboard() {
 
             <p className="text-sm text-gray-500 mt-4 text-center">
               {trafficData.length > 0
-                ? `Tracking sejak ${new Date(trafficData[0].date).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}`
+                ? `Tracking sejak ${new Date(
+                    trafficData[0].date
+                  ).toLocaleDateString("id-ID", {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                  })}`
                 : "Jumlah pengunjung landing page per hari"}
             </p>
           </div>
 
-          {/* Recent Activity */}
           <div className="bg-white border border-orange-400 rounded-lg p-6">
             <h3 className="text-xl font-semibold text-orange-600 mb-4">
               Recent Activity
             </h3>
             <div className="space-y-4">
-              {recentActivities.map((activity, index) => (
-                <div
-                  key={index}
-                  className="flex items-start gap-3 p-3 rounded-lg hover:bg-orange-50 transition"
-                >
+              {isLoadingActivity ? (
+                <>
+                  <div className="flex items-start gap-3 p-3 rounded-lg">
+                    <div className="w-10 h-10 rounded-full bg-gray-200 animate-pulse" />
+                    <div className="flex-1 space-y-2">
+                      <div className="h-3 w-24 bg-gray-200 rounded animate-pulse" />
+                      <div className="h-4 w-40 bg-gray-200 rounded animate-pulse" />
+                      <div className="h-3 w-20 bg-gray-200 rounded animate-pulse" />
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3 p-3 rounded-lg">
+                    <div className="w-10 h-10 rounded-full bg-gray-200 animate-pulse" />
+                    <div className="flex-1 space-y-2">
+                      <div className="h-3 w-24 bg-gray-200 rounded animate-pulse" />
+                      <div className="h-4 w-40 bg-gray-200 rounded animate-pulse" />
+                      <div className="h-3 w-20 bg-gray-200 rounded animate-pulse" />
+                    </div>
+                  </div>
+                </>
+              ) : recentActivities.length === 0 ? (
+                <p className="text-sm text-gray-500">
+                  Belum ada aktivitas terbaru.
+                </p>
+              ) : (
+                recentActivities.map((activity, index) => (
                   <div
-                    className={`w-10 h-10 rounded-full ${activity.color} flex items-center justify-center text-white font-semibold text-sm shrink-0`}
+                    key={index}
+                    className="flex items-start gap-3 p-3 rounded-lg hover:bg-orange-50 transition"
                   >
-                    {activity.user.charAt(0).toUpperCase()}
+                    <div
+                      className={`w-10 h-10 rounded-full ${getActivityColor(
+                        activity.type
+                      )} flex items-center justify-center text-white font-semibold text-sm shrink-0`}
+                    >
+                      {(activity.user || "?").charAt(0).toUpperCase()}
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm text-gray-500">{activity.user}</p>
+                      <p className="font-medium text-gray-800">
+                        {activity.activity}
+                      </p>
+                      <p className="text-xs text-gray-400 mt-1">
+                        {formatTimeAgo(activity.at)}
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <p className="text-sm text-gray-500">{activity.user}</p>
-                    <p className="font-medium text-gray-800">
-                      {activity.activity}
-                    </p>
-                    <p className="text-xs text-gray-400 mt-1">
-                      {activity.time}
-                    </p>
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
         </div>

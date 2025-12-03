@@ -15,6 +15,7 @@ import { VideoModule } from './video/video.module';
 import { PhotoModule } from './photo/photo.module';
 import { MemberModule } from './member/member.module';
 import { StatsModule } from './stats/stats.module';
+import { ActivityModule } from './activity/activity.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { StatsModule } from './stats/stats.module';
     PhotoModule,
     MemberModule,
     StatsModule,
+    ActivityModule,
   ],
   controllers: [AppController, AnalyticsController],
   providers: [AppService, AnalyticsService, AnalyticsGateway],

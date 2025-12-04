@@ -1,12 +1,14 @@
 import Sidebar from "~/components/Dashboard/student/sidebar";
 import { useState, useMemo } from "react";
 import { Menu, Plus, Eye, EyeOff, Pencil, Trash } from "lucide-react";
+
 interface DropdownFilterProps {
   label: string;
   options: string[];
   currentFilter: string;
   onSelect: (value: string) => void;
 }
+
 import { project_dummy } from "~/components/Dashboard/student/dataDummy";
 
 const DropdownFilter: React.FC<DropdownFilterProps> = ({
@@ -16,26 +18,35 @@ const DropdownFilter: React.FC<DropdownFilterProps> = ({
   onSelect,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+
   return (
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="border border-black rounded-lg px-4 py-2 bg-white text-gray-700 hover:bg-gray-50 focus:outline-none flex items-center justify-between min-w-[120px]"
+        className="
+          border border-orange-500 rounded-lg 
+          px-3 py-1.5 text-sm bg-white text-gray-700 
+          hover:bg-gray-50 focus:outline-none 
+          flex items-center justify-between 
+          min-w-[96px] whitespace-nowrap
+        "
       >
         {currentFilter || label}
+
         <svg
-          className={`w-4 h-4 ml-2 transition-transform ${isOpen ? "transform rotate-180" : ""}`}
+          className={`w-4 h-4 ml-1 transition-transform ${
+            isOpen ? "transform rotate-180" : ""
+          }`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
-          xmlns="http://www.w3.org/2000/svg"
         >
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
             strokeWidth="2"
             d="M19 9l-7 7-7-7"
-          ></path>
+          />
         </svg>
       </button>
 
@@ -58,8 +69,6 @@ const DropdownFilter: React.FC<DropdownFilterProps> = ({
     </div>
   );
 };
-
-// --- NewsPage Component ---
 
 export default function ProjectPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -118,7 +127,8 @@ export default function ProjectPage() {
     setProjects((prevProjects) =>
       prevProjects.map((project) => {
         if (project.id === id) {
-          const newStatus = project.status === "Muted" ? "Published" : "Muted";
+          const newStatus =
+            project.status === "Muted" ? "Published" : "Muted";
           return { ...project, status: newStatus };
         }
         return project;
@@ -126,9 +136,9 @@ export default function ProjectPage() {
     );
   };
 
-  // --- Filtering Logic ---
   const filteredData = useMemo(() => {
     let data = [...projects];
+
     const getYearFromString = (dateString: string) => {
       const parts = dateString.trim().split(" ");
       return parts[parts.length - 1];
@@ -137,8 +147,11 @@ export default function ProjectPage() {
     if (selectedKategori !== "All") {
       data = data.filter((row) => row.kategori === selectedKategori);
     }
+
     if (selectedYear !== "All Year") {
-      data = data.filter((row) => getYearFromString(row.year) === selectedYear);
+      data = data.filter(
+        (row) => getYearFromString(row.year) === selectedYear
+      );
     }
 
     if (searchTerm) {
@@ -155,7 +168,10 @@ export default function ProjectPage() {
     } else if (selectedSort === "Z-A") {
       data.sort((a, b) => b.title.localeCompare(a.title));
     } else if (selectedSort === "Latest") {
-      data.sort((a, b) => new Date(b.year).getTime() - new Date(a.year).getTime());
+      data.sort(
+        (a, b) =>
+          new Date(b.year).getTime() - new Date(a.year).getTime()
+      );
     } else if (selectedSort === "Most Popular") {
       data.sort((a, b) => Number(b.stars) - Number(a.stars));
     }
@@ -177,10 +193,13 @@ export default function ProjectPage() {
   return (
     <div className="flex">
       {isSidebarOpen && <Sidebar />}
+
       <div
-        className={`w-full p-8 transition-all duration-300 ease-in-out ${isSidebarOpen ? "ml-64" : "ml-0"}`}
+        className={`w-full p-8 transition-all duration-300 ease-in-out ${
+          isSidebarOpen ? "ml-64" : "ml-0"
+        }`}
       >
-        {/* Header dengan Tombol Toggle */}
+        {/* Header */}
         <div className="flex items-center mb-6">
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -191,33 +210,31 @@ export default function ProjectPage() {
           <h1 className="text-3xl font-bold text-orange-600">Project</h1>
         </div>
 
-        {/* --- Stats Section --- */}
+        {/* Stats */}
         <div className="grid grid-cols-4 gap-4 mb-6">
           {stats.map((s) => (
             <div key={s.label} className={`border-1 rounded-lg p-4 ${s.color}`}>
-              <div className="text-left">
-                <p className="text-sm">{s.label}</p>
-                <h2 className="text-3xl font-semibold">{s.value}</h2>
-              </div>
+              <p className="text-sm">{s.label}</p>
+              <h2 className="text-3xl font-semibold">{s.value}</h2>
             </div>
           ))}
         </div>
 
+        {/* Filters */}
         <div className="flex items-center gap-3 mb-6">
-          <div className="flex items-center flex-1 border border-black rounded-lg bg-white px-4 py-2">
+          <div className="flex items-center flex-1 border border-orange-500 rounded-lg bg-white px-4 py-2">
             <svg
               className="w-5 h-5 text-gray-400 mr-2"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
             >
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth="2"
                 d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              ></path>
+              />
             </svg>
             <input
               type="text"
@@ -234,18 +251,21 @@ export default function ProjectPage() {
             currentFilter={selectedYear}
             onSelect={setSelectedYear}
           />
+
           <DropdownFilter
             label="Kategori"
             options={["All", "UI/UX", "Game", "Frontend", "AR", "VR"]}
             currentFilter={selectedKategori}
             onSelect={setSelectedKategori}
           />
+
           <DropdownFilter
             label="Urutkan"
             options={["A-Z", "Z-A", "Most Popular", "Latest"]}
             currentFilter={selectedSort}
             onSelect={setSelectedSort}
           />
+
           <DropdownFilter
             label="Status"
             options={["All Status", "Published", "Waiting", "Review", "Muted"]}
@@ -254,16 +274,21 @@ export default function ProjectPage() {
           />
 
           <button
-            className="flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg transition-colors shadow-sm whitespace-nowrap"
-            onClick={() => console.log("test")} // linee 303 ini sementara ygy
+            className="
+              flex items-center gap-1 
+              bg-orange-600 hover:bg-orange-700 text-white
+              px-3 py-1.5 rounded-lg text-sm
+              transition-colors shadow-sm whitespace-nowrap
+            "
+            onClick={() => console.log("test")}
           >
-            <Plus size={20} />
+            <Plus size={18} />
             <span>Add Project</span>
           </button>
         </div>
 
-        {/* --- Table Section --- */}
-        <div className="border border-black rounded-lg overflow-hidden">
+        {/* Table */}
+        <div className="border border-orange-500 rounded-lg overflow-hidden">
           <table className="w-full text-sm">
             <thead className="bg-orange-50">
               <tr>
@@ -276,10 +301,13 @@ export default function ProjectPage() {
                 <th className="py-3">Action</th>
               </tr>
             </thead>
+
             <tbody>
               {filteredData.map((row, index) => {
                 const isLastRow = index === filteredData.length - 1;
-                const borderClass = isLastRow ? "" : "border-b border-gray-200";
+                const borderClass = isLastRow
+                  ? ""
+                  : "border-b border-gray-200";
 
                 const isReview = row.status === "Review";
                 const isMuted = row.status === "Muted";
@@ -305,38 +333,55 @@ export default function ProjectPage() {
                       {row.stars}
                     </td>
                     <td
-                      className={`py-3 ${borderClass} font-medium text-center ${getStatusColorClass(row.status)}`}
+                      className={`py-3 ${borderClass} text-center font-medium ${getStatusColorClass(
+                        row.status
+                      )}`}
                     >
                       {row.status}
                     </td>
                     <td className={`py-3 ${borderClass} text-center`}>
                       <div className="flex items-center justify-center gap-2">
                         <button
-                          className={`transition-colors ${isReview ? disabledStyle : "text-gray-600 hover:text-blue-600"}`}
-                          onClick={() => !isReview && handleToggleMute(row.id)}
+                          className={`transition-colors ${
+                            isReview
+                              ? disabledStyle
+                              : "text-gray-600 hover:text-blue-600"
+                          }`}
+                          onClick={() =>
+                            !isReview && handleToggleMute(row.id)
+                          }
                           disabled={isReview}
-                          title={isMuted ? "Unmute Project" : "Mute Project"}
+                          title={
+                            isMuted ? "Unmute Project" : "Mute Project"
+                          }
                         >
-                          {isMuted ? <EyeOff size={18} /> : <Eye size={18} />}
+                          {isMuted ? (
+                            <EyeOff size={18} />
+                          ) : (
+                            <Eye size={18} />
+                          )}
                         </button>
 
                         <button
-                          className={`transition-colors ${isReview || isWaiting || isMuted ? disabledStyle : "text-gray-600 hover:text-orange-600"}`}
-                          onClick={() =>
-                            !(isReview || isWaiting || isMuted) &&
-                            console.log("Edit", row.title)
+                          className={`transition-colors ${
+                            isReview || isWaiting || isMuted
+                              ? disabledStyle
+                              : "text-gray-600 hover:text-orange-600"
+                          }`}
+                          disabled={
+                            isReview || isWaiting || isMuted
                           }
-                          disabled={isReview || isWaiting || isMuted}
                           title="Edit"
                         >
                           <Pencil size={18} />
                         </button>
 
                         <button
-                          className={`transition-colors ${isReview ? disabledStyle : "text-gray-600 hover:text-red-600"}`}
-                          onClick={() =>
-                            !isReview && console.log("Delete", row.title)
-                          }
+                          className={`transition-colors ${
+                            isReview
+                              ? disabledStyle
+                              : "text-gray-600 hover:text-red-600"
+                          }`}
                           disabled={isReview}
                           title="Hapus"
                         >
@@ -347,9 +392,13 @@ export default function ProjectPage() {
                   </tr>
                 );
               })}
+
               {filteredData.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="py-8 text-center text-gray-500">
+                  <td
+                    colSpan={7}
+                    className="py-8 text-center text-gray-500"
+                  >
                     No matching data found.
                   </td>
                 </tr>

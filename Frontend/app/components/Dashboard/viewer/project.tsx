@@ -21,7 +21,7 @@ const DropdownFilter: React.FC<DropdownFilterProps> = ({
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="border border-black rounded-lg px-4 py-2 bg-white text-gray-700 hover:bg-gray-50 flex items-center justify-between min-w-[120px]"
+        className="border border-orange-500 rounded-lg px-4 py-2 bg-white text-gray-700 hover:bg-gray-50 flex items-center justify-between min-w-[120px]"
       >
         {currentFilter || label}
         <svg
@@ -156,8 +156,7 @@ export default function ProjectPage() {
       setError(null);
 
       try {
-        const res = await fetch("http://localhost:3000/project", {
-        });
+        const res = await fetch("http://localhost:3000/project", {});
 
         if (!res.ok) {
           throw new Error("Failed to fetch projects");
@@ -330,7 +329,7 @@ export default function ProjectPage() {
         </div>
 
         <div className="flex items-center gap-3 mb-6">
-          <div className="flex items-center flex-1 border border-black rounded-lg bg-white px-4 py-2">
+          <div className="flex items-center flex-1 border border-orange-500 rounded-lg bg-white px-4 py-2">
             <svg
               className="w-5 h-5 text-gray-400 mr-2"
               fill="none"
@@ -379,7 +378,7 @@ export default function ProjectPage() {
           />
         </div>
 
-        <div className="border border-black rounded-lg overflow-hidden">
+        <div className="border border-orange-500 rounded-lg overflow-hidden">
           <table className="w-full text-sm">
             <thead className="bg-orange-50">
               <tr>
@@ -394,10 +393,7 @@ export default function ProjectPage() {
             <tbody>
               {isLoading && (
                 <tr>
-                  <td
-                    colSpan={6}
-                    className="py-8 text-center text-gray-500"
-                  >
+                  <td colSpan={6} className="py-8 text-center text-gray-500">
                     Loading projects...
                   </td>
                 </tr>
@@ -405,10 +401,7 @@ export default function ProjectPage() {
 
               {!isLoading && error && (
                 <tr>
-                  <td
-                    colSpan={6}
-                    className="py-8 text-center text-red-500"
-                  >
+                  <td colSpan={6} className="py-8 text-center text-red-500">
                     {error}
                   </td>
                 </tr>
@@ -477,10 +470,7 @@ export default function ProjectPage() {
 
               {!isLoading && !error && filteredData.length === 0 && (
                 <tr>
-                  <td
-                    colSpan={6}
-                    className="py-8 text-center text-gray-500"
-                  >
+                  <td colSpan={6} className="py-8 text-center text-gray-500">
                     No data matches the applied filter.
                   </td>
                 </tr>

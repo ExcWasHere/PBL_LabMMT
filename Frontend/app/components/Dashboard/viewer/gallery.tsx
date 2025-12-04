@@ -20,7 +20,7 @@ const DropdownFilter: React.FC<DropdownFilterProps> = ({
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="border border-black rounded-lg px-4 py-2 bg-white text-gray-700 hover:bg-gray-50 focus:outline-none flex items-center justify-between min-w-[120px]"
+        className="border border-orange-500 rounded-lg px-4 py-2 bg-white text-gray-700 hover:bg-gray-50 focus:outline-none flex items-center justify-between min-w-[120px]"
       >
         {currentFilter || label}
         <svg
@@ -329,6 +329,7 @@ export default function GalleryPage() {
         (row) => getYearFromString(row.date) === selectedYear
       );
     }
+
     if (selectedStatus !== "All") {
       data = data.filter((row) => row.status === selectedStatus);
     }
@@ -388,7 +389,7 @@ export default function GalleryPage() {
         </div>
 
         <div className="flex items-center gap-3 mb-6">
-          <div className="flex items-center flex-1 border border-black rounded-lg bg-white px-4 py-2">
+          <div className="flex items-center flex-1 border border-orange-500 rounded-lg bg-white px-4 py-2">
             <svg
               className="w-5 h-5 text-gray-400 mr-2"
               fill="none"
@@ -431,7 +432,7 @@ export default function GalleryPage() {
           />
         </div>
 
-        <div className="border border-black rounded-lg overflow-hidden">
+        <div className="border border-orange-500 rounded-lg overflow-hidden">
           <table className="w-full text-sm">
             <thead className="bg-orange-50">
               <tr>
@@ -447,10 +448,7 @@ export default function GalleryPage() {
             <tbody>
               {isLoading && (
                 <tr>
-                  <td
-                    colSpan={7}
-                    className="py-8 text-center text-gray-500"
-                  >
+                  <td colSpan={7} className="py-8 text-center text-gray-500">
                     Loading gallery...
                   </td>
                 </tr>
@@ -505,10 +503,7 @@ export default function GalleryPage() {
 
               {!isLoading && !error && filteredData.length === 0 && (
                 <tr>
-                  <td
-                    colSpan={7}
-                    className="py-8 text-center text-gray-500"
-                  >
+                  <td colSpan={7} className="py-8 text-center text-gray-500">
                     No data matches the applied filter.
                   </td>
                 </tr>

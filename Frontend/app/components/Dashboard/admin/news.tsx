@@ -1,6 +1,6 @@
 import Sidebar from "~/components/Dashboard/admin/sidebar";
 import { useState, useMemo } from "react";
-import { Menu, Plus, Eye, EyeOff, Pencil, Trash, Check, X } from "lucide-react";
+import { Menu, Plus, Eye, EyeOff, Pencil, Trash, Check, X, Link} from "lucide-react";
 import { news_dummy, news_pending_dummy } from "~/components/Dashboard/admin/dataDummy";
 
 interface DropdownFilterProps {
@@ -22,12 +22,11 @@ const DropdownFilter: React.FC<DropdownFilterProps> = ({
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="border border-orange-500 rounded-lg px-4 py-2 bg-white text-gray-700 hover:bg-gray-50 flex items-center justify-between min-w-[120px]"
+        className="border border-orange-500 rounded-lg px-3 py-2 bg-white text-sm text-gray-700 hover:bg-gray-50 flex items-center justify-between min-w-[90px]"
       >
         {currentFilter || label}
         <svg
-          className={`w-4 h-4 ml-2 transition-transform ${isOpen ? "rotate-180" : ""
-            }`}
+          className={`w-4 h-4 ml-1 transition-transform ${isOpen ? "rotate-180" : ""}`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -37,7 +36,7 @@ const DropdownFilter: React.FC<DropdownFilterProps> = ({
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg z-10">
+        <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-lg z-10">
           {options.map((option) => (
             <button
               key={option}
@@ -45,7 +44,7 @@ const DropdownFilter: React.FC<DropdownFilterProps> = ({
                 onSelect(option);
                 setIsOpen(false);
               }}
-              className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-orange-50"
+              className="block w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-orange-50"
             >
               {option}
             </button>
@@ -93,16 +92,11 @@ export default function NewsPage() {
 
   const getStatusColorClass = (status: string) => {
     switch (status) {
-      case "Published":
-        return "text-orange-500";
-      case "Review":
-        return "text-blue-600";
-      case "Waiting":
-        return "text-green-600";
-      case "Muted":
-        return "text-red-500";
-      default:
-        return "text-black";
+      case "Published": return "text-orange-500";
+      case "Review": return "text-blue-600";
+      case "Waiting": return "text-green-600";
+      case "Muted": return "text-red-500";
+      default: return "text-black";
     }
   };
 
@@ -110,62 +104,62 @@ export default function NewsPage() {
     setSearchTerm(e.target.value);
 
   const handleToggleMute = (id: number) => {
-    setNewsList((prevNews) =>
-      prevNews.map((news) => {
-        if (news.id === id) {
-          const newStatus = news.status === "Muted" ? "Published" : "Muted";
-          return { ...news, status: newStatus };
-        }
-        return news;
-      })
+    setNewsList((prev) =>
+      prev.map((news) =>
+        news.id === id
+          ? { ...news, status: news.status === "Muted" ? "Published" : "Muted" }
+          : news
+      )
     );
   };
 
   const filteredData = useMemo(() => {
     let data = [...newsList];
     const getYearFromString = (dateString: string) => {
-      const parts = dateString.trim().split(' ');
+      const parts = dateString.trim().split(" ");
       return parts[parts.length - 1];
     };
 
     if (selectedYear !== "All Years") {
-      data = data.filter(row => getYearFromString(row.year) === selectedYear);
+      data = data.filter((r) => getYearFromString(r.year) === selectedYear);
     }
+
     if (selectedKategori !== "All") {
-      data = data.filter(row => row.kategori === selectedKategori);
+      data = data.filter((r) => r.kategori === selectedKategori);
     }
 
     if (searchTerm) {
-      const lowerCaseQuery = searchTerm.toLowerCase();
-      data = data.filter(row =>
-        row.title.toLowerCase().includes(lowerCaseQuery) ||
-        row.publisher.toLowerCase().includes(lowerCaseQuery)
+      const q = searchTerm.toLowerCase();
+      data = data.filter(
+        (r) =>
+          r.title.toLowerCase().includes(q) ||
+          r.publisher.toLowerCase().includes(q)
       );
     }
 
-    if (selectedSort === "A-Z") { data.sort((a, b) => a.title.localeCompare(b.title)); }
-    else if (selectedSort === "Z-A") { data.sort((a, b) => b.title.localeCompare(a.title)); }
+    if (selectedSort === "A-Z") data.sort((a,b)=>a.title.localeCompare(b.title));
+    else if (selectedSort === "Z-A") data.sort((a,b)=>b.title.localeCompare(a.title));
     else if (selectedSort === "Latest") {
-      data.sort((a, b) => new Date(b.year).getTime() - new Date(a.year).getTime());
+      data.sort((a,b)=>new Date(b.year).getTime()-new Date(a.year).getTime());
     }
 
     if (selectedStatus !== "All") {
-      data = data.filter(row => row.status === selectedStatus);
+      data = data.filter((r) => r.status === selectedStatus);
     }
 
     return data;
   }, [newsList, selectedYear, selectedKategori, searchTerm, selectedSort, selectedStatus]);
-
 
   const AddNews = () => alert("Add News clicked!");
   const handleApprove = (item: any) => alert("Approved: " + item.title);
   const handleReject = (item: any) => alert("Rejected: " + item.title);
 
   return (
-    <div className="flex">
+    <div className="flex min-h-screen overflow-y-scroll [scrollbar-gutter:stable]">
       {isSidebarOpen && <Sidebar />}
 
       <div className={`w-full p-8 transition-all ${isSidebarOpen ? "ml-64" : "ml-0"}`}>
+
         {/* Header */}
         <div className="flex items-center mb-6">
           <button
@@ -187,10 +181,11 @@ export default function NewsPage() {
           ))}
         </div>
 
-        {/* Filters */}
-        <div className="flex items-center gap-3 mb-6">
-          <div className="flex items-center flex-1 border border-orange-500 rounded-lg px-4 py-2 bg-white">
-            <svg className="w-5 h-5 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        {/* Filters — FIX 1 BARIS */}
+        <div className="flex items-center flex-nowrap gap-2 mb-6 text-sm">
+
+          <div className="flex items-center flex-1 border border-orange-500 rounded-lg px-3 py-2 bg-white">
+            <svg className="w-5 h-5 mr-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
             <input
@@ -198,20 +193,20 @@ export default function NewsPage() {
               placeholder="Search"
               value={searchTerm}
               onChange={handleSearchChange}
-              className="flex-1 outline-none bg-transparent"
+              className="flex-1 outline-none bg-transparent text-sm"
             />
           </div>
 
-          <DropdownFilter label="Tahun" options={["All Years", "2025", "2024", "2023"]} currentFilter={selectedYear} onSelect={setSelectedYear} />
-          <DropdownFilter label="Kategori" options={["All", "Berita", "Pelatihan", "Workshop", "Sertifikasi", "Artikel"]} currentFilter={selectedKategori} onSelect={setSelectedKategori} />
-          <DropdownFilter label="Urutkan" options={["A-Z", "Z-A", "Terpopuler", "Terbaru"]} currentFilter={selectedSort} onSelect={setSelectedSort} />
-          <DropdownFilter label="Status" options={["All", "Published", "Review", "Waiting", "Muted"]} currentFilter={selectedStatus} onSelect={setSelectedStatus} />
+          <DropdownFilter label="Tahun" options={["All Years","2025","2024","2023"]} currentFilter={selectedYear} onSelect={setSelectedYear} />
+          <DropdownFilter label="Kategori" options={["All","Berita","Pelatihan","Workshop","Sertifikasi","Artikel"]} currentFilter={selectedKategori} onSelect={setSelectedKategori} />
+          <DropdownFilter label="Urutkan" options={["A-Z","Z-A","Terpopuler","Terbaru"]} currentFilter={selectedSort} onSelect={setSelectedSort} />
+          <DropdownFilter label="Status" options={["All","Published","Review","Waiting","Muted"]} currentFilter={selectedStatus} onSelect={setSelectedStatus} />
 
           <button
             onClick={AddNews}
-            className="flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg"
+            className="flex items-center gap-1 bg-orange-600 hover:bg-orange-700 text-white px-3 py-2 rounded-lg text-sm whitespace-nowrap"
           >
-            <Plus size={18} />
+            <Plus size={16} />
             Add News
           </button>
         </div>
@@ -222,7 +217,7 @@ export default function NewsPage() {
             <thead className="bg-orange-50">
               <tr>
                 <th className="py-3">Title</th>
-                <th className="py-3">Kategori</th>
+                <th className="py-3">Category</th>
                 <th className="py-3">Date</th>
                 <th className="py-3">Publisher</th>
                 <th className="py-3">Status</th>
@@ -232,52 +227,38 @@ export default function NewsPage() {
 
             <tbody>
               {filteredData.map((row, index) => {
-                const isLastRow = index === filteredData.length - 1;
-                const borderClass = isLastRow ? '' : 'border-b border-gray-200';
                 const isReview = row.status === "Review";
                 const isMuted = row.status === "Muted";
                 const isWaiting = row.status === "Waiting";
                 const disabledStyle = "text-gray-300 cursor-not-allowed";
 
                 return (
-                  <tr key={index} className={index !== filteredData.length - 1 ? "border-b border-gray-200" : ""}>
+                  <tr key={index} className="border-b border-gray-200">
                     <td className="py-3 text-center">{row.title}</td>
                     <td className="py-3 text-center">{row.kategori}</td>
                     <td className="py-3 text-center">{row.year}</td>
                     <td className="py-3 text-center">{row.publisher}</td>
                     <td className={`py-3 text-center ${getStatusColorClass(row.status)}`}>{row.status}</td>
-                    
-                    <td className={`py-3 ${borderClass} text-center`}>
-
-                      <div className="flex items-center justify-center gap-2">
+                    <td className="py-3 text-center">
+                      <div className="flex justify-center gap-2">
                         <button
-                          className={`transition-colors ${isReview ? disabledStyle : "text-gray-600 hover:text-blue-600"}`}
+                          className={`${isReview ? disabledStyle : "text-gray-600 hover:text-blue-600"}`}
                           onClick={() => !isReview && handleToggleMute(row.id)}
                           disabled={isReview}
-                          title={isMuted ? "Unmute News" : "Mute News"}
                         >
                           {isMuted ? <EyeOff size={18} /> : <Eye size={18} />}
                         </button>
 
                         <button
-                          className={`transition-colors ${isReview || isWaiting || isMuted ? disabledStyle : "text-gray-600 hover:text-green-500"}`}
-                          onClick={() =>
-                            !(isReview || isWaiting || isMuted) &&
-                            console.log("Edit", row.title)
-                          }
+                          className={`${isReview || isWaiting || isMuted ? disabledStyle : "text-gray-600 hover:text-green-500"}`}
                           disabled={isReview || isWaiting || isMuted}
-                          title="Edit"
                         >
                           <Pencil size={18} />
                         </button>
 
                         <button
-                          className={`transition-colors ${isReview ? disabledStyle : "text-gray-600 hover:text-red-600"}`}
-                          onClick={() =>
-                            !isReview && console.log("Delete", row.title)
-                          }
+                          className={`${isReview ? disabledStyle : "text-gray-600 hover:text-red-600"}`}
                           disabled={isReview}
-                          title="Hapus"
                         >
                           <Trash size={18} />
                         </button>
@@ -298,7 +279,7 @@ export default function NewsPage() {
           </table>
         </div>
 
-        {/* Pending Section */}
+        {/* Pending */}
         <div className="mt-8">
           <button
             onClick={() => setShowPending(!showPending)}
@@ -306,11 +287,15 @@ export default function NewsPage() {
           >
             <div className="flex items-center">
               <h3 className="text-lg font-semibold mr-3">News Submissions</h3>
-              <span className="bg-orange-500 text-white px-2 py-1 rounded-full text-xs">1 new</span>
+              <span className="bg-orange-500 text-white px-2 py-1 rounded-full text-xs">
+                1 new
+              </span>
             </div>
 
             <svg
-              className={`w-5 h-5 transition-transform ${showPending ? "rotate-0" : "rotate-180"}`}
+              className={`w-5 h-5 transition-transform ${
+                showPending ? "rotate-0" : "rotate-180"
+              }`}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -326,7 +311,7 @@ export default function NewsPage() {
                   <tr>
                     <th className="py-3">Title</th>
                     <th className="py-3">Category</th>
-                    <th className="py-3">Submitted By</th>
+                    <th className="py-3">Publisher</th>
                     <th className="py-3">Date</th>
                     <th className="py-3">Action</th>
                   </tr>
@@ -338,17 +323,20 @@ export default function NewsPage() {
                       <td className="py-3 text-center">{item.title}</td>
                       <td className="py-3 text-center">{item.category}</td>
                       <td className="py-3 text-center">
-                        <div className="text-sm">{item.submittedBy?.name || "Unknown"}</div>
+                        <p className="font-medium">{item.submittedBy?.name || "Unknown"}</p>
                       </td>
                       <td className="py-3 text-center">{item.submissionDate}</td>
 
                       <td className="py-3 text-center">
-                        <div className="flex justify-center gap-3">
+                        <div className="flex justify-center gap-2">
+                          <button className="text-blue-500 hover:text-blue-800">
+                            <Link size={18}/>
+                          </button>
                           <button onClick={() => handleApprove(item)} className="text-green-600 hover:text-green-800">
-                            <Check size={18} />
+                            <Check size={18}/>
                           </button>
                           <button onClick={() => handleReject(item)} className="text-red-600 hover:text-red-800">
-                            <X size={18} />
+                            <X size={18}/>
                           </button>
                         </div>
                       </td>
@@ -358,7 +346,9 @@ export default function NewsPage() {
               </table>
             </div>
           )}
+
         </div>
+
       </div>
     </div>
   );

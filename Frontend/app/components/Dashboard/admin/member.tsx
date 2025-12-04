@@ -302,7 +302,7 @@ export default function MemberPage() {
                     <th className="py-3">NIM</th>
                     <th className="py-3">Email</th>
                     <th className="py-3">Role</th>
-                    <th className="py-3">Registration Date</th>
+                    <th className="py-3">Date</th>
                     <th className="py-3">Document</th>
                     <th className="py-3">Action</th>
                   </tr>

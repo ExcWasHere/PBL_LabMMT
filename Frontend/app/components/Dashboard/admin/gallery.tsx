@@ -330,7 +330,7 @@ export default function GalleryPage() {
                                     <tr>
                                         <th className="py-3">Title</th>
                                         <th className="py-3">Category</th>
-                                        <th className="py-3">Submitted By</th>
+                                        <th className="py-3">Publisher</th>
                                         <th className="py-3">Date</th>
                                         <th className="py-3">Files</th>
                                         <th className="py-3">Action</th>

@@ -232,7 +232,7 @@ export const registration_dummy = [
     role: "Frontend Developer",
     cvUrl: "/cv/budi.pdf",
     ktmUrl: "/ktm/budi.pdf",
-    registrationDate: "2024-11-30",
+    registrationDate: "5 Agustus 2025",
     status: "pending",
     document: "budi_document.pdf",
   },

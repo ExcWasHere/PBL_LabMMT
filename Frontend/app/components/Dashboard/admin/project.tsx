@@ -1,6 +1,7 @@
 import Sidebar from "~/components/Dashboard/admin/sidebar";
 import { useState, useMemo } from "react";
-import { Menu, Plus, Eye, EyeOff, Pencil, Trash, Check, X, Stars } from "lucide-react";
+import { Menu, Plus, Eye, EyeOff, Pencil, Trash, Check, X, Link } from "lucide-react";
+
 import { project_dummy, project_pending_dummy } from "~/components/Dashboard/admin/dataDummy";
 interface DropdownFilterProps {
   label: string;
@@ -15,10 +16,17 @@ const DropdownFilter: React.FC<DropdownFilterProps> = ({ label, options, current
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="border border-orange-500 rounded-lg px-4 py-2 bg-white text-gray-700 hover:bg-gray-50 focus:outline-none flex items-center justify-between min-w-[120px]"
+        className="border border-orange-500 rounded-lg px-3 py-2 bg-white text-sm text-gray-700 hover:bg-gray-50 focus:outline-none flex items-center justify-between min-w-[90px] whitespace-nowrap"
       >
         {currentFilter || label}
-        <svg className={`w-4 h-4 ml-2 transition-transform ${isOpen ? "transform rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+        <svg
+          className={`w-4 h-4 ml-1 transition-transform ${isOpen ? "rotate-180" : ""}`}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+        </svg>
       </button>
 
       {isOpen && (
@@ -41,9 +49,9 @@ const DropdownFilter: React.FC<DropdownFilterProps> = ({ label, options, current
   );
 };
 
-// --- NewsPage Component ---
+// --- ProjectPage Component ---
 export default function ProjectPage() {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true); 
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedYear, setSelectedYear] = useState("All Years");
   const [selectedKategori, setSelectedKategori] = useState("All");
@@ -51,6 +59,7 @@ export default function ProjectPage() {
   const [selectedStatus, setSelectedStatus] = useState("All");
 
   const [projects, setProjects] = useState(project_dummy);
+
   const stats = [
     {
       label: "Published",
@@ -96,11 +105,11 @@ export default function ProjectPage() {
       return parts[parts.length - 1];
     };
 
-    if (selectedKategori !== "All") { 
-      data = data.filter(row => row.kategori === selectedKategori); 
+    if (selectedKategori !== "All") {
+      data = data.filter(row => row.kategori === selectedKategori);
     }
-    if (selectedYear !== "All Years") { 
-      data = data.filter(row => getYearFromString(row.year) === selectedYear); 
+    if (selectedYear !== "All Years") {
+      data = data.filter(row => getYearFromString(row.year) === selectedYear);
     }
     if (searchTerm) {
       const lowerCaseQuery = searchTerm.toLowerCase();
@@ -121,7 +130,7 @@ export default function ProjectPage() {
     }
 
     if (selectedStatus !== "All") {
-      data = data.filter(row => row.status.toLowerCase() === selectedStatus);
+      data = data.filter(row => row.status.toLowerCase() === selectedStatus.toLowerCase());
     }
 
     return data;
@@ -158,18 +167,15 @@ export default function ProjectPage() {
     alert("Rejected: " + item.title);
   };
 
-
   return (
     <div className="flex">
       {isSidebarOpen && <Sidebar />}
 
-      {/* Page Content - Mengontrol margin kiri berdasarkan status sidebar */}
       <div
         className={`w-full p-8 transition-all duration-300 ease-in-out ${isSidebarOpen ? 'ml-64' : 'ml-0'}`}
       >
-        {/* Header dengan Tombol Toggle */}
+        {/* Header */}
         <div className="flex items-center mb-6">
-          {/* TOMBOL TOGGLE */}
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
             className="p-2 mr-4 text-gray-700 hover:text-orange-600 transition"
@@ -179,35 +185,28 @@ export default function ProjectPage() {
           <h1 className="text-3xl font-bold text-orange-600">Project</h1>
         </div>
 
-        {/* --- Stats Section --- */}
+        {/* Stats */}
         <div className="grid grid-cols-4 gap-4 mb-6">
           {stats.map((s) => (
-            <div
-              key={s.label}
-              className={`border-1 rounded-lg p-4 ${s.color}`}
-            >
-              <div className="text-left">
-                <p className="text-sm">{s.label}</p>
-                <h2 className="text-3xl font-semibold">{s.value}</h2>
-              </div>
+            <div key={s.label} className={`border-1 rounded-lg p-4 ${s.color}`}>
+              <p className="text-sm">{s.label}</p>
+              <h2 className="text-3xl font-semibold">{s.value}</h2>
             </div>
           ))}
         </div>
 
-        {/* --- Filters Section --- (Tetap) */}
-        <div className="flex items-center gap-3 mb-6">
-
-          <div className="flex items-center flex-1 border border-orange-500 rounded-lg bg-white px-4 py-2">
-            <svg className="w-5 h-5 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        {/* FILTER BAR FIX */}
+        <div className="flex items-center flex-nowrap gap-2 mb-6 text-sm">
+          <div className="flex items-center flex-1 border border-orange-500 rounded-lg bg-white px-3 py-2">
+            <svg className="w-5 h-5 text-gray-400 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
             </svg>
-
             <input
               type="text"
               placeholder="Search"
               value={searchTerm}
               onChange={handleSearchChange}
-              className="flex-1 outline-none text-gray-700 bg-transparent"
+              className="flex-1 outline-none text-sm bg-transparent"
             />
           </div>
 
@@ -215,15 +214,14 @@ export default function ProjectPage() {
           <DropdownFilter label="Kategori" options={["All", "UI/UX", "Game", "Frontend", "AR", "VR"]} currentFilter={selectedKategori} onSelect={setSelectedKategori} />
           <DropdownFilter label="Sort" options={["A-Z", "Z-A", "Most Popular", "Latest"]} currentFilter={selectedSort} onSelect={setSelectedSort} />
           <DropdownFilter label="Status" options={["All", "Published", "Review", "Muted", "Waiting"]} currentFilter={selectedStatus} onSelect={setSelectedStatus} />
+
           <button
             onClick={AddProject}
-            className="flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg transition-colors duration-200"
+            className="flex items-center gap-1 bg-orange-600 hover:bg-orange-700 text-white px-3 py-2 rounded-lg text-sm whitespace-nowrap transition"
           >
-            <Plus size={18} />
-            Add Project
+            <Plus size={16} /> Add Project
           </button>
         </div>
-
 
         {/* --- Table Section --- */}
         <div className="border border-orange-400 rounded-lg overflow-hidden">
@@ -231,7 +229,7 @@ export default function ProjectPage() {
             <thead className="bg-orange-50">
               <tr>
                 <th className="py-3">Title</th>
-                <th className="py-3">Kategori</th>
+                <th className="py-3">Category</th>
                 <th className="py-3">Date</th>
                 <th className="py-3">Publisher</th>
                 <th className="py-3">Stars</th>
@@ -242,7 +240,7 @@ export default function ProjectPage() {
             <tbody>
               {filteredData.map((row, index) => {
                 const isLastRow = index === filteredData.length - 1;
-                const borderClass = isLastRow ? "": 'border-b border-gray-200';
+                const borderClass = isLastRow ? "" : 'border-b border-gray-200';
 
                 const isReview = row.status === "Review";
                 const isMuted = row.status === "Muted";
@@ -257,37 +255,27 @@ export default function ProjectPage() {
                     <td className={`py-3 ${borderClass} text-center`}>{row.year}</td>
                     <td className={`py-3 ${borderClass} text-center`}>{row.publisher}</td>
                     <td className={`py-3 ${borderClass} text-center`}>{row.stars}</td>
-                    <td className={`py-3 ${borderClass} font-medium text-center ${getStatusColorClass(row.status)}`}>{row.status}</td>
+                    <td className={`py-3 ${borderClass} text-center font-medium ${getStatusColorClass(row.status)}`}>{row.status}</td>
                     <td className={`py-3 ${borderClass} text-center`}>
                       <div className="flex items-center justify-center gap-2">
                         <button
                           className={`transition-colors ${isReview ? disabledStyle : "text-gray-600 hover:text-blue-600"}`}
                           onClick={() => !isReview && handleToggleMute(row.id)}
                           disabled={isReview}
-                          title={isMuted ? "Unmute Project" : "Mute Project"}
                         >
                           {isMuted ? <EyeOff size={18} /> : <Eye size={18} />}
                         </button>
 
                         <button
                           className={`transition-colors ${isReview || isWaiting || isMuted ? disabledStyle : "text-gray-600 hover:text-green-500"}`}
-                          onClick={() =>
-                            !(isReview || isWaiting || isMuted) &&
-                            console.log("Edit", row.title)
-                          }
                           disabled={isReview || isWaiting || isMuted}
-                          title="Edit"
                         >
                           <Pencil size={18} />
                         </button>
 
                         <button
                           className={`transition-colors ${isReview ? disabledStyle : "text-gray-600 hover:text-red-600"}`}
-                          onClick={() =>
-                            !isReview && console.log("Delete", row.title)
-                          }
                           disabled={isReview}
-                          title="Hapus"
                         >
                           <Trash size={18} />
                         </button>
@@ -296,6 +284,7 @@ export default function ProjectPage() {
                   </tr>
                 );
               })}
+
               {filteredData.length === 0 && (
                 <tr>
                   <td colSpan={7} className="py-8 text-center text-gray-500">
@@ -307,28 +296,29 @@ export default function ProjectPage() {
           </table>
         </div>
 
+        {/* Pending Section */}
         <div className="mt-8">
           <button
             onClick={() => setShowPending(!showPending)}
-            className="flex items-center justify-between w-full p-4 bg-orange-50 border border-orange-200 rounded-lg hover:bg-orange-100">
+            className="flex items-center justify-between w-full p-4 bg-orange-50 border border-orange-200 rounded-lg hover:bg-orange-100"
+          >
             <div className="flex items-center">
               <h3 className="text-lg font-semibold text-gray-800 mr-3">
                 Project Submissions
               </h3>
-              <span className="bg-orange-500 text-white px-2 py-1 rounded-full text-xs">1 new</span>
+              <span className="bg-orange-500 text-white px-2 py-1 rounded-full text-xs">
+                1 new
+              </span>
             </div>
             <svg
-              className={`w-5 h-5 transform transition-transform ${showPending ? "rotate-0" : "rotate-180"}`}
+              className={`w-5 h-5 transform transition-transform ${
+                showPending ? "rotate-0" : "rotate-180"
+              }`}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M19 9l-7 7-7-7"
-              />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
             </svg>
           </button>
 
@@ -339,50 +329,35 @@ export default function ProjectPage() {
                   <tr>
                     <th className="py-3">Title</th>
                     <th className="py-3">Category</th>
-                    <th className="py-3">Submitted By</th>
+                    <th className="py-3">Publisher</th>
                     <th className="py-3">Date</th>
-                    <th className="py-3">Files</th>
                     <th className="py-3">Action</th>
                   </tr>
                 </thead>
                 <tbody>
                   {pending.map((item) => (
                     <tr key={item.id} className="border-b border-gray-200">
-
                       <td className="py-3 text-center">{item.title}</td>
-
                       <td className="py-3 text-center">{item.category}</td>
-
                       <td className="py-3 text-center">
-                        <div className="text-sm">
-                          <p className="font-medium">{item.submittedBy?.name || "Unknown"}</p>
-                        </div>
+                        <p className="font-medium">{item.submittedBy?.name || "Unknown"}</p>
                       </td>
-
                       <td className="py-3 text-center">{item.submissionDate}</td>
-
-                      <td className="py-3 text-center">—</td>
-
                       <td className="py-3 text-center">
                         <div className="flex items-center justify-center gap-3">
-                          <button
-                            onClick={() => handleApprove(item)}
-                            className="text-green-600 hover:text-green-800"
-                            title="Approve Submission"
-                          >
+                          <button onClick={() => handleViewFile(item)} className="text-blue-500 hover:text-blue-800">
+                            <Link size={18} />
+                          </button>
+
+                          <button onClick={() => handleApprove(item)} className="text-green-600 hover:text-green-800">
                             <Check size={18} />
                           </button>
 
-                          <button
-                            onClick={() => handleReject(item)}
-                            className="text-red-600 hover:text-red-800"
-                            title="Reject Submission"
-                          >
+                          <button onClick={() => handleReject(item)} className="text-red-600 hover:text-red-800">
                             <X size={18} />
                           </button>
                         </div>
                       </td>
-
                     </tr>
                   ))}
                 </tbody>

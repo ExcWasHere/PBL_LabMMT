@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DeepPartial } from 'typeorm';
@@ -7,6 +8,25 @@ import { RegisterDto } from '../auth/dto/register.dto';
 
 @Injectable()
 export class UsersService {
+  async getProfile(id: number) {
+    const user = await this.repo.findOne({ where: { id } });
+    return user;
+  }
+
+  async updateBio(id: number, bio?: string) {
+    const bioToSave = bio ?? null;
+
+    await this.repo.update({ id }, { bio: bioToSave as any });
+
+    return { bio: bioToSave };
+  }
+
+  async updatePhoto(id: number, file: Express.Multer.File) {
+    const photoUrl = `/uploads/photos/${file.filename}`;
+    await this.repo.update({ id }, { photo: photoUrl });
+    return { photo: photoUrl };
+  }
+
   constructor(
     @InjectRepository(User)
     private readonly repo: Repository<User>,

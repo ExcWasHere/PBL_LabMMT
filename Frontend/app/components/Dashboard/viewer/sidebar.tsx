@@ -26,6 +26,8 @@ const Sidebar: FC = () => {
   const [profile, setProfile] = useState<{
     name?: string;
     email?: string;
+    bio?: string;
+    photo?: string;
   } | null>(null);
 
   const menuTop: MenuItem[] = [
@@ -65,6 +67,15 @@ const Sidebar: FC = () => {
       danger: true,
     },
   ];
+
+  const getPhotoUrl = (raw?: string) => {
+    if (!raw) return "../member/person1.jpg";
+    if (raw.startsWith("/uploads")) {
+      return `http://localhost:3000${raw}`;
+    }
+    return raw;
+  };
+
   useEffect(() => {
     const currentPath = location.pathname;
     const activeTopMenu = menuTop.find((m) => m.route === currentPath);
@@ -81,6 +92,39 @@ const Sidebar: FC = () => {
   }, [location.pathname]);
 
   useEffect(() => {
+    loadProfile();
+    const handleStorageChange = () => {
+      loadProfile();
+    };
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, []);
+
+  const loadProfile = async () => {
+    try {
+      const response = await fetch("http://localhost:3000/user/profile", {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setProfile({
+          name: data.name ?? data.fullname ?? data.username ?? "KetuaLab",
+          email: data.email ?? "user@gmail.com",
+          bio: data.bio ?? data.status ?? "Belum ada bio",
+          photo: data.photo ?? "",
+        });
+      } else {
+        loadFromLocalStorage();
+      }
+    } catch (e) {
+      loadFromLocalStorage();
+    }
+  };
+
+  const loadFromLocalStorage = () => {
     try {
       const raw = localStorage.getItem("user");
       if (raw) {
@@ -88,14 +132,26 @@ const Sidebar: FC = () => {
         setProfile({
           name: parsed.name ?? parsed.fullname ?? parsed.username ?? "KetuaLab",
           email: parsed.email ?? "user@gmail.com",
+          bio: parsed.bio ?? parsed.status ?? "Belum ada bio",
+          photo: parsed.photo ?? "",
         });
       } else {
-        setProfile({ name: "KetuaLab", email: "user@gmail.com" });
+        setProfile({
+          name: "KetuaLab",
+          email: "user@gmail.com",
+          bio: "Belum ada bio",
+          photo: "",
+        });
       }
-    } catch (e) {
-      setProfile({ name: "KetuaLab", email: "user@gmail.com" });
+    } catch {
+      setProfile({
+        name: "KetuaLab",
+        email: "user@gmail.com",
+        bio: "Belum ada bio",
+        photo: "",
+      });
     }
-  }, []);
+  };
 
   const handleNavigation = (menuItem: MenuItem) => {
     if (menuItem.route) {
@@ -107,10 +163,23 @@ const Sidebar: FC = () => {
     <div className="w-64 h-screen bg-[#f6ece4] border-r border-gray-300 p-5 flex flex-col justify-between fixed">
       {/* profile section */}
       <div>
+        {/* Bio Cloud */}
+        {profile?.bio && (
+          <div className="mb-4 relative">
+            <div className="bg-white rounded-2xl p-3 shadow-md border-2 border-orange-200 relative">
+              <div className="absolute -top-5 -left-3 text-3xl">☁️</div>
+              <div className="absolute -top-5 -right-4 text-3xl rotate-12">☁️</div>
+              <p className="text-xs text-gray-700 italic text-center leading-relaxed">
+                "{profile.bio}"
+              </p>
+            </div>
+          </div>
+        )}
+
         <div className="flex items-center gap-3 mb-4">
           <img
-            src="../member/person1.jpg"
-            className="w-12 h-12 rounded-full"
+            src={getPhotoUrl(profile?.photo)}
+            className="w-12 h-12 rounded-full object-cover"
             alt="profile"
           />
           <div>

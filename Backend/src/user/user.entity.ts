@@ -43,4 +43,10 @@ export class User {
     nullable: true,
   })
   cvPath?: string | null;
+
+  @Column({ type: 'text', nullable: true })
+  bio?: string;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  photo?: string;
 }

@@ -7,18 +7,66 @@ const ProfilPage = () => {
     role: "",
     email: "",
     phone: "",
-    status: "",
-    photo:
-      "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop",
+    bio: "",
+    photo: "",
   });
 
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState({
-    status: "",
+    bio: "",
     photo: "",
   });
+  const [isLoading, setIsLoading] = useState(false);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const getPhotoUrl = (raw?: string) => {
+    if (!raw) return "../member/person1.jpg";
+    if (raw.startsWith("/uploads")) {
+      return `http://localhost:3000${raw}`;
+    }
+    return raw;
+  };
 
   useEffect(() => {
+    fetchProfile();
+  }, []);
+
+  const fetchProfile = async () => {
+    try {
+      setIsLoading(true);
+
+      const response = await fetch("http://localhost:3000/user/profile", {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const profileData = {
+          name: data.name ?? data.fullname ?? data.username ?? "KetuaLab",
+          role: data.role ?? "Lab Member",
+          email: data.email ?? "user@gmail.com",
+          phone: data.phone ?? data.phoneNumber ?? "08123456789",
+          bio: data.bio ?? data.status ?? "Belum ada bio",
+          photo: data.photo ?? "",
+        };
+        setProfile(profileData);
+        setEditData({
+          bio: profileData.bio,
+          photo: profileData.photo,
+        });
+      } else {
+        loadFromLocalStorage();
+      }
+    } catch (e) {
+      console.error("Error loading profile:", e);
+      loadFromLocalStorage();
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const loadFromLocalStorage = () => {
     try {
       const raw = localStorage.getItem("user");
       if (raw) {
@@ -28,23 +76,24 @@ const ProfilPage = () => {
           role: parsed.role ?? "Lab Member",
           email: parsed.email ?? "user@gmail.com",
           phone: parsed.phone ?? parsed.phoneNumber ?? "08123456789",
-          status: parsed.status ?? "Available",
-          photo: parsed.photo ?? "../member/person1.jpg",
+          bio: parsed.bio ?? parsed.status ?? "Belum ada bio",
+          photo: parsed.photo ?? "",
         };
         setProfile(profileData);
         setEditData({
-          status: profileData.status,
+          bio: profileData.bio,
           photo: profileData.photo,
         });
       }
     } catch (e) {
-      console.error("Error loading profile:", e);
+      console.error("Error loading from localStorage:", e);
     }
-  }, []);
+  };
 
   const handlePhotoChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setPhotoFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
         if (typeof reader.result === "string") {
@@ -55,27 +104,92 @@ const ProfilPage = () => {
     }
   };
 
-  const handleSave = () => {
-    setProfile((prev) => ({
-      ...prev,
-      status: editData.status,
-      photo: editData.photo || prev.photo,
-    }));
+  const handleSave = async () => {
+    try {
+      setIsLoading(true);
+      let latestPhoto = profile.photo;
+      if (photoFile) {
+        const formData = new FormData();
+        formData.append("photo", photoFile);
 
-    setIsEditing(false);
-    alert("Profil berhasil diperbarui!");
+        const photoResponse = await fetch(
+          "http://localhost:3000/user/photo",
+          {
+            method: "PUT",
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+            },
+            body: formData,
+          }
+        );
+
+        if (!photoResponse.ok) {
+          const errorText = await photoResponse.text();
+          console.error(
+            "Gagal update photo:",
+            photoResponse.status,
+            errorText
+          );
+          alert("Gagal menyimpan foto profil.");
+          return;
+        }
+
+        const photoData = await photoResponse.json();
+        latestPhoto = photoData.photo;
+
+        setProfile((prev) => ({ ...prev, photo: latestPhoto }));
+      }
+      const bioResponse = await fetch("http://localhost:3000/user/bio", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+        },
+        body: JSON.stringify({ bio: editData.bio }),
+      });
+
+      if (!bioResponse.ok) {
+        const errorText = await bioResponse.text();
+        console.error("Gagal update bio:", bioResponse.status, errorText);
+        alert("Gagal menyimpan bio.");
+        return;
+      }
+
+      const bioData = await bioResponse.json();
+      setProfile((prev) => ({ ...prev, bio: bioData.bio }));
+      const userRaw = localStorage.getItem("user");
+      if (userRaw) {
+        const user = JSON.parse(userRaw);
+        user.bio = bioData.bio;
+        user.photo = latestPhoto;
+        localStorage.setItem("user", JSON.stringify(user));
+      }
+
+      setIsEditing(false);
+      setPhotoFile(null);
+      alert("Profil berhasil diperbarui!");
+    } catch (error) {
+      console.error("Error saving profile:", error);
+      alert("Gagal menyimpan profil. Silakan coba lagi.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleCancel = () => {
     setEditData({
-      status: profile.status,
+      bio: profile.bio,
       photo: profile.photo,
     });
+    setPhotoFile(null);
     setIsEditing(false);
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-orange-100 p-8">
+    <div
+      className="min-h-screen bg-cover bg-center p-8"
+      style={{ backgroundImage: "url(/latar-belakang.svg)" }}
+    >
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-6 flex items-center gap-4">
@@ -91,7 +205,7 @@ const ProfilPage = () => {
         {/* Profile Card */}
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
           {/* Header Banner */}
-          <div className="h-32 bg-gradient-to-r from-orange-400 to-orange-600"></div>
+          <div className="h-32 bg-linear-to-r from-orange-400 to-orange-600"></div>
 
           {/* Profile Content */}
           <div className="px-8 pb-8">
@@ -99,7 +213,11 @@ const ProfilPage = () => {
             <div className="flex flex-col items-center -mt-16 mb-6">
               <div className="relative">
                 <img
-                  src={isEditing ? editData.photo || profile.photo : profile.photo}
+                  src={
+                    isEditing
+                      ? editData.photo || getPhotoUrl(profile.photo)
+                      : getPhotoUrl(profile.photo)
+                  }
                   alt="Profile"
                   className="w-32 h-32 rounded-full border-4 border-white shadow-lg object-cover"
                 />
@@ -166,29 +284,31 @@ const ProfilPage = () => {
                 </div>
               </div>
 
-              {/* Editable Status */}
+              {/* Editable Bio */}
               <div className="bg-orange-50 p-4 rounded-lg border-2 border-orange-200">
                 <div className="flex items-center gap-3 mb-2">
-                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                  <User size={20} className="text-orange-500" />
                   <span className="text-sm font-semibold text-gray-600">
-                    Status
+                    Bio
                   </span>
                 </div>
                 {isEditing ? (
-                  <input
-                    type="text"
-                    value={editData.status}
+                  <textarea
+                    value={editData.bio}
                     onChange={(e) =>
                       setEditData((prev) => ({
                         ...prev,
-                        status: e.target.value,
+                        bio: e.target.value,
                       }))
                     }
-                    className="w-full ml-6 px-3 py-2 border border-orange-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                    placeholder="Contoh: Available, Busy, In a meeting..."
+                    rows={3}
+                    className="w-full px-3 py-2 border border-orange-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none"
+                    placeholder="Ceritakan tentang dirimu..."
                   />
                 ) : (
-                  <p className="text-gray-800 ml-6">{profile.status}</p>
+                  <p className="text-gray-800 ml-6 whitespace-pre-wrap">
+                    {profile.bio}
+                  </p>
                 )}
               </div>
             </div>
@@ -199,15 +319,17 @@ const ProfilPage = () => {
                 <>
                   <button
                     onClick={handleCancel}
-                    className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
+                    disabled={isLoading}
+                    className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition disabled:opacity-50"
                   >
                     Batal
                   </button>
                   <button
                     onClick={handleSave}
-                    className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition shadow-lg"
+                    disabled={isLoading}
+                    className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition shadow-lg disabled:opacity-50"
                   >
-                    Simpan Perubahan
+                    {isLoading ? "Menyimpan..." : "Simpan Perubahan"}
                   </button>
                 </>
               ) : (

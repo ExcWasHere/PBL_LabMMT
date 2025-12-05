@@ -1,5 +1,5 @@
-import { motion } from "framer-motion"
-import Card from "../../common/card"
+import { motion } from "framer-motion";
+import Card from "../../common/card";
 
 export function HomeBerita() {
   const news = [
@@ -27,55 +27,49 @@ export function HomeBerita() {
       tags: ["Foto", "Animasi"],
       info: "Blitar",
     },
-  ]
+  ];
 
   return (
-    <section className="bg-white text-left py-25 sm:px-10 lg:px-20">
+    <section className="bg-white text-left py-16 sm:py-20 lg:py-24 px-4 sm:px-6 lg:px-20">
       <div className="max-w-7xl mx-auto">
         <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        viewport={{ once: true }}
-        className="text-4xl md:text-5xl font-bold text-gray-900 tracking-tight"
-      >
-        <h2 className="text-4xl md:text-5xl font-bold text-gray-900 tracking-tight">News</h2>
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          viewport={{ once: true }}
+          className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 tracking-tight"
+        >
+          <h2>News</h2>
         </motion.div>
-        <div className="mt-4 mb-10 overflow-hidden">
+        <div className="mt-3 sm:mt-4 mb-8 sm:mb-10 overflow-hidden">
           <motion.div
             initial={{ width: 0 }}
-            whileInView={{ width: "3rem" }}  
+            whileInView={{ width: "3rem" }}
             transition={{ duration: 0.5 }}
             viewport={{ once: true }}
             className="h-1 bg-orange-600"
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-10 mb-12 md:mb-16">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 mb-10 sm:mb-12">
           {news.map((item, idx) => (
             <motion.div
               key={idx}
-              initial={{ opacity: 0, scale: 0.95 }}
+              initial={{ opacity: 0, scale: 0.96 }}
               whileInView={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.4, delay: idx * 0.1 }}
+              transition={{ duration: 0.35, delay: idx * 0.08 }}
               viewport={{ once: true }}
             >
-              <Card
-                image={item.image}
-                date={item.date}
-                title={item.title}
-                desc={item.desc}
-                tags={item.tags}
-                info={item.info}
-              />
+              <Card {...item} />
             </motion.div>
           ))}
         </div>
 
         <motion.div
-          initial={{ scale: 0.8, opacity: 0 }}
+          initial={{ scale: 0.9, opacity: 0 }}
           whileInView={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.3 }}
+          transition={{ duration: 0.25 }}
+          viewport={{ once: true }}
         >
           <div className="text-center">
             <a href="/news">
@@ -87,5 +81,5 @@ export function HomeBerita() {
         </motion.div>
       </div>
     </section>
-  )
+  );
 }

@@ -95,7 +95,10 @@ export default function Footer() {
           >
             {/* Description */}
             <p className="text-sm text-white/80">
-              p balap lorem ipsum dolor samndut amet
+              Laboratorium Multimedia dan Mobile Technology adalah
+              sebuah laboratorium yang berfokus pada pengembangan teknologi
+              multimedia dan mobile untuk mendukung kegiatan penelitian dan
+              pengembangan di Jurusan Teknologi Informasi, Politeknik Negeri Malang.
             </p>
 
             {/* Mobile Navigation */}
@@ -106,11 +109,11 @@ export default function Footer() {
                   <Link to="/our-story" className="hover:text-orange-200">
                     Our Story
                   </Link>
-                  <Link to="/why-LabMMT" className="hover:text-orange-200">
-                    Why labMMT?
+                  <Link to="/our-sponsorship" className="hover:text-orange-200">
+                    Our Sponsorship
                   </Link>
-                  <Link to="/testimonial" className="hover:text-orange-200">
-                    Testimonials
+                  <Link to="/gallery" className="hover:text-orange-200">
+                    Our Activity
                   </Link>
                 </div>
               </div>

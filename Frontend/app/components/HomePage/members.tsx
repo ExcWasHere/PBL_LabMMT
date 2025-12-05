@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import MemberCard from "../../common/memberCard";
 
 export function HomeMember() {
@@ -26,35 +26,43 @@ export function HomeMember() {
   ];
 
   const [index, setIndex] = useState(0);
-  const [shift, setShift] = useState(0);
+  const [itemsPerView, setItemsPerView] = useState(1);
 
-  const cardRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
-  if (!cardRef.current) return;
+    const updateItemsPerView = () => {
+      if (typeof window === "undefined") return;
+      const w = window.innerWidth;
+      if (w < 768) setItemsPerView(1);       // mobile
+      else if (w < 1024) setItemsPerView(2); // tablet
+      else setItemsPerView(3);               // desktop
+    };
 
-  const observer = new ResizeObserver((entries) => {
-    const width = entries[0].contentRect.width;
-    setShift(width);
-  });
-
-    observer.observe(cardRef.current);
-
-    return () => observer.disconnect();
+    updateItemsPerView();
+    window.addEventListener("resize", updateItemsPerView);
+    return () => window.removeEventListener("resize", updateItemsPerView);
   }, []);
 
+  const maxIndex = useMemo(
+    () => Math.max(0, Math.ceil(teamMembers.length / itemsPerView) - 1),
+    [teamMembers.length, itemsPerView]
+  );
+
+  const safeIndex = Math.min(index, maxIndex);
+  const shiftPercent = 100 / itemsPerView;
+
   return (
-    <section className="bg-white text-left py-15 sm:px-10 lg:px-20">
+    <section className="bg-white text-left py-16 sm:py-20 lg:py-24 px-4 sm:px-6 lg:px-20 scroll-mt-20">
       <div className="max-w-7xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
           viewport={{ once: true }}
-          className="text-4xl md:text-5xl font-bold text-gray-900 tracking-tight"
+          className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 tracking-tight"
         >
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 tracking-tight">Team Member</h2>
+          <h2>Team Member</h2>
         </motion.div>
-        <div className="mt-4 mb-10 overflow-hidden">
+        <div className="mt-3 sm:mt-4 mb-8 overflow-hidden">
           <motion.div
             initial={{ width: 0 }}
             whileInView={{ width: "3rem" }}
@@ -64,50 +72,54 @@ export function HomeMember() {
           />
         </div>
 
-        <div className="flex justify-center mb-16">
+        {/* Leader */}
+        <div className="flex justify-center mb-10 sm:mb-14">
           <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
+            initial={{ opacity: 0, scale: 0.9 }}
             whileInView={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5 }}
+            transition={{ duration: 0.4 }}
             viewport={{ once: true }}
-            className="w-full max-w-xs"
+            className="w-full max-w-xs sm:max-w-sm"
           >
             <MemberCard {...leader} isLeader />
           </motion.div>
         </div>
 
-
+        {/* Slider */}
         <div className="overflow-hidden w-full">
           <motion.div
-            animate={{ x: -(index * shift) }}
-            transition={{ duration: 0.55, ease: "easeInOut" }}
-            className="flex gap-[16.5px]"
+            animate={{ x: `-${safeIndex * shiftPercent}%` }}
+            transition={{ duration: 0.5, ease: "easeInOut" }}
+            className="flex gap-4 sm:gap-5"
           >
             {teamMembers.map((member, i) => (
               <div
                 key={i}
-                ref={i === 0 ? cardRef : null}
-                className="min-w-[calc((100%-3rem)/3)] max-w-[calc((100%-3rem)/3)]"
+                className="basis-full sm:basis-1/2 lg:basis-1/3 shrink-0"
               >
                 <MemberCard {...member} />
               </div>
             ))}
           </motion.div>
-
         </div>
+
+        {/* Dots */}
         <div className="flex justify-center gap-2 mt-6">
-          {Array.from({ length: Math.ceil(teamMembers.length / 3) }).map(
-            (_, dotIndex) => (
-              <button
-                key={dotIndex}
-                onClick={() => setIndex(dotIndex)}
-                className={`w-3 h-3 rounded-full transition-all ${index === dotIndex ? "bg-orange-500 w-6" : "bg-gray-300"
-                  }`}
-              />
-            )
-          )}
+          {Array.from({ length: maxIndex + 1 }).map((_, dotIndex) => (
+            <button
+              key={dotIndex}
+              onClick={() => setIndex(dotIndex)}
+              className={`h-2.5 rounded-full transition-all ${
+                safeIndex === dotIndex
+                  ? "bg-orange-500 w-6"
+                  : "bg-gray-300 w-2.5"
+              }`}
+              aria-label={`Slide ${dotIndex + 1}`}
+            />
+          ))}
         </div>
       </div>
-    </section >
+    </section>
   );
 }
+export default HomeMember;

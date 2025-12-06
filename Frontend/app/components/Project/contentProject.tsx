@@ -74,7 +74,7 @@ export function ContentProject() {
                       value={tags}
                       onChange={(e) => setTags(e.target.value)}
                     >
-                      <option value="">Tags</option>
+                      <option value="">All Tech</option>
                       <option value="React">React</option>
                       <option value="Tailwind">Tailwind</option>
                       <option value="Unity">Unity</option>
@@ -88,7 +88,7 @@ export function ContentProject() {
                       value={year}
                       onChange={(e) => setYear(e.target.value)}
                     >
-                      <option value="">Year</option>
+                      <option value="">All Years</option>
                       <option value="2023">2023</option>
                       <option value="2024">2024</option>
                       <option value="2025">2025</option>

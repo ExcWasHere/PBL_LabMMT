@@ -7,23 +7,39 @@ import { ProjectInfo } from "./components/projectInfo";
 import { TeamSection } from "./components/teamSection"; 
 import { CommentSection } from "./components/commentSection";
 import { useCommentSystem } from "./hooks/useCommentSystem";
+import type { ProjectDetailItem } from "./types";
 import { dummy_images, dummy_team_member } from "./data/mockData";
 
 export function Detail1() {
   const { 
     comments, userName, setUserName, commentText, setCommentText, 
-    userRating, setUserRating, addComment, averageRating, userReviewsCount 
+    userRating, setUserRating, addComment, averageRating, userReviewsCount, addReply, toggleLike 
   } = useCommentSystem();
 
-  const projectDetails = [
+  const projectDetails: ProjectDetailItem[] = [
     { label: "Type", value: "Game" },
     { label: "Date", value: "23 November 2025" },
     { label: "Tech", value: "Unity, Blender" },
-    { label: "Repository", value: "https://github.com/username/project-a" },
+    { label: "Link", value:[{text: "GitHub", url:  "https://github.com/username/project-a"}, {text: "Demo", url: "https://drive.google.com"}] },
     { label: "Rating", value: averageRating },
   ];
 
-  const recommendations = projects.filter((p) => p.title !== "Project A").slice(0, 3);
+  const currentTechDetail = projectDetails.find((d) => d.label === "Tech");
+  const currentTechList = currentTechDetail 
+    ? (currentTechDetail.value as string).toLowerCase().split(",").map((t) => t.trim()) 
+    : [];
+
+  const recommendations = projects.filter((p: any) => {
+      // Jangan tampilkan project yang sedang dibuka (Project A)
+      if (p.title === "Project A") return false;
+
+      const otherProjectTechs = typeof p.tags === "string"
+        ? p.tags.toLowerCase().split(",") 
+        : (p.tags || []); 
+
+      return otherProjectTechs.some((t: string) => currentTechList.includes(t.trim().toLowerCase()));
+    })
+    .slice(0, 3);
 
   return (
     <div className="bg-white min-h-screen text-gray-800 pt-20">
@@ -61,6 +77,8 @@ export function Detail1() {
           commentText={commentText} setCommentText={setCommentText}
           userRating={userRating} setUserRating={setUserRating}
           onSubmit={addComment}
+          onReply={addReply}
+          onLike={toggleLike}
           reviewCount={userReviewsCount}
         />
       </main>

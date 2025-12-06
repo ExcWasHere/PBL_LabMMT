@@ -1,0 +1,295 @@
+import { useState, useEffect } from "react";
+import { X, Eye, Download, ExternalLink } from "lucide-react";
+import MediaUploader from "./media-uploader";
+
+interface NewsData {
+  title: string;
+  category: string;
+  date: string;
+  publisher: string;
+  location: string;
+  content: string;
+  docGuide: string;
+  newsLink: string;
+  coverUrl: string;
+  coverFile?: File; 
+  docFile?: File;
+}
+
+interface NewsFormProps {
+  onClose: () => void;
+  onSubmit: (newsData: NewsData) => void;
+  initialData?: NewsData;
+}
+
+export default function NewsForm({ onClose, onSubmit, initialData }: NewsFormProps) {
+  
+  const isEditMode = !!initialData;
+  const [showPreview, setShowPreview] = useState(false);
+
+  // Title Logic
+  const formTitle = isEditMode ? "Edit Post" : "Add New Post";
+
+  const defaultFormData: NewsData = {
+    title: "",
+    category: "News",
+    date: "",
+    publisher: "",
+    location: "",
+    content: "",
+    docGuide: "",
+    newsLink: "",
+    coverUrl: "",
+  };
+
+  const [formData, setFormData] = useState<NewsData>(
+    initialData || defaultFormData
+  );
+
+  useEffect(() => {
+      setFormData(initialData || defaultFormData);
+  }, [initialData]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = () => {
+    if (!formData.title || !formData.category || !formData.date || !formData.publisher || !formData.content) {
+      alert("Please fill in required fields");
+      return;
+    }
+    onSubmit(formData);
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 bg-white z-50 overflow-y-auto font-sans">
+      <div className="w-full h-full p-8">
+        
+        {/* HEADER SECTION - Matches Project Form */}
+        <div className="flex items-center justify-between mb-8">
+          <h2 className="text-3xl font-bold text-orange-600">{formTitle}</h2>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-gray-100 rounded-lg transition"
+          >
+            <X size={28} className="text-gray-600" />
+          </button>
+        </div>
+
+        {/* MAIN CONTENT AREA */}
+        <div className="max-w-6xl mx-auto space-y-6 pb-24">
+          
+          {showPreview ? (
+            /* PREVIEW MODE */
+            <div className="animate-in fade-in zoom-in-95 duration-300">
+               <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-2 rounded-lg mb-8 flex items-center gap-2 text-sm">
+                  <Eye size={16} />
+                  <span>You are viewing a preview. Links and downloads are disabled in this mode.</span>
+              </div>
+
+              {/* News Specific Preview Layout */}
+              <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100">
+                 <div className="relative">
+                     <img
+                        src={formData.coverUrl || "https://placehold.co/1200x600?text=No+Cover+Image"}
+                        alt="Header"
+                        className="w-full h-[400px] object-cover"
+                      />
+                     <div className="p-8 md:p-12 max-w-4xl mx-auto">
+                        <div className="text-center mb-10">
+                            <span className="inline-block px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-sm font-semibold mb-4">
+                                {formData.category}
+                            </span>
+                            <h1 className="text-4xl md:text-5xl font-extrabold leading-tight text-gray-900 mb-4 break-words">
+                                {formData.title || <span className="text-gray-300 italic">Untitled Post</span>}
+                            </h1>
+                            <p className="text-gray-500 text-sm">
+                                {formData.date || "Unknown Date"} • <span className="font-semibold text-gray-900">{formData.publisher}</span> 
+                                {formData.location && ` • ${formData.location}`}
+                            </p>
+                        </div>
+
+                        <div className="prose prose-lg max-w-none text-gray-700 whitespace-pre-wrap leading-relaxed">
+                            {formData.content || <span className="text-gray-300 italic">No content written yet...</span>}
+                        </div>
+
+                        {/* Action Buttons in Preview */}
+                        <div className="flex flex-wrap justify-center gap-4 mt-12 border-t border-gray-100 pt-8">
+                            {formData.docGuide ? (
+                                <button className="flex items-center gap-2 bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700 transition shadow-sm opacity-80 cursor-not-allowed">
+                                    <Download size={20} /> Download Guide
+                                </button>
+                            ) : (
+                                <span className="text-sm text-gray-400 italic px-4 py-2 border border-dashed border-gray-300 rounded-lg">No Document Attached</span>
+                            )}
+                            
+                            {formData.newsLink && (
+                                <button className="flex items-center gap-2 bg-white border border-gray-300 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-50 transition shadow-sm opacity-80 cursor-not-allowed">
+                                    <ExternalLink size={20} /> Visit Link
+                                </button>
+                            )}
+                        </div>
+                     </div>
+                 </div>
+              </div>
+            </div>
+
+          ) : (
+            /* EDIT MODE - Matches Project Form Field Styles */
+            <div className="space-y-6 bg-white p-8 rounded-xl shadow-sm">
+              
+              {/* Title Field */}
+              <div>
+                <label className="block text-base font-medium text-gray-700 mb-2">
+                  Title *
+                </label>
+                <input type="text" name="title" value={formData.title} onChange={handleChange} className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500" placeholder="Enter post title" />
+              </div>
+
+              {/* Category & Date Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="relative">
+                  <label className="block text-base font-medium text-gray-700 mb-2">
+                    Category *
+                  </label>
+                  <select name="category" value={formData.category} onChange={handleChange} className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 appearance-none pr-10 cursor-pointer">
+                    <option value="News">News</option>
+                    <option value="Workshop">Workshop</option>
+                    <option value="Article">Article</option>
+                  </select>
+                   <div className="pointer-events-none absolute inset-y-0 right-0 top-7 flex items-center px-2 text-gray-700">
+                      <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-base font-medium text-gray-700 mb-2">
+                    Date *
+                  </label>
+                  <input type="text" name="date" value={formData.date} onChange={handleChange} className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500" placeholder="e.g., 12 Jun 2025" />
+                </div>
+              </div>
+
+              {/* Publisher & Location Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-base font-medium text-gray-700 mb-2">
+                    Publisher *
+                  </label>
+                  <input type="text" name="publisher" value={formData.publisher} onChange={handleChange} className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500" placeholder="e.g., Aulia Resty Azizah" />
+                </div>
+
+                <div>
+                  <label className="block text-base font-medium text-gray-700 mb-2">
+                    Location *
+                  </label>
+                  <input type="text" name="location" value={formData.location} onChange={handleChange} className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500" placeholder="e.g., Online, Malang, Sipil Building" />
+                </div>
+              </div>
+
+              {/* Content Field */}
+              <div>
+                <label className="block text-base font-medium text-gray-700 mb-2">
+                  Content *
+                </label>
+                <textarea
+                  name="content"
+                  value={formData.content}
+                  onChange={handleChange}
+                  rows={10}
+                  className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none leading-relaxed"
+                  placeholder="Enter the full post content here..."
+                />
+              </div>
+
+               {/* Link Field */}
+              <div>
+                <label className="block text-base font-medium text-gray-700 mb-2">
+                  External Link (Optional)
+                </label>
+                <input type="url" name="newsLink" value={formData.newsLink} onChange={handleChange} className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500" placeholder="https://..." />
+              </div>
+
+              {/* Uploads Section - Styled like Project Form's Image/Video upload */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                 
+                 {/* Cover Image Upload */}
+                 <div>
+                    <MediaUploader
+                        label="Cover Image (Header)"
+                        accept="image/*"
+                        maxFiles={1}
+                        allowMultiple={false}
+                        initialMedia={formData.coverUrl ? [formData.coverUrl] : []}
+                        onMediaChange={(files) => {
+                            if (files.length > 0) {
+                                const url = URL.createObjectURL(files[0]);
+                                setFormData(prev => ({ 
+                                    ...prev, 
+                                    coverUrl: url,     
+                                    coverFile: files[0] 
+                                }));
+                            } else {
+                                setFormData(prev => ({ ...prev, coverUrl: "", coverFile: undefined }));
+                            }
+                        }}
+                    />
+                </div>
+
+                 {/* Document Upload */}
+                 <div>
+                      <MediaUploader
+                          label="Reference Document"
+                          description="PDF, DOCX, TXT (Max 10MB)"
+                          accept=".pdf,.doc,.docx"
+                          maxFiles={1}
+                          allowMultiple={false}
+                          initialMedia={formData.docGuide && !formData.docGuide.startsWith('[Mock') ? [formData.docGuide] : []} 
+                          onMediaChange={(files) => {
+                              if (files.length > 0) {
+                                  setFormData(prev => ({ 
+                                      ...prev, 
+                                      docGuide: files[0].name, 
+                                      docFile: files[0]        
+                                  }));
+                              } else {
+                                  setFormData(prev => ({ ...prev, docGuide: "", docFile: undefined }));
+                              }
+                          }}
+                      />
+                  </div>
+
+              </div>
+
+            </div>
+          )}
+        </div>
+
+        {/* FOOTER SECTION - Matches Project Form (Sticky Bottom) */}
+        <div className="max-w-6xl mx-auto flex justify-end gap-4 mt-8 sticky bottom-0 bg-white py-4 border-t border-gray-200">
+          <button onClick={onClose} className="px-8 py-3 text-base border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">
+              Cancel
+            </button>
+            
+            {!showPreview ? (
+                  <button onClick={() => setShowPreview(true)} className="px-6 py-2.5 bg-gray-800 text-white rounded-lg hover:bg-gray-900 font-medium transition flex items-center gap-2">
+                    <Eye size={18} /> Preview
+                  </button>
+              ) : (
+                  <button onClick={() => setShowPreview(false)} className="px-6 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium transition flex items-center gap-2">
+                     Back to Edit
+                  </button>
+              )}
+
+            <button onClick={handleSubmit} className="px-8 py-2.5 bg-orange-600 text-white rounded-lg hover:bg-orange-700 font-medium transition shadow-sm">
+              {isEditMode ? "Save Changes" : "Publish"}
+            </button>
+        </div>
+
+      </div>
+    </div>
+  );
+}

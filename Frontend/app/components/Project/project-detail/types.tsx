@@ -15,16 +15,22 @@ export interface Comment {
   text: string;
   rating: number;
   likes: number;
+  isLike?: boolean;
   replies: Reply[];
 }
 
 export interface ProjectDetailItem {
   label: string;
-  value: string | number;
+  value: string | number | LinkItem[];
 }
 
 export interface TeamMember {
   name: string;
   role: string;
   img: string;
+}
+
+export interface LinkItem {
+  text: string;
+  url: string;
 }

@@ -1,4 +1,4 @@
-import { Link as LinkIcon, Image as ImageIcon, ThumbsUp } from "lucide-react";
+import { Link as LinkIcon, Image as ImageIcon, ThumbsUp, MessageCircle, X } from "lucide-react";
 import { StarRating } from "./starRating";
 import type { Comment } from "../types";
 import { useState } from "react";
@@ -12,6 +12,8 @@ interface CommentSectionProps {
   userRating: number;
   setUserRating: (val: number) => void;
   onSubmit: () => void;
+  onReply: (commentId: number, text: string) => void;
+  onLike: (commentId: number) => void;
   reviewCount: number;
 }
 
@@ -24,9 +26,21 @@ export function CommentSection({
   userRating,
   setUserRating,
   onSubmit,
+  onReply,
+  onLike,
   reviewCount,
 }: CommentSectionProps) {
   const [hoverRating, setHoverRating] = useState(0);
+
+  const [activeReplyId, setActiveReplyId] = useState<number | null>(null);
+  const [replyTextContent, setReplyTextContent] = useState("");
+
+  const handleReplySubmit = (commentId: number) => {
+    if (!replyTextContent.trim()) return;
+    onReply(commentId, replyTextContent);
+    setActiveReplyId(null);
+    setReplyTextContent("");
+  };
 
   return (
     <section id="comments" className="max-w-6xl mx-auto px-[1px]">
@@ -64,17 +78,7 @@ export function CommentSection({
           className="w-full border border-gray-300 rounded-lg p-4 focus:ring-2 focus:ring-orange-400 focus:outline-none"
         />
 
-        <div className="flex justify-between items-center mt-3">
-          <div className="flex gap-4 text-gray-400">
-            <LinkIcon
-              size={20}
-              className="cursor-pointer hover:text-gray-600"
-            />
-            <ImageIcon
-              size={20}
-              className="cursor-pointer hover:text-gray-600"
-            />
-          </div>
+        <div className="flex justify-end items-center mt-3">
           <button
             onClick={onSubmit}
             className="bg-orange-500 text-white px-6 py-2 rounded-full font-semibold hover:bg-orange-600 transition shadow-md"
@@ -95,7 +99,6 @@ export function CommentSection({
       <div className="space-y-8">
         {comments.map((comment) => (
           <div key={comment.id}>
-            {/* ... Render User Info, Avatar, Rating ... */}
             <div className="flex gap-4">
               <img
                 src={comment.avatar}
@@ -118,11 +121,77 @@ export function CommentSection({
                   </span>
                 </div>
                 <p className="text-gray-700 mb-3">{comment.text}</p>
-                <button className="flex items-center gap-1 text-gray-400 hover:text-orange-500 text-sm">
-                  <ThumbsUp size={16} />({comment.likes})
-                </button>
+                
+                {/* --- ACTION BUTTONS (LIKE & REPLY) --- */}
+                <div className="flex items-center gap-4">
+                  <button 
+                    onClick={() => onLike(comment.id)}
+                    className={`flex items-center gap-1 text-sm transition-colors ${
+                      comment.isLike 
+                        ? "text-orange-500 font-bold"   // Style jika SUDAH like
+                        : "text-gray-400 hover:text-orange-500" // Style jika BELUM like
+                    }`}
+                  >
+                    {/* Opsional: Tambahkan fill={comment.isLiked ? "currentColor" : "none"} agar ikonnya penuh warna */}
+                    <ThumbsUp 
+                        size={16} 
+                        fill={comment.isLike ? "currentColor" : "none"} 
+                    />
+                    ({comment.likes})
+                  </button>
+                  
+                  <button 
+                    onClick={() => {
+                        // Toggle Reply Form
+                        if (activeReplyId === comment.id) {
+                            setActiveReplyId(null);
+                        } else {
+                            setActiveReplyId(comment.id);
+                            setReplyTextContent(""); // Reset text saat buka baru
+                        }
+                    }}
+                    className={`flex items-center gap-1 text-sm transition-colors ${activeReplyId === comment.id ? "text-orange-500 font-medium" : "text-gray-400 hover:text-orange-500"}`}
+                  >
+                    <MessageCircle size={16} /> Reply
+                  </button>
+                </div>
+
+                {/* --- FORM REPLY INPUT (Muncul jika tombol reply diklik) --- */}
+                {activeReplyId === comment.id && (
+                    <div className="mt-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                        <div className="flex gap-3">
+                            <div className="w-8 h-8 rounded-full bg-gray-200 flex-shrink-0 flex items-center justify-center text-xs font-bold text-gray-500">
+                                You
+                            </div>
+                            <div className="flex-1">
+                                <textarea
+                                    value={replyTextContent}
+                                    onChange={(e) => setReplyTextContent(e.target.value)}
+                                    placeholder={`Reply to ${comment.user}...`}
+                                    className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-orange-400 focus:outline-none min-h-[80px]"
+                                />
+                                <div className="flex justify-end gap-2 mt-2">
+                                    <button 
+                                        onClick={() => setActiveReplyId(null)}
+                                        className="text-gray-500 hover:text-gray-700 text-sm px-3 py-1.5"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button 
+                                        onClick={() => handleReplySubmit(comment.id)}
+                                        className="bg-orange-500 text-white text-sm px-4 py-1.5 rounded-full hover:bg-orange-600 transition"
+                                    >
+                                        Send Reply
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
               </div>
             </div>
+
+            {/* --- LIST REPLIES (Recursive / Nested) --- */}
             {comment.replies && comment.replies.length > 0 && (
               <div className="mt-4 pl-4 flex flex-col gap-4 relative">
                 {comment.replies.map((reply) => (

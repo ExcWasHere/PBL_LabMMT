@@ -1,6 +1,6 @@
 import { ContentProject } from "../components/Project/contentProject";
 import Navbar from "~/common/navbar";
-import ProjectForm from "~/components/project-form";
+import ProjectForm from "~/common/project-form";
 
 export function meta() {
   return [

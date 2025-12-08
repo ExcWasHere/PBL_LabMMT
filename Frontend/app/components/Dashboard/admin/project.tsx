@@ -1,64 +1,33 @@
 import Sidebar from "~/components/Dashboard/admin/sidebar";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Menu, Plus, Eye, EyeOff, Pencil, Trash, Check, X, Link } from "lucide-react";
-
 import { project_dummy, project_pending_dummy } from "~/components/Dashboard/admin/dataDummy";
-interface DropdownFilterProps {
-  label: string;
-  options: string[];
-  currentFilter: string;
-  onSelect: (value: string) => void;
-}
-
-const DropdownFilter: React.FC<DropdownFilterProps> = ({ label, options, currentFilter, onSelect }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  return (
-    <div className="relative">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="border border-orange-500 rounded-lg px-3 py-2 bg-white text-sm text-gray-700 hover:bg-gray-50 focus:outline-none flex items-center justify-between min-w-[90px] whitespace-nowrap"
-      >
-        {currentFilter || label}
-        <svg
-          className={`w-4 h-4 ml-1 transition-transform ${isOpen ? "rotate-180" : ""}`}
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
-        </svg>
-      </button>
-
-      {isOpen && (
-        <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg z-10">
-          {options.map((option) => (
-            <button
-              key={option}
-              onClick={() => {
-                onSelect(option);
-                setIsOpen(false);
-              }}
-              className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-orange-50"
-            >
-              {option}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
+import DropdownFilter from "~/common/dropdown-filter";
+import ProjectForm from "~/common/project-form";
+import TableAction from "~/common/table-action";
+import TableStatus from "~/common/table-status";
 
 // --- ProjectPage Component ---
 export default function ProjectPage() {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) setIsSidebarOpen(true);
+      else setIsSidebarOpen(false);
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedYear, setSelectedYear] = useState("All Years");
   const [selectedKategori, setSelectedKategori] = useState("All");
   const [selectedSort, setSelectedSort] = useState("Latest");
   const [selectedStatus, setSelectedStatus] = useState("All");
-
   const [projects, setProjects] = useState(project_dummy);
+  const [editData, setEditData] = useState<any | null>(null);
+  const [isFormOpen, setIsFormOpen] = useState(false);
 
   const stats = [
     {
@@ -106,10 +75,10 @@ export default function ProjectPage() {
     };
 
     if (selectedKategori !== "All") {
-      data = data.filter(row => row.kategori === selectedKategori);
+      data = data.filter(row => row.category === selectedKategori);
     }
     if (selectedYear !== "All Years") {
-      data = data.filter(row => getYearFromString(row.year) === selectedYear);
+      data = data.filter(row => getYearFromString(row.date) === selectedYear);
     }
     if (searchTerm) {
       const lowerCaseQuery = searchTerm.toLowerCase();
@@ -124,7 +93,7 @@ export default function ProjectPage() {
     } else if (selectedSort === "Z-A") {
       data.sort((a, b) => b.title.localeCompare(a.title));
     } else if (selectedSort === "Latest") {
-      data.sort((a, b) => new Date(b.year).getTime() - new Date(a.year).getTime());
+      data.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     } else if (selectedSort === "Most Popular") {
       data.sort((a, b) => Number(b.stars) - Number(a.stars));
     }
@@ -140,20 +109,75 @@ export default function ProjectPage() {
     setProjects((prevProjects) =>
       prevProjects.map((project) => {
         if (project.id === id) {
-          const newStatus = project.status === "Muted" ? "Published" : "Muted";
-          return { ...project, status: newStatus };
+          const projectStatus = project.status === "Muted" ? "Published" : "Muted";
+          return { ...project, status: projectStatus };
         }
         return project;
       })
     );
   };
 
-  const AddProject = () => {
-    alert("Add Project");
+  const handleEditClick = (project: any) => {
+    setEditData(project);
+    setIsFormOpen(true);
+  }
+
+  const formatDate = (dateString: string) => {
+    if (!dateString) return "-";
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return dateString;
+
+    return new Intl.DateTimeFormat("en-GB", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    }).format(date);
+  };
+
+  const handleSaveProject = (formData: any) => {
+    if (editData) {
+      setProjects((prevProjects) =>
+        prevProjects.map((project) => {
+          if (project.id === editData.id) {
+            return {
+              ...project,
+              title: formData.title,
+              category: formData.type,
+              date: formData.date,
+            };
+          }
+          return project;
+        })
+      );
+    } else {
+      const newProject = {
+        id: projects.length + 1,
+        title: formData.title,
+        category: formData.type,
+        date: formData.date,
+        publisher: "Me",
+        stars: "0",
+        status: "Review",
+      };
+      setProjects([newProject as any, ...projects]);
+    }
+
+    setIsFormOpen(false);
+    setEditData(null);
+  };
+
+  const handleDelete = (id: number) => {
+    if (window.confirm("Are you sure you want to delete this project?")) {
+      setProjects((prevProjects) =>
+        prevProjects.filter((projects) => projects.id !== id)
+      );
+    }
   };
 
   const [pending, setPending] = useState(project_pending_dummy);
   const [showPending, setShowPending] = useState(false);
+  const pendingCounter = [{ value: pending.length }]
+
 
   const handleViewFile = (file: any) => {
     alert("Preview file: " + file.name);
@@ -170,7 +194,6 @@ export default function ProjectPage() {
   return (
     <div className="flex">
       {isSidebarOpen && <Sidebar />}
-
       <div
         className={`w-full p-8 transition-all duration-300 ease-in-out ${isSidebarOpen ? 'ml-64' : 'ml-0'}`}
       >
@@ -213,10 +236,10 @@ export default function ProjectPage() {
           <DropdownFilter label="Year" options={["All Years", "2025", "2024", "2023"]} currentFilter={selectedYear} onSelect={setSelectedYear} />
           <DropdownFilter label="Kategori" options={["All", "UI/UX", "Game", "Frontend", "AR", "VR"]} currentFilter={selectedKategori} onSelect={setSelectedKategori} />
           <DropdownFilter label="Sort" options={["A-Z", "Z-A", "Most Popular", "Latest"]} currentFilter={selectedSort} onSelect={setSelectedSort} />
-          <DropdownFilter label="Status" options={["All", "Published", "Review", "Muted", "Waiting"]} currentFilter={selectedStatus} onSelect={setSelectedStatus} />
+          <DropdownFilter label="Status" options={["All", "Published", "Review", "Muted", "Waiting", "Denied"]} currentFilter={selectedStatus} onSelect={setSelectedStatus} />
 
           <button
-            onClick={AddProject}
+            onClick={() => setIsFormOpen(true)}
             className="flex items-center gap-1 bg-orange-600 hover:bg-orange-700 text-white px-3 py-2 rounded-lg text-sm whitespace-nowrap transition"
           >
             <Plus size={16} /> Add Project
@@ -251,35 +274,18 @@ export default function ProjectPage() {
                 return (
                   <tr key={index}>
                     <td className={`py-3 ${borderClass} text-center`}>{row.title}</td>
-                    <td className={`py-3 ${borderClass} text-center`}>{row.kategori}</td>
-                    <td className={`py-3 ${borderClass} text-center`}>{row.year}</td>
+                    <td className={`py-3 ${borderClass} text-center`}>{row.category}</td>
+                    <td className={`py-3 ${borderClass} text-center`}>{formatDate(row.date)}</td>
                     <td className={`py-3 ${borderClass} text-center`}>{row.publisher}</td>
                     <td className={`py-3 ${borderClass} text-center`}>{row.stars}</td>
-                    <td className={`py-3 ${borderClass} text-center font-medium ${getStatusColorClass(row.status)}`}>{row.status}</td>
+                    <td className={`py-3 ${borderClass} text-center`}><TableStatus status={row.status} /> </td>
                     <td className={`py-3 ${borderClass} text-center`}>
-                      <div className="flex items-center justify-center gap-2">
-                        <button
-                          className={`transition-colors ${isReview ? disabledStyle : "text-gray-600 hover:text-blue-600"}`}
-                          onClick={() => !isReview && handleToggleMute(row.id)}
-                          disabled={isReview}
-                        >
-                          {isMuted ? <EyeOff size={18} /> : <Eye size={18} />}
-                        </button>
-
-                        <button
-                          className={`transition-colors ${isReview || isWaiting || isMuted ? disabledStyle : "text-gray-600 hover:text-green-500"}`}
-                          disabled={isReview || isWaiting || isMuted}
-                        >
-                          <Pencil size={18} />
-                        </button>
-
-                        <button
-                          className={`transition-colors ${isReview ? disabledStyle : "text-gray-600 hover:text-red-600"}`}
-                          disabled={isReview}
-                        >
-                          <Trash size={18} />
-                        </button>
-                      </div>
+                      <TableAction
+                        status={row.status}
+                        onToggleMute={() => handleToggleMute(row.id)}
+                        onEdit={() => handleEditClick(row)}
+                        onDelete={() => handleDelete(row.id)}
+                      />
                     </td>
                   </tr>
                 );
@@ -307,13 +313,12 @@ export default function ProjectPage() {
                 Project Submissions
               </h3>
               <span className="bg-orange-500 text-white px-2 py-1 rounded-full text-xs">
-                1 new
+                {pendingCounter.map(pc => pc.value)} New
               </span>
             </div>
             <svg
-              className={`w-5 h-5 transform transition-transform ${
-                showPending ? "rotate-0" : "rotate-180"
-              }`}
+              className={`w-5 h-5 transform transition-transform ${showPending ? "rotate-0" : "rotate-180"
+                }`}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -365,6 +370,30 @@ export default function ProjectPage() {
             </div>
           )}
         </div>
+        {isFormOpen && (
+          <ProjectForm
+            onClose={() => {
+              setIsFormOpen(false);
+              setEditData(null);
+            }}
+            onSubmit={handleSaveProject}
+            initialData={
+              editData
+                ? {
+                  title: editData.title,
+                  description: editData.description || "",
+                  type: editData.category || "",
+                  date: editData.date || "",
+                  tech: editData.tech || "",
+                  teamMembers: editData.teamMembers || "",
+                  githubLink: editData.githubLink || "",
+                  demoLink: editData.demoLink || "",
+                  photoUrls: editData.photoUrls || [],
+                }
+                : undefined
+            }
+          />
+        )}
       </div>
     </div>
   );

@@ -1,89 +1,64 @@
 import Sidebar from "~/components/Dashboard/admin/sidebar";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Plus, Menu, Eye, EyeOff, Pencil, Trash, X, Check, FileText, Image } from "lucide-react";
 import { gallery_dummy, gallery_pending_dummy } from "./dataDummy";
-interface DropdownFilterProps {
-    label: string;
-    options: string[];
-    currentFilter: string;
-    onSelect: (value: string) => void;
-}
+import DropdownFilter from "~/common/dropdown-filter";
+import GalleryForm from "~/common/gallery-form";
+import TableAction from "~/common/table-action";
+import TableStatus from "~/common/table-status";
 
-const DropdownFilter: React.FC<DropdownFilterProps> = ({ label, options, currentFilter, onSelect }) => {
-    const [isOpen, setIsOpen] = useState(false);
-    return (
-        <div className="relative">
-            <button
-                onClick={() => setIsOpen(!isOpen)}
-                className="border border-orange-500 rounded-lg px-4 py-2 bg-white text-gray-700 hover:bg-gray-50 focus:outline-none flex items-center justify-between min-w-[120px]"
-            >
-                {currentFilter || label}
-                <svg className={`w-4 h-4 ml-2 transition-transform ${isOpen ? "transform rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
-            </button>
 
-            {isOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg z-10">
-                    {options.map((option) => (
-                        <button
-                            key={option}
-                            onClick={() => {
-                                onSelect(option);
-                                setIsOpen(false);
-                            }}
-                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-orange-50"
-                        >
-                            {option}
-                        </button>
-                    ))}
-                </div>
-            )}
-        </div>
-    );
-};
 
 export default function GalleryPage() {
-    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    useEffect(() => {
+        const handleResize = () => {
+            if (window.innerWidth >= 1024) setIsSidebarOpen(true);
+            else setIsSidebarOpen(false);
+        };
+        handleResize();
+        window.addEventListener("resize", handleResize);
+        return () => window.removeEventListener("resize", handleResize);
+    }, []);
+
+    const [editData, setEditData] = useState<any | null>(null);
+    const [isFormOpen, setIsFormOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedYear, setSelectedYear] = useState("All Years");
     const [selectedKategori, setSelectedKategori] = useState("All");
     const [selectedSort, setSelectedSort] = useState("Latest");
     const [selectedStatus, setSelectedStatus] = useState("All Status");
     const [showPending, setShowPending] = useState(false);
-
     const [galleryList, setGalleryList] = useState(gallery_dummy);
+    const [pending, setPending] = useState(gallery_pending_dummy);
+    const handleViewFile = (file: any) => {
+        alert("Preview file: " + file.name);
+    };
 
     const stats = [
         {
-      label: "Published",
-      value: galleryList.filter((p) => p.status === "Published").length,
-      color: "border-orange-400 text-orange-500",
-    },
-    {
-      label: "Review",
-      value: galleryList.filter((p) => p.status === "Review").length,
-      color: "border-blue-400 text-blue-500",
-    },
-    {
-      label: "Wait To Publish",
-      value: galleryList.filter((p) => p.status === "Waiting").length,
-      color: "border-green-400 text-green-500",
-    },
-    {
-      label: "Muted",
-      value: galleryList.filter((p) => p.status === "Muted").length,
-      color: "border-red-400 text-red-500",
-    },
+            label: "Published",
+            value: galleryList.filter((p) => p.status === "Published").length,
+            color: "border-orange-400 text-orange-500",
+        },
+        {
+            label: "Review",
+            value: galleryList.filter((p) => p.status === "Review").length,
+            color: "border-blue-400 text-blue-500",
+        },
+        {
+            label: "Wait To Publish",
+            value: galleryList.filter((p) => p.status === "Waiting").length,
+            color: "border-green-400 text-green-500",
+        },
+        {
+            label: "Muted",
+            value: galleryList.filter((p) => p.status === "Muted").length,
+            color: "border-red-400 text-red-500",
+        },
     ];
 
-    const getStatusColorClass = (status: string) => {
-        switch (status) {
-            case "Published": return "text-orange-500";
-            case "Review": return "text-blue-600";
-            case "Waiting": return "text-green-600";
-            case "Muted": return "text-red-500";
-            default: return "text-black";
-        }
-    };
+    const pendingCounter = [{value: pending.length}]
 
     const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setSearchTerm(e.target.value);
@@ -99,6 +74,18 @@ export default function GalleryPage() {
                 return gallery;
             })
         );
+    };
+
+    const formatDate = (dateString: string) => {
+        if (!dateString) return "-";
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return dateString;
+
+        return new Intl.DateTimeFormat("en-GB", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+        }).format(date);
     };
 
     // --- Filtering Logic ---
@@ -133,16 +120,7 @@ export default function GalleryPage() {
 
         return data;
     }, [galleryList, selectedYear, selectedKategori, searchTerm, selectedSort, selectedStatus]);
-
-
-    const AddGallery = () => {
-        alert("Add Gallery");
-    };
-
-    const [pending, setPending] = useState(gallery_pending_dummy);
-    const handleViewFile = (file: any) => {
-        alert("Preview file: " + file.name);
-    };
+    
 
     const handleApprove = (item: any) => {
         alert("Approved: " + item.title);
@@ -152,8 +130,80 @@ export default function GalleryPage() {
         alert("Rejected: " + item.title);
     };
 
+    const handleSaveGallery = (formData: any) => {
+    let photoCount = 0;
+    let videoCount = 0;
+    let animationCount = 0;
 
+    if (formData.mediaFilesRaw && formData.mediaFilesRaw.length > 0) {
+      formData.mediaFilesRaw.forEach((file: File) => {
+        if (file.type.startsWith("image/")) {
+          if (file.type === "image/gif") {
+            animationCount++;
+          } else {
+            photoCount++;
+          }
+        } else if (file.type.startsWith("video/")) {
+          videoCount++;
+        }
+      });
+    }
 
+    if (editData) {
+      setGalleryList((prevGallery) =>
+        prevGallery.map((gallery) => {
+          if (gallery.id === editData.id) {
+            return {
+              ...gallery,
+              title: formData.title,
+              description: formData.description,
+              location: formData.location,
+              date: formData.date,
+              mediaTypes: formData.mediaTypes,
+              mediaFiles: formData.mediaFiles,
+              thumbnailUrl: formData.thumbnailUrl,
+              photo: photoCount.toString(),
+              video: videoCount.toString(),
+              animation: animationCount.toString(),
+            };
+          }
+          return gallery;
+        })
+      );
+    } else {
+      const newGallery = {
+        id: galleryList.length + 1,
+        title: formData.title,
+        description: formData.description,
+        location: formData.location,
+        date: formData.date,
+        mediaTypes: formData.mediaTypes,
+        mediaFiles: formData.mediaFiles,
+        publisher:"Me",
+        status: "Review",
+        photo: photoCount.toString(),
+        video: videoCount.toString(),
+        animation: animationCount.toString(),
+        thumbnailUrl: formData.thumbnailUrl || "",
+      };
+      setGalleryList([newGallery as any, ...galleryList]);
+    }
+
+    setIsFormOpen(false);
+    setEditData(null);
+  };
+
+  const handleDelete = (id: number) => {
+    if (window.confirm("Are you sure you want to delete this gallery?")) {
+      setGalleryList((prev) => prev.filter((item) => item.id !== id));
+    }
+  };
+
+  const handleEditClick = (gallery: any) => {
+    setEditData(gallery);
+    setIsFormOpen(true);
+  };
+  
     return (
         <div className="flex">
             {isSidebarOpen && <Sidebar />}
@@ -204,10 +254,10 @@ export default function GalleryPage() {
                         />
                     </div>
 
-                    <DropdownFilter label="Tahun" options={["Semua Tahun", "2025", "2024", "2023"]} currentFilter={selectedYear} onSelect={setSelectedYear} />
-                    <DropdownFilter label="Urutkan" options={["A-Z", "Z-A", "Terpopuler", "Terbaru"]} currentFilter={selectedSort} onSelect={setSelectedSort} />
+                    <DropdownFilter label="Tahun" options={["All Years", "2025", "2024", "2023"]} currentFilter={selectedYear} onSelect={setSelectedYear} />
+                    <DropdownFilter label="Urutkan" options={["A-Z", "Z-A", "Most Popular", "Latest"]} currentFilter={selectedSort} onSelect={setSelectedSort} />
                     <button
-                        onClick={AddGallery}
+                        onClick={() => setIsFormOpen(true)}
                         className="flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg transition-colors duration-200"
                     >
                         <Plus size={18} />
@@ -246,43 +296,17 @@ export default function GalleryPage() {
                                         <td className={`py-3 ${borderClass} text-center`}>{row.photo}</td>
                                         <td className={`py-3 ${borderClass} text-center`}>{row.video}</td>
                                         <td className={`py-3 ${borderClass} text-center`}>{row.animation}</td>
-                                        <td className={`py-3 ${borderClass} text-center`}>{row.date}</td>
+                                        <td className={`py-3 ${borderClass} text-center`}>{formatDate(row.date)}</td>
                                         <td className={`py-3 ${borderClass} text-center`}>{row.publisher}</td>
-                                        <td className={`py-3 ${borderClass} font-medium text-center ${getStatusColorClass(row.status)}`}>{row.status}</td>
-                                        <td className={`py-3 ${borderClass} text-center`}>
-                                            <div className="flex items-center justify-center gap-2">
-                                                <button
-                                                    className={`transition-colors ${isReview ? disabledStyle : "text-gray-600 hover:text-blue-600"}`}
-                                                    onClick={() => !isReview && handleToggleMute(row.id)}
-                                                    disabled={isReview}
-                                                    title={isMuted ? "Unmute News" : "Mute News"}
-                                                >
-                                                    {isMuted ? <EyeOff size={18} /> : <Eye size={18} />}
-                                                </button>
-
-                                                <button
-                                                    className={`transition-colors ${isReview || isWaiting || isMuted ? disabledStyle : "text-gray-600 hover:text-green-500"}`}
-                                                    onClick={() =>
-                                                        !(isReview || isWaiting || isMuted) &&
-                                                        console.log("Edit", row.title)
-                                                    }
-                                                    disabled={isReview || isWaiting || isMuted}
-                                                    title="Edit"
-                                                >
-                                                    <Pencil size={18} />
-                                                </button>
-
-                                                <button
-                                                    className={`transition-colors ${isReview ? disabledStyle : "text-gray-600 hover:text-red-600"}`}
-                                                    onClick={() =>
-                                                        !isReview && console.log("Delete", row.title)
-                                                    }
-                                                    disabled={isReview}
-                                                    title="Hapus"
-                                                >
-                                                    <Trash size={18} />
-                                                </button>
-                                            </div>
+                                        <td className={`py-3 ${borderClass} text-center`}> <TableStatus status={row.status} /></td>
+                                        <td className={`py-3 px-2 ${borderClass} text-center`}>
+                                            <TableAction
+                                                status={row.status}
+                                                onToggleMute={() => handleToggleMute(row.id)}
+                                                onEdit={() => handleEditClick(row)}
+                                                onDelete={() => handleDelete(row.id)}
+                                            />
+                                            
                                         </td>
                                     </tr>
                                 );
@@ -290,7 +314,7 @@ export default function GalleryPage() {
                             {filteredData.length === 0 && (
                                 <tr>
                                     <td colSpan={5} className="py-8 text-center text-gray-500">
-                                        Tidak ada data yang cocok dengan filter yang diterapkan.
+                                         No matching data found.
                                     </td>
                                 </tr>
                             )}
@@ -306,7 +330,7 @@ export default function GalleryPage() {
                             <h3 className="text-lg font-semibold text-gray-800 mr-3">
                                 Gallery Submissions
                             </h3>
-                            <span className="bg-orange-500 text-white px-2 py-1 rounded-full text-xs">1 new</span>
+                            <span className="bg-orange-500 text-white px-2 py-1 rounded-full text-xs">{pendingCounter.map(pc => pc.value)} New</span>
                         </div>
                         <svg
                             className={`w-5 h-5 transform transition-transform ${showPending ? "rotate-0" : "rotate-180"}`}
@@ -388,6 +412,28 @@ export default function GalleryPage() {
                         </div>
                     )}
                 </div>
+                {isFormOpen && (
+                          <GalleryForm
+                            onClose={() => {
+                              setIsFormOpen(false);
+                              setEditData(null);
+                            }}
+                            onSubmit={handleSaveGallery}
+                            initialData={
+                              editData
+                                ? {
+                                    title: editData.title || "",
+                                    description: editData.description || "",
+                                    date: editData.date || "",
+                                    location: editData.location || "",
+                                    mediaTypes: editData.mediaTypes || [],
+                                    mediaFiles: editData.mediaFiles || [],
+                                    thumbnailUrl: editData.thumbnailUrl || "",
+                                  }
+                                : undefined
+                            }
+                          />
+                        )}
             </div>
         </div>
     );

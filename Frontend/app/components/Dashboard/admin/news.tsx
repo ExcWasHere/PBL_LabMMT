@@ -1,71 +1,35 @@
 import Sidebar from "~/components/Dashboard/admin/sidebar";
-import { useState, useMemo } from "react";
-import { Menu, Plus, Eye, EyeOff, Pencil, Trash, Check, X, Link} from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
+import { Menu, Plus,  Check, X, Link } from "lucide-react";
 import { news_dummy, news_pending_dummy } from "~/components/Dashboard/admin/dataDummy";
-
-interface DropdownFilterProps {
-  label: string;
-  options: string[];
-  currentFilter: string;
-  onSelect: (value: string) => void;
-}
-
-const DropdownFilter: React.FC<DropdownFilterProps> = ({
-  label,
-  options,
-  currentFilter,
-  onSelect,
-}) => {
-  const [isOpen, setIsOpen] = useState(false);
-
-  return (
-    <div className="relative">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="border border-orange-500 rounded-lg px-3 py-2 bg-white text-sm text-gray-700 hover:bg-gray-50 flex items-center justify-between min-w-[90px]"
-      >
-        {currentFilter || label}
-        <svg
-          className={`w-4 h-4 ml-1 transition-transform ${isOpen ? "rotate-180" : ""}`}
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-        </svg>
-      </button>
-
-      {isOpen && (
-        <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-lg z-10">
-          {options.map((option) => (
-            <button
-              key={option}
-              onClick={() => {
-                onSelect(option);
-                setIsOpen(false);
-              }}
-              className="block w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-orange-50"
-            >
-              {option}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
+import NewsForm from "~/common/news-form";
+import DropdownFilter from "~/common/dropdown-filter";
+import TableAction from "~/common/table-action";
+import TableStatus from "~/common/table-status";
 
 export default function NewsPage() {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) setIsSidebarOpen(true);
+      else setIsSidebarOpen(false);
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedYear, setSelectedYear] = useState("All Years");
   const [selectedKategori, setSelectedKategori] = useState("All");
   const [selectedSort, setSelectedSort] = useState("Latest");
   const [selectedStatus, setSelectedStatus] = useState("All");
-
   const [newsList, setNewsList] = useState(news_dummy);
-  const [pending, setPending] = useState(news_pending_dummy);
   const [showPending, setShowPending] = useState(false);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editData, setEditData] = useState<any | null>(null);
+  const [pending, setPending] = useState(news_pending_dummy);
+  const pendingCounter = [{value: pending.length}]
 
   const stats = [
     {
@@ -90,15 +54,6 @@ export default function NewsPage() {
     },
   ];
 
-  const getStatusColorClass = (status: string) => {
-    switch (status) {
-      case "Published": return "text-orange-500";
-      case "Review": return "text-blue-600";
-      case "Waiting": return "text-green-600";
-      case "Muted": return "text-red-500";
-      default: return "text-black";
-    }
-  };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) =>
     setSearchTerm(e.target.value);
@@ -121,11 +76,11 @@ export default function NewsPage() {
     };
 
     if (selectedYear !== "All Years") {
-      data = data.filter((r) => getYearFromString(r.year) === selectedYear);
+      data = data.filter((r) => getYearFromString(r.date) === selectedYear);
     }
 
     if (selectedKategori !== "All") {
-      data = data.filter((r) => r.kategori === selectedKategori);
+      data = data.filter((r) => r.category === selectedKategori);
     }
 
     if (searchTerm) {
@@ -137,10 +92,10 @@ export default function NewsPage() {
       );
     }
 
-    if (selectedSort === "A-Z") data.sort((a,b)=>a.title.localeCompare(b.title));
-    else if (selectedSort === "Z-A") data.sort((a,b)=>b.title.localeCompare(a.title));
+    if (selectedSort === "A-Z") data.sort((a, b) => a.title.localeCompare(b.title));
+    else if (selectedSort === "Z-A") data.sort((a, b) => b.title.localeCompare(a.title));
     else if (selectedSort === "Latest") {
-      data.sort((a,b)=>new Date(b.year).getTime()-new Date(a.year).getTime());
+      data.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     }
 
     if (selectedStatus !== "All") {
@@ -153,6 +108,60 @@ export default function NewsPage() {
   const AddNews = () => alert("Add News clicked!");
   const handleApprove = (item: any) => alert("Approved: " + item.title);
   const handleReject = (item: any) => alert("Rejected: " + item.title);
+
+  const formatDate = (dateString: string) => {
+    if (!dateString) return "-";
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return dateString;
+
+    return new Intl.DateTimeFormat("en-GB", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    }).format(date);
+  };
+
+  const handleSaveNews = (formData: any) => {
+    if (editData) {
+      setNewsList((prevNews) =>
+        prevNews.map((news) => {
+          if (news.id === editData.id) {
+            return {
+              ...news,
+              title: formData.title,
+              category: formData.type,
+              date: formData.date,
+            };
+          }
+          return news;
+        })
+      );
+    } else {
+      const newNews = {
+        id: newsList.length + 1,
+        title: formData.title,
+        category: formData.type,
+        date: formData.date,
+        publisher: "Me",
+        status: "Review",
+      };
+      setNewsList([newNews as any, ...newsList]);
+    }
+
+    setIsFormOpen(false);
+    setEditData(null);
+  };
+
+  const handleDelete = (id: number) => {
+    if (window.confirm("Are you sure you want to delete this news?")) {
+      setNewsList((prev) => prev.filter((item) => item.id !== id));
+    }
+  };
+
+  const handleEditClick = (news: any) => {
+    setEditData(news);
+    setIsFormOpen(true);
+  };
 
   return (
     <div className="flex min-h-screen overflow-y-scroll [scrollbar-gutter:stable]">
@@ -197,13 +206,13 @@ export default function NewsPage() {
             />
           </div>
 
-          <DropdownFilter label="Tahun" options={["All Years","2025","2024","2023"]} currentFilter={selectedYear} onSelect={setSelectedYear} />
-          <DropdownFilter label="Kategori" options={["All","Berita","Pelatihan","Workshop","Sertifikasi","Artikel"]} currentFilter={selectedKategori} onSelect={setSelectedKategori} />
-          <DropdownFilter label="Urutkan" options={["A-Z","Z-A","Terpopuler","Terbaru"]} currentFilter={selectedSort} onSelect={setSelectedSort} />
-          <DropdownFilter label="Status" options={["All","Published","Review","Waiting","Muted"]} currentFilter={selectedStatus} onSelect={setSelectedStatus} />
+          <DropdownFilter label="Tahun" options={["All Years", "2025", "2024", "2023"]} currentFilter={selectedYear} onSelect={setSelectedYear} />
+          <DropdownFilter label="Kategori" options={["All", "News", "Training", "Workshop", "Certification", "Articles"]} currentFilter={selectedKategori} onSelect={setSelectedKategori} />
+          <DropdownFilter label="Urutkan" options={["A-Z", "Z-A", "Most Popular", "Latest"]} currentFilter={selectedSort} onSelect={setSelectedSort} />
+          <DropdownFilter label="Status" options={["All", "Published", "Review", "Waiting", "Muted"]} currentFilter={selectedStatus} onSelect={setSelectedStatus} />
 
           <button
-            onClick={AddNews}
+            onClick={() => setIsFormOpen(true)}
             className="flex items-center gap-1 bg-orange-600 hover:bg-orange-700 text-white px-3 py-2 rounded-lg text-sm whitespace-nowrap"
           >
             <Plus size={16} />
@@ -227,42 +236,36 @@ export default function NewsPage() {
 
             <tbody>
               {filteredData.map((row, index) => {
-                const isReview = row.status === "Review";
-                const isMuted = row.status === "Muted";
-                const isWaiting = row.status === "Waiting";
-                const disabledStyle = "text-gray-300 cursor-not-allowed";
-
+                const isLastRow = index === filteredData.length - 1;
+                  const borderClass = isLastRow
+                    ? ""
+                    : "border-b border-gray-200";
+                    
                 return (
-                  <tr key={index} className="border-b border-gray-200">
-                    <td className="py-3 text-center">{row.title}</td>
-                    <td className="py-3 text-center">{row.kategori}</td>
-                    <td className="py-3 text-center">{row.year}</td>
-                    <td className="py-3 text-center">{row.publisher}</td>
-                    <td className={`py-3 text-center ${getStatusColorClass(row.status)}`}>{row.status}</td>
-                    <td className="py-3 text-center">
-                      <div className="flex justify-center gap-2">
-                        <button
-                          className={`${isReview ? disabledStyle : "text-gray-600 hover:text-blue-600"}`}
-                          onClick={() => !isReview && handleToggleMute(row.id)}
-                          disabled={isReview}
-                        >
-                          {isMuted ? <EyeOff size={18} /> : <Eye size={18} />}
-                        </button>
+                  <tr key={index}>
+                    <td className={`py-3 px-2 ${borderClass} text-center`}>
+                      {row.title}
+                    </td>
+                    <td className={`py-3 px-2 ${borderClass} text-center`}>
+                      {row.category}
+                    </td>
+                    <td className={`py-3 px-2 ${borderClass} text-center`}>
+                      {formatDate(row.date)}
+                    </td>
+                    <td className={`py-3 px-2 ${borderClass} text-center`}>
+                      {row.publisher}
+                    </td>
+                    <td className={`py-3 px-2 ${borderClass} text-center`}>
+                      <TableStatus status={row.status} />
+                    </td>
 
-                        <button
-                          className={`${isReview || isWaiting || isMuted ? disabledStyle : "text-gray-600 hover:text-green-500"}`}
-                          disabled={isReview || isWaiting || isMuted}
-                        >
-                          <Pencil size={18} />
-                        </button>
-
-                        <button
-                          className={`${isReview ? disabledStyle : "text-gray-600 hover:text-red-600"}`}
-                          disabled={isReview}
-                        >
-                          <Trash size={18} />
-                        </button>
-                      </div>
+                    <td className={`py-3 px-2 ${borderClass} text-center`}>
+                      <TableAction
+                        status={row.status}
+                        onToggleMute={() => handleToggleMute(row.id)}
+                        onEdit={() => handleEditClick(row)}
+                        onDelete={() => handleDelete(row.id)}
+                      />
                     </td>
                   </tr>
                 );
@@ -271,7 +274,7 @@ export default function NewsPage() {
               {filteredData.length === 0 && (
                 <tr>
                   <td colSpan={6} className="py-8 text-center text-gray-500">
-                    Tidak ada data yang cocok dengan filter.
+                    No matching data found.
                   </td>
                 </tr>
               )}
@@ -288,14 +291,13 @@ export default function NewsPage() {
             <div className="flex items-center">
               <h3 className="text-lg font-semibold mr-3">News Submissions</h3>
               <span className="bg-orange-500 text-white px-2 py-1 rounded-full text-xs">
-                1 new
+                {pendingCounter.map(pc => pc.value)} New
               </span>
             </div>
 
             <svg
-              className={`w-5 h-5 transition-transform ${
-                showPending ? "rotate-0" : "rotate-180"
-              }`}
+              className={`w-5 h-5 transition-transform ${showPending ? "rotate-0" : "rotate-180"
+                }`}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -330,13 +332,13 @@ export default function NewsPage() {
                       <td className="py-3 text-center">
                         <div className="flex justify-center gap-2">
                           <button className="text-blue-500 hover:text-blue-800">
-                            <Link size={18}/>
+                            <Link size={18} />
                           </button>
                           <button onClick={() => handleApprove(item)} className="text-green-600 hover:text-green-800">
-                            <Check size={18}/>
+                            <Check size={18} />
                           </button>
                           <button onClick={() => handleReject(item)} className="text-red-600 hover:text-red-800">
-                            <X size={18}/>
+                            <X size={18} />
                           </button>
                         </div>
                       </td>
@@ -345,10 +347,34 @@ export default function NewsPage() {
                 </tbody>
               </table>
             </div>
+
           )}
 
         </div>
-
+        {isFormOpen && (
+          <NewsForm
+            onClose={() => {
+              setIsFormOpen(false);
+              setEditData(null);
+            }}
+            onSubmit={handleSaveNews}
+            initialData={
+              editData
+                ? {
+                  title: editData.title,
+                  category: editData.category,
+                  date: editData.date,
+                  content: editData.description || "",
+                  coverUrl: editData.image || "",
+                  location: editData.location || "",
+                  publisher: editData.publisher || "",
+                  docGuide: editData.docGuide || "",
+                  newsLink: editData.newsLink || "",
+                }
+                : undefined
+            }
+          />
+        )}
       </div>
     </div>
   );

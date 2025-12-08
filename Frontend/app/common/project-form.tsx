@@ -77,6 +77,16 @@ export default function ProjectForm({ onClose, onSubmit, initialData }: ProjectF
     onClose();
   };
 
+  const getTodayString = () => {
+  const date = new Date();
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0'); 
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const minDate = getTodayString();
+
   const formatDate = (dateString: string) => {
     if (!dateString) return "";
     const date = new Date(dateString);
@@ -165,7 +175,7 @@ export default function ProjectForm({ onClose, onSubmit, initialData }: ProjectF
                 </div>
                 <div>
                   <label className="block text-base font-medium text-gray-700 mb-2">Date *</label>
-                  <input type="date" name="date" value={formData.date} onChange={handleChange} className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500" />
+                  <input type="date" name="date" min={minDate} value={formData.date} onChange={handleChange} className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500" />
                 </div>
               </div>
 

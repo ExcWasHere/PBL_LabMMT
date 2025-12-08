@@ -15,7 +15,7 @@ export const project_dummy = [
     date: "9 nov 2023",
     publisher: "Dani Setiawan",
     stars: "4",
-    status: "Waiting",
+    status: "Denied",
   },
   {
     id: 3,
@@ -41,7 +41,7 @@ export const news_dummy = [
   {
     id: 1,
     title: "Workshop Keamanan Siber",
-    category: "Workshop",
+    category: "Workshops",
     date: "30 jan 2025",
     publisher: "Dani Setiawan",
     status: "Published",
@@ -49,7 +49,7 @@ export const news_dummy = [
   {
     id: 2,
     title: "Pelatihan React JS Dasar",
-    category: "Pelatihan",
+    category: "Training",
     date: "15 feb 2025",
     publisher: "Dani Setiawan",
     status: "Waiting",
@@ -57,7 +57,7 @@ export const news_dummy = [
   {
     id: 3,
     title: "Sertifikasi AI untuk Pendidikan",
-    category: "Sertifikasi",
+    category: "Certifications",
     date: "10 mar 2025",
     publisher: "Dani Setiawan",
     status: "Review",
@@ -65,7 +65,7 @@ export const news_dummy = [
   {
     id: 4,
     title: "Artikel Teknologi Blockchain",
-    category: "Artikel",
+    category: "Articles",
     date: "05 apr 2025",
     publisher: "Dani Setiawan",
     status: "Muted",

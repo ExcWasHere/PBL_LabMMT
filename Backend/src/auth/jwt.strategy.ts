@@ -28,7 +28,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     if (!user) {
       return null;
     }
+
     const { password, ...rest } = user as any;
-    return rest;
+    const jwtRole = payload.role;
+    return {
+      ...rest,
+      role: jwtRole ?? rest.role,
+    };
   }
 }

@@ -4,8 +4,8 @@ import NewsPage from "~/components/Dashboard/lecturer/news.js";
 
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: "MMT | Dashboard-News" },
-    { name: "Masuk", content: "Welcome to Lab MMT JTI!" },
+    { title: "MMT | Dashboard-Lecturer" },
+    { name: "News", content: "Welcome to Lab MMT JTI!" },
   ];
 }
 

@@ -14,11 +14,11 @@ import {
 import { ProjectService } from './project.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
-import { UserRole } from '../user/user.entity';
 
 @Controller('project')
 export class ProjectController {
   constructor(private readonly projectService: ProjectService) {}
+
   @Get()
   async findAll() {
     return this.projectService.findAll();
@@ -31,17 +31,18 @@ export class ProjectController {
   @Post()
   async create(@Body() createProjectDto: CreateProjectDto, @Req() req: any) {
     const user = req.user;
+    console.log('POST /project user =', user);
+    const rawRole = user?.role;
+    const role = typeof rawRole === 'string' ? rawRole.toLowerCase() : '';
 
-    if (
-      user?.role !== UserRole.ADMIN &&
-      user?.role !== UserRole.DOSEN &&
-      user?.role !== UserRole.MAHASISWA
-    ) {
+    const allowedRoles = ['admin', 'dosen', 'mahasiswa'];
+    if (role && !allowedRoles.includes(role)) {
       throw new ForbiddenException('Kamu tidak boleh membuat project');
     }
 
     return this.projectService.create(createProjectDto);
   }
+
   @Patch(':id')
   async update(
     @Param('id') id: string,
@@ -49,22 +50,28 @@ export class ProjectController {
     @Req() req: any,
   ) {
     const user = req.user;
+    console.log('PATCH /project user =', user);
 
-    if (
-      user?.role !== UserRole.ADMIN &&
-      user?.role !== UserRole.DOSEN &&
-      user?.role !== UserRole.MAHASISWA
-    ) {
+    const rawRole = user?.role;
+    const role = typeof rawRole === 'string' ? rawRole.toLowerCase() : '';
+
+    const allowedRoles = ['admin', 'dosen', 'mahasiswa'];
+
+    if (role && !allowedRoles.includes(role)) {
       throw new ForbiddenException('Kamu tidak boleh mengupdate project');
     }
 
     return this.projectService.update(id, updateProjectDto);
   }
+
   @Delete(':id')
   async remove(@Param('id') id: string, @Req() req: any) {
     const user = req.user;
+    console.log('DELETE /project user =', user);
 
-    if (user?.role !== UserRole.ADMIN) {
+    const rawRole = user?.role;
+    const role = typeof rawRole === 'string' ? rawRole.toLowerCase() : '';
+    if (role && role !== 'admin') {
       throw new ForbiddenException('Kamu tidak boleh menghapus project');
     }
 

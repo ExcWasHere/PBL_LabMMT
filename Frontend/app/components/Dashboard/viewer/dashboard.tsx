@@ -48,9 +48,9 @@ function formatTimeAgo(dateStr: string): string {
   const diffDays = Math.floor(diffHours / 24);
 
   if (diffSec < 60) return "baru saja";
-  if (diffMin < 60) return `${diffMin} menit yang lalu`;
-  if (diffHours < 24) return `${diffHours} jam yang lalu`;
-  if (diffDays < 7) return `${diffDays} hari yang lalu`;
+  if (diffMin < 60) return `${diffMin} minute ago`;
+  if (diffHours < 24) return `${diffHours} hour ago`;
+  if (diffDays < 7) return `${diffDays} day ago`;
   return date.toLocaleDateString("id-ID", {
     day: "numeric",
     month: "short",
@@ -403,7 +403,7 @@ export default function Dashboard() {
 
             <p className="text-sm text-gray-500 mt-4 text-center">
               {trafficData.length > 0
-                ? `Tracking sejak ${new Date(
+                ? `Tracking since ${new Date(
                     trafficData[0].date
                   ).toLocaleDateString("id-ID", {
                     day: "numeric",

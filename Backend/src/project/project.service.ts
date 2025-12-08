@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Project } from './entities/project.entity';
@@ -12,8 +12,13 @@ export class ProjectService {
     private readonly projectRepo: Repository<Project>,
   ) {}
 
-  create(dto: CreateProjectDto) {
-    const project = this.projectRepo.create(dto);
+  async create(dto: CreateProjectDto) {
+    const project = this.projectRepo.create({
+      ...dto,
+      status: dto.status ?? 'Waiting',
+      stars: 0,
+    });
+
     return this.projectRepo.save(project);
   }
 
@@ -23,8 +28,12 @@ export class ProjectService {
     });
   }
 
-  findOne(id: string) {
-    return this.projectRepo.findOne({ where: { id } });
+  async findOne(id: string) {
+    const project = await this.projectRepo.findOne({ where: { id } });
+    if (!project) {
+      throw new NotFoundException('Project not found');
+    }
+    return project;
   }
 
   async update(id: string, dto: UpdateProjectDto) {

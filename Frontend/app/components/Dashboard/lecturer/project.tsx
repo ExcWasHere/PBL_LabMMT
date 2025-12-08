@@ -2,14 +2,30 @@ import Sidebar from "~/components/Dashboard/lecturer/sidebar";
 import { useState, useMemo, useEffect } from "react";
 import { Menu, Plus } from "lucide-react";
 import DropdownFilter from "~/common/dropdown-filter";
-import { project_dummy } from "./dataDummy";
-import ProjectForm from "~/common/project-form";
-import { useUserProfile } from "~/hook/useUserProfile";
+import ProjectForm, { type ProjectData } from "~/common/project-form";
 import TableAction from "~/common/table-action";
 import TableStatus from "~/common/table-status";
+const API_BASE_URL = "http://localhost:3000";
+
+const mapApiToProject = (p: any) => ({
+  id: p.id as string,
+  title: p.title ?? "-",
+  category: p.kategori ?? p.category ?? "-",
+  date: p.year || p.date || "",
+  publisher: p.publisher ?? "-",
+  stars: typeof p.stars === "number" ? String(p.stars) : (p.stars ?? "0"),
+  status: p.status ?? "Review",
+  description: p.description ?? "",
+  tech: p.tech ?? "",
+  teamMembers: Array.isArray(p.teamMembers) ? p.teamMembers : [],
+  githubLink: p.githubLink ?? "",
+  demoLink: p.demoLink ?? "",
+  mediaUrls: Array.isArray(p.mediaUrls) ? p.mediaUrls : [],
+});
 
 export default function ProjectPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth >= 1024) setIsSidebarOpen(true);
@@ -20,6 +36,21 @@ export default function ProjectPage() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  const [publisherName, setPublisherName] = useState("KetuaLab");
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("user");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        setPublisherName(
+          parsed.name ?? parsed.fullname ?? parsed.username ?? "KetuaLab"
+        );
+      }
+    } catch (e) {
+      console.error("Failed to parse user profile", e);
+    }
+  }, []);
+
   const [editData, setEditData] = useState<any | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedYear, setSelectedYear] = useState("All Year");
@@ -27,8 +58,35 @@ export default function ProjectPage() {
   const [selectedSort, setSelectedSort] = useState("Latest");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("All Status");
-  const [projects, setProjects] = useState(project_dummy);
-  const profile = useUserProfile();
+
+  const [projects, setProjects] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    const fetchProjects = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const res = await fetch(`${API_BASE_URL}/project`);
+
+        if (!res.ok) {
+          throw new Error("Failed to fetch projects");
+        }
+
+        const data = await res.json();
+        const mapped = (Array.isArray(data) ? data : []).map(mapApiToProject);
+        setProjects(mapped);
+      } catch (err) {
+        console.error(err);
+        setError("Gagal memuat data project.");
+        setProjects([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProjects();
+  }, []);
 
   const stats = [
     {
@@ -57,16 +115,30 @@ export default function ProjectPage() {
     setSearchTerm(e.target.value);
   };
 
-  const handleToggleMute = (id: number) => {
-    setProjects((prevProjects) =>
-      prevProjects.map((project) => {
-        if (project.id === id) {
-          const newStatus = project.status === "Muted" ? "Published" : "Muted";
-          return { ...project, status: newStatus };
-        }
-        return project;
-      })
-    );
+  const handleToggleMute = async (id: string) => {
+    const project = projects.find((p) => p.id === id);
+    if (!project) return;
+
+    const newStatus = project.status === "Muted" ? "Published" : "Muted";
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/project/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to update status");
+      }
+
+      setProjects((prev) =>
+        prev.map((p) => (p.id === id ? { ...p, status: newStatus } : p))
+      );
+    } catch (err) {
+      console.error(err);
+      alert("Gagal mengubah status project.");
+    }
   };
 
   const handleEditClick = (project: any) => {
@@ -86,12 +158,13 @@ export default function ProjectPage() {
     }).format(date);
   };
 
-  // --- Filtering Logic ---
   const filteredData = useMemo(() => {
     let data = [...projects];
+
     const getYearFromString = (dateString: string) => {
-      const parts = dateString.trim().split(" ");
-      return parts[parts.length - 1];
+      const d = new Date(dateString);
+      if (isNaN(d.getTime())) return "";
+      return String(d.getFullYear());
     };
 
     if (selectedCategory !== "All") {
@@ -136,43 +209,102 @@ export default function ProjectPage() {
     selectedStatus,
   ]);
 
-  const handleSaveProject = (formData: any) => {
-    if (editData) {
-      setProjects((prevProjects) =>
-        prevProjects.map((project) => {
-          if (project.id === editData.id) {
-            return {
-              ...project,
-              title: formData.title,
-              category: formData.type,
-              date: formData.date,
-            };
-          }
-          return project;
-        })
-      );
-    } else {
-      const newProject = {
-        id: projects.length + 1,
-        title: formData.title,
-        category: formData.type,
-        date: formData.date,
-        publisher: profile.name || "Me",
-        stars: "0",
-        status: "Review",
-      };
-      setProjects([newProject as any, ...projects]);
+  const handleSaveProject = async (formData: ProjectData) => {
+    const token = localStorage.getItem("token");
+
+    const headers: HeadersInit = {
+      "Content-Type": "application/json",
+    };
+
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
     }
 
-    setIsFormOpen(false);
-    setEditData(null);
+    const payload = {
+      title: formData.title,
+      kategori: formData.type,
+      year: formData.date,
+      description: formData.description,
+      publisher: publisherName,
+    };
+
+    try {
+      if (editData) {
+        const res = await fetch(`${API_BASE_URL}/project/${editData.id}`, {
+          method: "PATCH",
+          headers,
+          body: JSON.stringify({
+            ...payload,
+            status: "Review",
+            stars: 0,
+          }),
+        });
+
+        if (!res.ok) {
+          const text = await res.text();
+          console.error("Update project failed", res.status, text);
+          throw new Error("Failed to update project");
+        }
+
+        const updated = await res.json();
+        const mapped = mapApiToProject(updated);
+
+        setProjects((prev) =>
+          prev.map((p) => (p.id === mapped.id ? mapped : p))
+        );
+      } else {
+        // CREATE → status harus "Review" + stars 0
+        const res = await fetch(`${API_BASE_URL}/project`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            ...payload,
+            status: "Review",
+            stars: 0,
+          }),
+        });
+
+        if (!res.ok) {
+          const text = await res.text();
+          console.error("Create project failed", res.status, text);
+          throw new Error("Failed to create project");
+        }
+
+        const created = await res.json();
+        const mapped = mapApiToProject(created);
+
+        setProjects((prev) => [mapped, ...prev]);
+      }
+      setIsFormOpen(false);
+      setEditData(null);
+    } catch (err) {
+      console.error(err);
+      alert(
+        editData
+          ? "Gagal menyimpan perubahan project."
+          : "Gagal membuat project baru."
+      );
+    }
   };
 
-  const handleDelete = (id: number) => {
-    if (window.confirm("Are you sure you want to delete this project?")) {
-      setProjects((prevProjects) =>
-        prevProjects.filter((projects) => projects.id !== id)
-      );
+  const handleDelete = async (id: string) => {
+    if (!window.confirm("Are you sure you want to delete this project?")) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/project/${id}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to delete project");
+      }
+
+      setProjects((prev) => prev.filter((p) => p.id !== id));
+    } catch (err) {
+      console.error(err);
+      alert("Gagal menghapus project.");
     }
   };
 
@@ -188,7 +320,9 @@ export default function ProjectPage() {
       {isSidebarOpen && <Sidebar onClose={() => setIsSidebarOpen(false)} />}
 
       <div
-        className={`w-full p-4 md:p-8 transition-all duration-300 ease-in-out ${isSidebarOpen ? "lg:ml-64" : "ml-0"}`}
+        className={`w-full p-4 md:p-8 transition-all duration-300 ease-in-out ${
+          isSidebarOpen ? "lg:ml-64" : "ml-0"
+        }`}
       >
         <div className="flex items-center mb-6">
           <button
@@ -204,7 +338,7 @@ export default function ProjectPage() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           {stats.map((s) => (
-            <div key={s.label} className={`border-1 rounded-lg p-4 ${s.color}`}>
+            <div key={s.label} className={`border rounded-lg p-4 ${s.color}`}>
               <div className="text-left">
                 <p className="text-sm">{s.label}</p>
                 <h2 className="text-2xl md:text-3xl font-semibold">
@@ -267,7 +401,6 @@ export default function ProjectPage() {
                 "Waiting",
                 "Review",
                 "Muted",
-                "Denied",
               ]}
               currentFilter={selectedStatus}
               onSelect={setSelectedStatus}
@@ -283,7 +416,7 @@ export default function ProjectPage() {
           </button>
         </div>
 
-        {/* --- Table Section (Scrollable) --- */}
+        {/* Table Section */}
         <div className="border border-orange-500 rounded-lg overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm min-w-[800px]">
@@ -299,44 +432,63 @@ export default function ProjectPage() {
                 </tr>
               </thead>
               <tbody>
-                {filteredData.map((row, index) => {
-                  const isLastRow = index === filteredData.length - 1;
-                  const borderClass = isLastRow
-                    ? ""
-                    : "border-b border-gray-200";
+                {isLoading && (
+                  <tr>
+                    <td colSpan={7} className="py-8 text-center text-gray-500">
+                      Loading projects...
+                    </td>
+                  </tr>
+                )}
 
-                  return (
-                    <tr key={index}>
-                      <td className={`py-3 px-2 ${borderClass} text-center`}>
-                        {row.title}
-                      </td>
-                      <td className={`py-3 px-2 ${borderClass} text-center`}>
-                        {row.category}
-                      </td>
-                      <td className={`py-3 px-2 ${borderClass} text-center`}>
-                        {formatDate(row.date)}
-                      </td>
-                      <td className={`py-3 px-2 ${borderClass} text-center`}>
-                        {row.publisher}
-                      </td>
-                      <td className={`py-3 px-2 ${borderClass} text-center`}>
-                        {row.stars}
-                      </td>
-                      <td className={`py-3 px-2 ${borderClass} text-center`}>
-                        <TableStatus status={row.status} />
-                      </td>
-                      <td className={`py-3 px-2 ${borderClass} text-center`}>
-                        <TableAction
-                          status={row.status}
-                          onToggleMute={() => handleToggleMute(row.id)}
-                          onEdit={() => handleEditClick(row)}
-                          onDelete={() => handleDelete(row.id)}
-                        />
-                      </td>
-                    </tr>
-                  );
-                })}
-                {filteredData.length === 0 && (
+                {!isLoading && error && (
+                  <tr>
+                    <td colSpan={7} className="py-8 text-center text-red-500">
+                      {error}
+                    </td>
+                  </tr>
+                )}
+
+                {!isLoading &&
+                  !error &&
+                  filteredData.map((row, index) => {
+                    const isLastRow = index === filteredData.length - 1;
+                    const borderClass = isLastRow
+                      ? ""
+                      : "border-b border-gray-200";
+
+                    return (
+                      <tr key={row.id ?? index}>
+                        <td className={`py-3 px-2 ${borderClass} text-center`}>
+                          {row.title}
+                        </td>
+                        <td className={`py-3 px-2 ${borderClass} text-center`}>
+                          {row.category}
+                        </td>
+                        <td className={`py-3 px-2 ${borderClass} text-center`}>
+                          {formatDate(row.date)}
+                        </td>
+                        <td className={`py-3 px-2 ${borderClass} text-center`}>
+                          {row.publisher}
+                        </td>
+                        <td className={`py-3 px-2 ${borderClass} text-center`}>
+                          {row.stars}
+                        </td>
+                        <td className={`py-3 px-2 ${borderClass} text-center`}>
+                          <TableStatus status={row.status} />
+                        </td>
+                        <td className={`py-3 px-2 ${borderClass} text-center`}>
+                          <TableAction
+                            status={row.status}
+                            onToggleMute={() => handleToggleMute(row.id)}
+                            onEdit={() => handleEditClick(row)}
+                            onDelete={() => handleDelete(row.id)}
+                          />
+                        </td>
+                      </tr>
+                    );
+                  })}
+
+                {!isLoading && !error && filteredData.length === 0 && (
                   <tr>
                     <td colSpan={7} className="py-8 text-center text-gray-500">
                       No matching data found.
@@ -347,6 +499,7 @@ export default function ProjectPage() {
             </table>
           </div>
         </div>
+
         {isFormOpen && (
           <ProjectForm
             onClose={() => {
@@ -362,10 +515,10 @@ export default function ProjectPage() {
                     type: editData.category || "",
                     date: editData.date || "",
                     tech: editData.tech || "",
-                    teamMembers: editData.teamMembers || "",
+                    teamMembers: editData.teamMembers || [],
                     githubLink: editData.githubLink || "",
                     demoLink: editData.demoLink || "",
-                    photoUrls: editData.photoUrls || [],
+                    mediaUrls: editData.mediaUrls || [],
                   }
                 : undefined
             }

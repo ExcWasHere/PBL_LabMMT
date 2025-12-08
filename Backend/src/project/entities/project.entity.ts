@@ -36,6 +36,24 @@ export class Project {
   @Column({ type: 'text', nullable: true })
   description: string;
 
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  tech: string;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  githubLink: string;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  demoLink: string;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  thumbnailUrl: string;
+
+  @Column('text', { array: true, nullable: true })
+  mediaUrls: string[];
+
+  @Column({ type: 'jsonb', nullable: true })
+  teamMembers: { name: string; role: string; imageUrl?: string }[];
+
   @CreateDateColumn()
   createdAt: Date;
 

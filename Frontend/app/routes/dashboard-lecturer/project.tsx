@@ -4,8 +4,8 @@ import ProjectPage from "~/components/Dashboard/lecturer/project.js";
 
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: "MMT | Dashboard-Viewer" },
-    { name: "Masuk", content: "Welcome to Lab MMT JTI!" },
+    { title: "MMT | Dashboard-Lecturer" },
+    { name: "Project", content: "Welcome to Lab MMT JTI!" },
   ];
 }
 

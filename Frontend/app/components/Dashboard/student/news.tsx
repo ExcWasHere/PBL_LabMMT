@@ -2,58 +2,16 @@ import Sidebar from "~/components/Dashboard/student/sidebar";
 import { useState, useMemo } from "react";
 import { Menu, Plus, Eye, EyeOff, Pencil, Trash } from 'lucide-react';
 import { news_dummy } from "./dataDummy";
-
-interface DropdownFilterProps {
-  label: string;
-  options: string[];
-  currentFilter: string;
-  onSelect: (value: string) => void;
-}
-
-const DropdownFilter: React.FC<DropdownFilterProps> = ({ label, options, currentFilter, onSelect }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  return (
-    <div className="relative">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="border border-orange-500 rounded-lg px-3 py-1.5 bg-white text-gray-700 
-                   hover:bg-gray-50 focus:outline-none flex items-center justify-between 
-                   min-w-[96px] text-sm whitespace-nowrap"
-      >
-        {currentFilter || label}
-        <svg
-          className={`w-4 h-4 ml-1 transition-transform ${isOpen ? 'transform rotate-180' : ''}`}
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
-        </svg>
-      </button>
-
-      {isOpen && (
-        <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg z-10"> 
-          {options.map((option) => (
-            <button
-              key={option}
-              onClick={() => {
-                onSelect(option);
-                setIsOpen(false);
-              }}
-              className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-orange-50"
-            >
-              {option}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
+import TableAction from "~/common/table-action";
+import TableStatus from "~/common/table-status";
+import DropdownFilter from "~/common/dropdown-filter";
+import NewsForm from "~/common/news-form";
 
 export default function NewsPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editData, setEditData] = useState<any | null>(null);
 
   const [selectedYear, setSelectedYear] = useState("All Year");
   const [selectedKategori, setSelectedKategori] = useState("All");
@@ -69,16 +27,6 @@ export default function NewsPage() {
     { label: "Wait To Publish", value: newsList.filter(n => n.status === "Waiting").length, color: "border-green-400 text-green-500" },
     { label: "Muted", value: newsList.filter(n => n.status === "Muted").length, color: "border-red-400 text-red-500" },
   ];
-
-  const getStatusColorClass = (status: string) => {
-    switch (status) {
-      case "Muted": return "text-red-500";
-      case "Waiting": return "text-green-500";
-      case "Review": return "text-blue-500";
-      case "Published": return "text-orange-500";
-      default: return "text-black";
-    }
-  };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
@@ -96,6 +44,18 @@ export default function NewsPage() {
     );
   };
 
+  const formatDate = (dateString: string) => {
+    if (!dateString) return "-";
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return dateString;
+
+    return new Intl.DateTimeFormat("en-GB", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    }).format(date);
+  };
+
   const filteredData = useMemo(() => {
     let data = [...newsList];
 
@@ -104,8 +64,8 @@ export default function NewsPage() {
       return parts[parts.length - 1];
     };
 
-    if (selectedKategori !== "All") data = data.filter(row => row.kategori === selectedKategori);
-    if (selectedYear !== "All Year") data = data.filter(row => getYearFromString(row.year) === selectedYear);
+    if (selectedKategori !== "All") data = data.filter(row => row.category === selectedKategori);
+    if (selectedYear !== "All Year") data = data.filter(row => getYearFromString(row.date) === selectedYear);
 
     if (searchTerm) {
       const q = searchTerm.toLowerCase();
@@ -117,12 +77,54 @@ export default function NewsPage() {
 
     if (selectedSort === "A-Z") data.sort((a, b) => a.title.localeCompare(b.title));
     else if (selectedSort === "Z-A") data.sort((a, b) => b.title.localeCompare(a.title));
-    else if (selectedSort === "Latest") data.sort((a, b) => new Date(b.year).getTime() - new Date(a.year).getTime());
+    else if (selectedSort === "Latest") data.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
     if (selectedStatus !== "All Status") data = data.filter(row => row.status === selectedStatus);
 
     return data;
   }, [newsList, selectedYear, selectedKategori, searchTerm, selectedSort, selectedStatus]);
+
+  const handleSaveNews = (formData: any) => {
+    if (editData) {
+      setNewsList((prevNews) =>
+        prevNews.map((news) => {
+          if (news.id === editData.id) {
+            return {
+              ...news,
+              title: formData.title,
+              category: formData.category,
+              date: formData.date,
+            };
+          }
+          return news;
+        })
+      );
+    } else {
+      const newNews = {
+        id: newsList.length + 1,
+        title: formData.title,
+        category: formData.category,
+        date: formData.date,
+        publisher: "Me",
+        status: "Review",
+      };
+      setNewsList([newNews as any, ...newsList]);
+    }
+
+    setIsFormOpen(false);
+    setEditData(null);
+  };
+
+  const handleDelete = (id: number) => {
+    if (window.confirm("Are you sure you want to delete this news?")) {
+      setNewsList((prev) => prev.filter((item) => item.id !== id));
+    }
+  };
+
+  const handleEditClick = (news: any) => {
+    setEditData(news);
+    setIsFormOpen(true);
+  };
 
   return (
     <div className="flex">
@@ -172,12 +174,10 @@ export default function NewsPage() {
           <DropdownFilter label="Status" options={["All Status", "Published", "Waiting", "Review", "Muted"]} currentFilter={selectedStatus} onSelect={setSelectedStatus} />
 
           <button
-            className="flex items-center gap-1 bg-orange-600 hover:bg-orange-700 text-white 
-                       px-3 py-1.5 rounded-lg transition-colors shadow-sm 
-                       text-sm whitespace-nowrap"
-            onClick={() => console.log("Test")}
+            className="flex items-center justify-center gap-2 bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg transition-colors shadow-sm whitespace-nowrap mt-2 md:mt-0"
+            onClick={() => setIsFormOpen(true)}
           >
-            <Plus size={18} />
+            <Plus size={20} />
             <span>Add News</span>
           </button>
         </div>
@@ -200,48 +200,20 @@ export default function NewsPage() {
                 const isLastRow = index === filteredData.length - 1;
                 const borderClass = isLastRow ? '' : 'border-b border-gray-200';
 
-                const isReview = row.status === "Review";
-                const isMuted = row.status === "Muted";
-                const isWaiting = row.status === "Waiting";
-
-                const disabledStyle = "text-gray-300 cursor-not-allowed";
-
                 return (
                   <tr key={index}>
                     <td className={`py-3 ${borderClass} text-center`}>{row.title}</td>
-                    <td className={`py-3 ${borderClass} text-center`}>{row.kategori}</td>
-                    <td className={`py-3 ${borderClass} text-center`}>{row.year}</td>
+                    <td className={`py-3 ${borderClass} text-center`}>{row.category}</td>
+                    <td className={`py-3 ${borderClass} text-center`}>{formatDate(row.date)}</td>
                     <td className={`py-3 ${borderClass} text-center`}>{row.publisher}</td>
-                    <td className={`py-3 ${borderClass} font-medium text-center ${getStatusColorClass(row.status)}`}>
-                      {row.status}
-                    </td>
+                    <td className={`py-3 ${borderClass} text-center`}><TableStatus status={row.status} /></td>
                     <td className={`py-3 ${borderClass} text-center`}>
-                      <div className="flex items-center justify-center gap-2">
-                        <button
-                          className={`transition-colors ${isReview ? disabledStyle : "text-gray-600 hover:text-blue-600"}`}
-                          onClick={() => !isReview && handleToggleMute(row.id)}
-                          disabled={isReview}
-                          title={isMuted ? "Unmute News" : "Mute News"}
-                        >
-                          {isMuted ? <EyeOff size={18} /> : <Eye size={18} />}
-                        </button>
-
-                        <button
-                          className={`transition-colors ${isReview || isWaiting || isMuted ? disabledStyle : "text-gray-600 hover:text-green-500"}`}
-                          disabled={isReview || isWaiting || isMuted}
-                          title="Edit"
-                        >
-                          <Pencil size={18} />
-                        </button>
-
-                        <button
-                          className={`transition-colors ${isReview ? disabledStyle : "text-gray-600 hover:text-red-600"}`}
-                          disabled={isReview}
-                          title="Hapus"
-                        >
-                          <Trash size={18} />
-                        </button>
-                      </div>
+                      <TableAction
+                        status={row.status}
+                        onToggleMute={() => handleToggleMute(row.id)}
+                        onEdit={() => handleEditClick(row)}
+                        onDelete={() => handleDelete(row.id)}
+                      />
                     </td>
                   </tr>
                 );
@@ -257,7 +229,30 @@ export default function NewsPage() {
             </tbody>
           </table>
         </div>
-
+        {isFormOpen && (
+          <NewsForm
+            onClose={() => {
+              setIsFormOpen(false);
+              setEditData(null);
+            }}
+            onSubmit={handleSaveNews}
+            initialData={
+              editData
+                ? {
+                  title: editData.title,
+                  category: editData.category,
+                  date: editData.date,
+                  content: editData.description || "",
+                  coverUrl: editData.image || "",
+                  location: editData.location || "",
+                  publisher: editData.publisher || "",
+                  docGuide: editData.docGuide || "",
+                  newsLink: editData.newsLink || "",
+                }
+                : undefined
+            }
+          />
+        )}
       </div>
     </div>
   );

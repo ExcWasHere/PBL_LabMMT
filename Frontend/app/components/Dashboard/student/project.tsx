@@ -1,77 +1,19 @@
 import Sidebar from "~/components/Dashboard/student/sidebar";
 import { useState, useMemo } from "react";
-import { Menu, Plus, Eye, EyeOff, Pencil, Trash } from "lucide-react";
-
-interface DropdownFilterProps {
-  label: string;
-  options: string[];
-  currentFilter: string;
-  onSelect: (value: string) => void;
-}
+import { Menu, Plus } from "lucide-react";
+import TableAction from "~/common/table-action";
+import TableStatus from "~/common/table-status";
+import DropdownFilter from "~/common/dropdown-filter";
+import NewsForm from "~/common/project-form";
 
 import { project_dummy } from "~/components/Dashboard/student/dataDummy";
 
-const DropdownFilter: React.FC<DropdownFilterProps> = ({
-  label,
-  options,
-  currentFilter,
-  onSelect,
-}) => {
-  const [isOpen, setIsOpen] = useState(false);
-
-  return (
-    <div className="relative">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="
-          border border-orange-500 rounded-lg 
-          px-3 py-1.5 text-sm bg-white text-gray-700 
-          hover:bg-gray-50 focus:outline-none 
-          flex items-center justify-between 
-          min-w-[96px] whitespace-nowrap
-        "
-      >
-        {currentFilter || label}
-
-        <svg
-          className={`w-4 h-4 ml-1 transition-transform ${
-            isOpen ? "transform rotate-180" : ""
-          }`}
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2"
-            d="M19 9l-7 7-7-7"
-          />
-        </svg>
-      </button>
-
-      {isOpen && (
-        <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg z-10">
-          {options.map((option) => (
-            <button
-              key={option}
-              onClick={() => {
-                onSelect(option);
-                setIsOpen(false);
-              }}
-              className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-orange-50"
-            >
-              {option}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
 
 export default function ProjectPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editData, setEditData] = useState<any | null>(null);
 
   const [selectedYear, setSelectedYear] = useState("All Year");
   const [selectedKategori, setSelectedKategori] = useState("All");
@@ -104,21 +46,6 @@ export default function ProjectPage() {
     },
   ];
 
-  const getStatusColorClass = (status: string) => {
-    switch (status) {
-      case "Muted":
-        return "text-red-500";
-      case "Waiting":
-        return "text-green-500";
-      case "Review":
-        return "text-blue-500";
-      case "Published":
-        return "text-orange-500";
-      default:
-        return "text-black";
-    }
-  };
-
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
   };
@@ -135,6 +62,17 @@ export default function ProjectPage() {
       })
     );
   };
+  const formatDate = (dateString: string) => {
+    if (!dateString) return "-";
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return dateString;
+
+    return new Intl.DateTimeFormat("en-GB", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    }).format(date);
+  };
 
   const filteredData = useMemo(() => {
     let data = [...projects];
@@ -144,15 +82,8 @@ export default function ProjectPage() {
       return parts[parts.length - 1];
     };
 
-    if (selectedKategori !== "All") {
-      data = data.filter((row) => row.kategori === selectedKategori);
-    }
-
-    if (selectedYear !== "All Year") {
-      data = data.filter(
-        (row) => getYearFromString(row.year) === selectedYear
-      );
-    }
+    if (selectedKategori !== "All") data = data.filter(row => row.category === selectedKategori);
+    if (selectedYear !== "All Year") data = data.filter(row => getYearFromString(row.date) === selectedYear);
 
     if (searchTerm) {
       const lowerCaseQuery = searchTerm.toLowerCase();
@@ -170,7 +101,7 @@ export default function ProjectPage() {
     } else if (selectedSort === "Latest") {
       data.sort(
         (a, b) =>
-          new Date(b.year).getTime() - new Date(a.year).getTime()
+          new Date(b.date).getTime() - new Date(a.date).getTime()
       );
     } else if (selectedSort === "Most Popular") {
       data.sort((a, b) => Number(b.stars) - Number(a.stars));
@@ -189,15 +120,57 @@ export default function ProjectPage() {
     selectedSort,
     selectedStatus,
   ]);
+  const handleSaveProject = (formData: any) => {
+    if (editData) {
+      setProjects((prevProjects) =>
+        prevProjects.map((project) => {
+          if (project.id === editData.id) {
+            return {
+              ...project,
+              title: formData.title,
+              category: formData.type,
+              date: formData.date,
+            };
+          }
+          return project;
+        })
+      );
+    } else {
+      const newNews = {
+        id: projects.length + 1,
+        title: formData.title,
+        category: formData.type,
+        date: formData.date,
+        publisher: "Me",
+        status: "Review",
+
+        stars: 0,
+      };
+      setProjects([newNews as any, ...projects]);
+    }
+
+    setIsFormOpen(false);
+    setEditData(null);
+  };
+
+  const handleDelete = (id: number) => {
+    if (window.confirm("Are you sure you want to delete this news?")) {
+      setProjects((prev) => prev.filter((item) => item.id !== id));
+    }
+  };
+
+  const handleEditClick = (news: any) => {
+    setEditData(news);
+    setIsFormOpen(true);
+  };
 
   return (
     <div className="flex">
       {isSidebarOpen && <Sidebar />}
 
       <div
-        className={`w-full p-8 transition-all duration-300 ease-in-out ${
-          isSidebarOpen ? "ml-64" : "ml-0"
-        }`}
+        className={`w-full p-8 transition-all duration-300 ease-in-out ${isSidebarOpen ? "ml-64" : "ml-0"
+          }`}
       >
         {/* Header */}
         <div className="flex items-center mb-6">
@@ -221,20 +194,21 @@ export default function ProjectPage() {
         </div>
 
         {/* Filters */}
-        <div className="flex items-center gap-3 mb-6">
-          <div className="flex items-center flex-1 border border-orange-500 rounded-lg bg-white px-4 py-2">
+        <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 mb-6 flex-wrap">
+          <div className="flex items-center flex-1 border border-orange-500 rounded-lg bg-white px-4 py-2 min-w-[200px]">
             <svg
               className="w-5 h-5 text-gray-400 mr-2"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
             >
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth="2"
                 d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
+              ></path>
             </svg>
             <input
               type="text"
@@ -245,44 +219,45 @@ export default function ProjectPage() {
             />
           </div>
 
-          <DropdownFilter
-            label="Tahun"
-            options={["All Year", "2025", "2024", "2023"]}
-            currentFilter={selectedYear}
-            onSelect={setSelectedYear}
-          />
-
-          <DropdownFilter
-            label="Kategori"
-            options={["All", "UI/UX", "Game", "Frontend", "AR", "VR"]}
-            currentFilter={selectedKategori}
-            onSelect={setSelectedKategori}
-          />
-
-          <DropdownFilter
-            label="Urutkan"
-            options={["A-Z", "Z-A", "Most Popular", "Latest"]}
-            currentFilter={selectedSort}
-            onSelect={setSelectedSort}
-          />
-
-          <DropdownFilter
-            label="Status"
-            options={["All Status", "Published", "Waiting", "Review", "Muted"]}
-            currentFilter={selectedStatus}
-            onSelect={setSelectedStatus}
-          />
+          <div className="flex gap-2 flex-wrap w-full md:w-auto">
+            <DropdownFilter
+              label="Tahun"
+              options={["All Year", "2025", "2024", "2023"]}
+              currentFilter={selectedYear}
+              onSelect={setSelectedYear}
+            />
+            <DropdownFilter
+              label="Category"
+              options={["All", "UI/UX", "Game", "Web", "AR", "VR", "Mobile"]}
+              currentFilter={selectedKategori}
+              onSelect={setSelectedKategori}
+            />
+            <DropdownFilter
+              label="Urutkan"
+              options={["A-Z", "Z-A", "Most Popular", "Latest"]}
+              currentFilter={selectedSort}
+              onSelect={setSelectedSort}
+            />
+            <DropdownFilter
+              label="Status"
+              options={[
+                "All Status",
+                "Published",
+                "Waiting",
+                "Review",
+                "Muted",
+                "Denied",
+              ]}
+              currentFilter={selectedStatus}
+              onSelect={setSelectedStatus}
+            />
+          </div>
 
           <button
-            className="
-              flex items-center gap-1 
-              bg-orange-600 hover:bg-orange-700 text-white
-              px-3 py-1.5 rounded-lg text-sm
-              transition-colors shadow-sm whitespace-nowrap
-            "
-            onClick={() => console.log("test")}
+            className="flex items-center justify-center gap-2 bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg transition-colors shadow-sm whitespace-nowrap mt-2 md:mt-0"
+            onClick={() => setIsFormOpen(true)}
           >
-            <Plus size={18} />
+            <Plus size={20} />
             <span>Add Project</span>
           </button>
         </div>
@@ -306,88 +281,25 @@ export default function ProjectPage() {
               {filteredData.map((row, index) => {
                 const isLastRow = index === filteredData.length - 1;
                 const borderClass = isLastRow
-                  ? ""
-                  : "border-b border-gray-200";
-
-                const isReview = row.status === "Review";
-                const isMuted = row.status === "Muted";
-                const isWaiting = row.status === "Waiting";
-
-                const disabledStyle = "text-gray-300 cursor-not-allowed";
+                  ? "" : "border-b border-gray-200";
 
                 return (
                   <tr key={index}>
+                    <td className={`py-3 ${borderClass} text-center`}>{row.title}</td>
+                    <td className={`py-3 ${borderClass} text-center`}>{row.category}</td>
+                    <td className={`py-3 ${borderClass} text-center`}>{formatDate(row.date)}</td>
+                    <td className={`py-3 ${borderClass} text-center`}>{row.publisher}</td>
+                    <td className={`py-3 px-2 ${borderClass} text-center`}>
+                        {row.stars}
+                      </td>
+                    <td className={`py-3 ${borderClass} text-center`}><TableStatus status={row.status} /></td>
                     <td className={`py-3 ${borderClass} text-center`}>
-                      {row.title}
-                    </td>
-                    <td className={`py-3 ${borderClass} text-center`}>
-                      {row.kategori}
-                    </td>
-                    <td className={`py-3 ${borderClass} text-center`}>
-                      {row.year}
-                    </td>
-                    <td className={`py-3 ${borderClass} text-center`}>
-                      {row.publisher}
-                    </td>
-                    <td className={`py-3 ${borderClass} text-center`}>
-                      {row.stars}
-                    </td>
-                    <td
-                      className={`py-3 ${borderClass} text-center font-medium ${getStatusColorClass(
-                        row.status
-                      )}`}
-                    >
-                      {row.status}
-                    </td>
-                    <td className={`py-3 ${borderClass} text-center`}>
-                      <div className="flex items-center justify-center gap-2">
-                        <button
-                          className={`transition-colors ${
-                            isReview
-                              ? disabledStyle
-                              : "text-gray-600 hover:text-blue-600"
-                          }`}
-                          onClick={() =>
-                            !isReview && handleToggleMute(row.id)
-                          }
-                          disabled={isReview}
-                          title={
-                            isMuted ? "Unmute Project" : "Mute Project"
-                          }
-                        >
-                          {isMuted ? (
-                            <EyeOff size={18} />
-                          ) : (
-                            <Eye size={18} />
-                          )}
-                        </button>
-
-                        <button
-                          className={`transition-colors ${
-                            isReview || isWaiting || isMuted
-                              ? disabledStyle
-                              : "text-gray-600 hover:text-orange-600"
-                          }`}
-                          disabled={
-                            isReview || isWaiting || isMuted
-                          }
-                          title="Edit"
-                        >
-                          <Pencil size={18} />
-                        </button>
-
-                        <button
-                          className={`transition-colors ${
-                            isReview
-                              ? disabledStyle
-                              : "text-gray-600 hover:text-red-600"
-                          }`}
-                          disabled={isReview}
-                          title="Hapus"
-                        >
-                          <Trash size={18} />
-                        </button>
-                      </div>
+                      <TableAction
+                        status={row.status}
+                        onToggleMute={() => handleToggleMute(row.id)}
+                        onEdit={() => handleEditClick(row)}
+                        onDelete={() => handleDelete(row.id)}
+                      />
                     </td>
                   </tr>
                 );
@@ -406,6 +318,30 @@ export default function ProjectPage() {
             </tbody>
           </table>
         </div>
+        {isFormOpen && (
+                  <NewsForm
+                    onClose={() => {
+                      setIsFormOpen(false);
+                      setEditData(null);
+                    }}
+                    onSubmit={handleSaveProject}
+                    initialData={
+                      editData
+                        ? {
+                          title: editData.title,
+                          category: editData.category,
+                          date: editData.date,
+                          content: editData.description || "",
+                          coverUrl: editData.image || "",
+                          location: editData.location || "",
+                          publisher: editData.publisher || "",
+                          docGuide: editData.docGuide || "",
+                          newsLink: editData.newsLink || "",
+                        }
+                        : undefined
+                    }
+                  />
+                )}
       </div>
     </div>
   );

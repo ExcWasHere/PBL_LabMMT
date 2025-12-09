@@ -22,6 +22,32 @@ interface NewsFormProps {
   initialData?: NewsData;
 }
 
+const normalizeDateInput = (value: string) => {
+  if (!value) return "";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+
+  const d = new Date(value);
+  if (isNaN(d.getTime())) return "";
+  return d.toISOString().slice(0, 10);
+};
+
+const getPublisherName = () => {
+  if (typeof window === "undefined") return "";
+  try {
+    const raw = localStorage.getItem("user");
+    if (!raw) return "KetuaLab";
+    const parsed = JSON.parse(raw);
+    return (
+      parsed.name ??
+      parsed.fullname ??
+      parsed.username ??
+      "KetuaLab"
+    );
+  } catch {
+    return "KetuaLab";
+  }
+};
+
 export default function NewsForm({
   onClose,
   onSubmit,
@@ -29,8 +55,6 @@ export default function NewsForm({
 }: NewsFormProps) {
   const isEditMode = !!initialData;
   const [showPreview, setShowPreview] = useState(false);
-
-  // Title Logic
   const formTitle = isEditMode ? "Edit Post" : "Add New Post";
 
   const defaultFormData: NewsData = {
@@ -50,7 +74,19 @@ export default function NewsForm({
   );
 
   useEffect(() => {
-    setFormData(initialData || defaultFormData);
+    if (initialData) {
+      setFormData({
+        ...defaultFormData,
+        ...initialData,
+        date: normalizeDateInput(initialData.date),
+      });
+    } else {
+      setFormData((prev) => ({
+        ...defaultFormData,
+        ...prev,
+        publisher: prev.publisher || getPublisherName(),
+      }));
+    }
   }, [initialData]);
 
   const handleChange = (
@@ -67,7 +103,6 @@ export default function NewsForm({
       !formData.title ||
       !formData.category ||
       !formData.date ||
-      !formData.publisher ||
       !formData.content
     ) {
       alert("Please fill in required fields");
@@ -100,7 +135,7 @@ export default function NewsForm({
   return (
     <div className="fixed inset-0 bg-white z-50 overflow-y-auto font-sans">
       <div className="w-full h-full p-8">
-        {/* HEADER SECTION - Matches Project Form */}
+        {/* HEADER SECTION */}
         <div className="flex items-center justify-between mb-8">
           <h2 className="text-3xl font-bold text-orange-600">{formTitle}</h2>
           <button
@@ -217,10 +252,10 @@ export default function NewsForm({
                     className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 appearance-none pr-10 cursor-pointer"
                   >
                     <option value="News">News</option>
-                    <option value="Article">Training</option>
-                    <option value="Workshop">Workshops</option>
-                    <option value="Workshop">Certifications</option>
-                    <option value="Article">Articles</option>
+                    <option value="Training">Training</option>
+                    <option value="Workshops">Workshops</option>
+                    <option value="Certifications">Certifications</option>
+                    <option value="Articles">Articles</option>
                   </select>
                   <div className="pointer-events-none absolute inset-y-0 right-0 top-7 flex items-center px-2 text-gray-700">
                     <svg
@@ -374,7 +409,7 @@ export default function NewsForm({
           )}
         </div>
 
-        {/* FOOTER SECTION - Matches Project Form (Sticky Bottom) */}
+        {/* FOOTER SECTION */}
         <div className="max-w-6xl mx-auto flex justify-end gap-4 mt-8 sticky bottom-0 bg-white py-4 border-t border-gray-200">
           <button
             onClick={onClose}

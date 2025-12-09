@@ -30,6 +30,7 @@ export function useCommentSystem() {
       rating: userRating,
       text: commentText,
       likes: 0,
+      isLike: false,
       replies: [],
     };
 
@@ -39,6 +40,49 @@ export function useCommentSystem() {
     setUserRating(0);
   };
 
+  const addReply = (commentId: number, text: string) => {
+  setComments((prevComments) => 
+    prevComments.map((comment) => {
+      if (comment.id === commentId) {
+        return {
+          ...comment,
+          replies: [
+            ...comment.replies,
+            {
+              id: Date.now(), // ID unik sederhana
+              user: userName || "Guest", // Menggunakan nama dari input utama
+              avatar: "https://i.pravatar.cc/150?img=12", // Placeholder avatar
+              time: "Just now",
+              text: text,
+              likes: 0,
+            },
+          ],
+        };
+      }
+      return comment;
+    })
+  );
+};
+
+const toggleLike = (commentId: number) => {
+    setComments((prevComments) =>
+      prevComments.map((comment) => {
+        if (comment.id === commentId) {
+          // Cek status saat ini
+          const currentlyLiked = comment.isLike || false; 
+
+          return { 
+            ...comment, 
+            // Jika sudah like, kurangi 1. Jika belum, tambah 1.
+            likes: currentlyLiked ? comment.likes - 1 : comment.likes + 1,
+            // Balik status isLiked (true jadi false, false jadi true)
+            isLike: !currentlyLiked 
+          };
+        }
+        return comment;
+      })
+    );
+  };
   return {
     comments,
     userName,
@@ -49,6 +93,8 @@ export function useCommentSystem() {
     setUserRating,
     addComment,
     averageRating,
-    userReviewsCount
+    userReviewsCount,
+    addReply,
+    toggleLike
   };
 }

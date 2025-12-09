@@ -1,66 +1,19 @@
 import Sidebar from "~/components/Dashboard/student/sidebar";
 import { useState, useMemo } from "react";
-import { Menu, Plus, Eye, EyeOff, Pencil, Trash } from "lucide-react";
+import { Menu, Plus } from "lucide-react";
 import { gallery_dummy } from "./dataDummy";
-interface DropdownFilterProps {
-  label: string;
-  options: string[];
-  currentFilter: string;
-  onSelect: (value: string) => void;
-}
+import GalleryForm from "~/common/gallery-form";
+import DropdownFilter from "~/common/dropdown-filter";
+import TableAction from "~/common/table-action";
+import TableStatus from "~/common/table-status";
 
-const DropdownFilter: React.FC<DropdownFilterProps> = ({
-  label,
-  options,
-  currentFilter,
-  onSelect,
-}) => {
-  const [isOpen, setIsOpen] = useState(false);
-  return (
-    <div className="relative">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="border border-orange-500 rounded-lg px-4 py-2 bg-white text-gray-700 hover:bg-gray-50 focus:outline-none flex items-center justify-between min-w-[120px]"
-      >
-        {currentFilter || label}
-        <svg
-          className={`w-4 h-4 ml-2 transition-transform ${isOpen ? "transform rotate-180" : ""}`}
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2"
-            d="M19 9l-7 7-7-7"
-          ></path>
-        </svg>
-      </button>
-
-      {isOpen && (
-        <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg z-10">
-          {options.map((option) => (
-            <button
-              key={option}
-              onClick={() => {
-                onSelect(option);
-                setIsOpen(false);
-              }}
-              className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-orange-50"
-            >
-              {option}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
 
 export default function GalleryPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editData, setEditData] = useState<any | null>(null);
 
   const [selectedYear, setSelectedYear] = useState("All Year");
   const [selectedKategori, setSelectedKategori] = useState("Semua");
@@ -123,7 +76,18 @@ export default function GalleryPage() {
       })
     );
   };
+  const formatDate = (dateString: string) => {
+    if (!dateString) return "-";
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return dateString;
 
+    return new Intl.DateTimeFormat("en-GB", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    }).format(date);
+  };
+  //-- filtwer logic --//
   const filteredData = useMemo(() => {
     let data = [...galleryList];
     const getYearFromString = (dateString: string) => {
@@ -131,9 +95,7 @@ export default function GalleryPage() {
       return parts[parts.length - 1];
     };
 
-    if (selectedYear !== "All Year") {
-      data = data.filter((row) => getYearFromString(row.date) === selectedYear);
-    }
+    if (selectedYear !== "All Year") data = data.filter(row => getYearFromString(row.date) === selectedYear);
 
     if (searchTerm) {
       const lowerCaseQuery = searchTerm.toLowerCase();
@@ -160,11 +122,54 @@ export default function GalleryPage() {
   }, [
     galleryList,
     selectedYear,
-    selectedKategori,
     searchTerm,
     selectedSort,
     selectedStatus,
   ]);
+  const handleSaveGallery = (formData: any) => {
+    if (editData) {
+      setGalleryList((prevGallery) =>
+        prevGallery.map((Gallery) => {
+          if (Gallery.id === editData.id) {
+            return {
+              ...Gallery,
+              title: formData.title,
+              category: formData.type,
+              date: formData.date,
+            };
+          }
+          return Gallery;
+        })
+      );
+    } else {
+      const newNews = {
+        id: galleryList.length + 1,
+        title: formData.title,
+        category: formData.type,
+        date: formData.date,
+        publisher: "Me",
+        status: "Review",
+
+        photo: 0,
+        video: 0,
+        animation: 0,
+      };
+      setGalleryList([newNews as any, ...galleryList]);
+    }
+
+    setIsFormOpen(false);
+    setEditData(null);
+  };
+  const handleDelete = (id: number) => {
+    if (window.confirm("Are you sure you want to delete this gallery?")) {
+      setGalleryList((prev) => prev.filter((item) => item.id !== id));
+    }
+  };
+
+  const handleEditClick = (gallery: any) => {
+    setEditData(gallery);
+    setIsFormOpen(true);
+  };
 
   return (
     <div className="flex">
@@ -194,8 +199,8 @@ export default function GalleryPage() {
           ))}
         </div>
 
-        <div className="flex items-center gap-3 mb-6">
-          <div className="flex items-center flex-1 border border-orange-500 rounded-lg bg-white px-4 py-2">
+        <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 mb-6 flex-wrap">
+          <div className="flex items-center flex-1 border border-orange-500 rounded-lg bg-white px-4 py-2 min-w-[200px]">
             <svg
               className="w-5 h-5 text-gray-400 mr-2"
               fill="none"
@@ -218,29 +223,42 @@ export default function GalleryPage() {
               className="flex-1 outline-none text-gray-700 bg-transparent"
             />
           </div>
-
-          <DropdownFilter
-            label="Tahun"
-            options={["All Year", "2025", "2024", "2023"]}
-            currentFilter={selectedYear}
-            onSelect={setSelectedYear}
-          />
-          <DropdownFilter
-            label="Urutkan"
-            options={["A-Z", "Z-A", "Latest"]}
-            currentFilter={selectedSort}
-            onSelect={setSelectedSort}
-          />
-          <DropdownFilter
-            label="Status"
-            options={["All Status", "Published", "Waiting", "Review", "Muted"]}
-            currentFilter={selectedStatus}
-            onSelect={setSelectedStatus}
-          />
-
+          <div className="flex gap-2 flex-wrap w-full md:w-auto">
+            <DropdownFilter
+              label="Tahun"
+              options={["All Year", "2025", "2024", "2023"]}
+              currentFilter={selectedYear}
+              onSelect={setSelectedYear}
+            />
+            <DropdownFilter
+              label="Category"
+              options={["All", "UI/UX", "Game", "Web", "AR", "VR", "Mobile"]}
+              currentFilter={selectedKategori}
+              onSelect={setSelectedKategori}
+            />
+            <DropdownFilter
+              label="Urutkan"
+              options={["A-Z", "Z-A", "Most Popular", "Latest"]}
+              currentFilter={selectedSort}
+              onSelect={setSelectedSort}
+            />
+            <DropdownFilter
+              label="Status"
+              options={[
+                "All Status",
+                "Published",
+                "Waiting",
+                "Review",
+                "Muted",
+                "Denied",
+              ]}
+              currentFilter={selectedStatus}
+              onSelect={setSelectedStatus}
+            />
+          </div>
           <button
             className="flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg transition-colors shadow-sm whitespace-nowrap"
-            onClick={() => console.log("Test")} 
+            onClick={() => setIsFormOpen(true)}
           >
             <Plus size={20} />
             <span>Add Gallery</span>
@@ -266,72 +284,37 @@ export default function GalleryPage() {
                 const isLastRow = index === filteredData.length - 1;
                 const borderClass = isLastRow ? "" : "border-b border-gray-200";
 
-                const isReview = row.status === "Review";
-                const isMuted = row.status === "Muted";
-                const isWaiting = row.status === "Waiting";
-
-                const disabledStyle = "text-gray-300 cursor-not-allowed";
-
                 return (
                   <tr key={index}>
-                    <td className={`py-3 ${borderClass} text-center`}>
+                    <td className={`py-3 px-2 ${borderClass} text-center`}>
                       {row.title}
                     </td>
-                    <td className={`py-3 ${borderClass} text-center`}>
+                    <td className={`py-3 px-2 ${borderClass} text-center`}>
                       {row.photo}
                     </td>
-                    <td className={`py-3 ${borderClass} text-center`}>
+                    <td className={`py-3 px-2 ${borderClass} text-center`}>
                       {row.video}
                     </td>
-                    <td className={`py-3 ${borderClass} text-center`}>
+                    <td className={`py-3 px-2 ${borderClass} text-center`}>
                       {row.animation}
                     </td>
-                    <td className={`py-3 ${borderClass} text-center`}>
-                      {row.date}
+                    <td className={`py-3 px-2 ${borderClass} text-center`}>
+                      {formatDate(row.date)}
                     </td>
-                    <td className={`py-3 ${borderClass} text-center`}>
+                    <td className={`py-3 px-2 ${borderClass} text-center`}>
                       {row.publisher}
                     </td>
-                    <td
-                      className={`py-3 ${borderClass} font-medium text-center ${getStatusColorClass(row.status)}`}
-                    >
-                      {row.status}
+                    <td className={`py-3 px-2 ${borderClass} text-center`}>
+                      <TableStatus status={row.status} />
                     </td>
-
                     <td className={`py-3 ${borderClass} text-center`}>
-                      <div className="flex items-center justify-center gap-2">
-                        <button
-                          className={`transition-colors ${isReview ? disabledStyle : "text-gray-600 hover:text-blue-600"}`}
-                          onClick={() => !isReview && handleToggleMute(row.id)}
-                          disabled={isReview}
-                          title={isMuted ? "Unmute News" : "Mute News"}
-                        >
-                          {isMuted ? <EyeOff size={18} /> : <Eye size={18} />}
-                        </button>
+                      <TableAction
+                        status={row.status}
+                        onToggleMute={() => handleToggleMute(row.id)}
+                        onEdit={() => handleEditClick(row)}
+                        onDelete={() => handleDelete(row.id)}
+                      />
 
-                        <button
-                          className={`transition-colors ${isReview || isWaiting || isMuted ? disabledStyle : "text-gray-600 hover:text-green-500"}`}
-                          onClick={() =>
-                            !(isReview || isWaiting || isMuted) &&
-                            console.log("Edit", row.title)
-                          }
-                          disabled={isReview || isWaiting || isMuted}
-                          title="Edit"
-                        >
-                          <Pencil size={18} />
-                        </button>
-
-                        <button
-                          className={`transition-colors ${isReview ? disabledStyle : "text-gray-600 hover:text-red-600"}`}
-                          onClick={() =>
-                            !isReview && console.log("Delete", row.title)
-                          }
-                          disabled={isReview}
-                          title="Hapus"
-                        >
-                          <Trash size={18} />
-                        </button>
-                      </div>
                     </td>
                   </tr>
                 );
@@ -346,6 +329,28 @@ export default function GalleryPage() {
             </tbody>
           </table>
         </div>
+        {isFormOpen && (
+          <GalleryForm
+            onClose={() => {
+              setIsFormOpen(false);
+              setEditData(null);
+            }}
+            onSubmit={handleSaveGallery}
+            initialData={
+              editData
+                ? {
+                  title: editData.title || "",
+                  description: editData.description || "",
+                  date: editData.date || "",
+                  location: editData.location || "",
+                  mediaTypes: editData.mediaTypes || [],
+                  mediaFiles: editData.mediaFiles || [],
+                  thumbnailUrl: editData.thumbnailUrl || "",
+                }
+                : undefined
+            }
+          />
+        )}
       </div>
     </div>
   );

@@ -42,7 +42,7 @@ export default function header() {
                 : "opacity-0 translate-y-6"
             }`}
           >
-            Koleksi proyek yang dikerjakan oleh anggota - anggota lab MMT.
+            A showcase of projects created by the MMT Lab team.
           </p>
         </div>
       </div>

@@ -40,7 +40,7 @@ const DropdownFilter: React.FC<DropdownFilterProps> = ({ label, options, current
   );
 };
 
-// --- NewsPage Component ---
+
 
 export default function MemberPage() {
   // STATE BARU untuk mengontrol sidebar

@@ -1,76 +1,29 @@
 import Sidebar from "~/components/Dashboard/lecturer/sidebar";
-import { useState, useMemo } from "react";
-import { Menu, FileText, CreditCard, Check, X } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
+import { Menu, FileText, Check, X } from "lucide-react";
 import { member_dummy, registration_dummy } from "./dataDummy";
-interface DropdownFilterProps {
-  label: string;
-  options: string[];
-  currentFilter: string;
-  onSelect: (value: string) => void;
-}
-
-const DropdownFilter: React.FC<DropdownFilterProps> = ({
-  label,
-  options,
-  currentFilter,
-  onSelect,
-}) => {
-  const [isOpen, setIsOpen] = useState(false);
-  return (
-    <div className="relative">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="border border-orange-500 rounded-lg px-4 py-2 bg-white text-gray-700 hover:bg-gray-50 focus:outline-none flex items-center justify-between min-w-[120px]"
-      >
-        {currentFilter || label}
-        <svg
-          className={`w-4 h-4 ml-2 transition-transform ${isOpen ? "transform rotate-180" : ""}`}
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2"
-            d="M19 9l-7 7-7-7"
-          ></path>
-        </svg>
-      </button>
-
-      {isOpen && (
-        <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg z-10">
-          {options.map((option) => (
-            <button
-              key={option}
-              onClick={() => {
-                onSelect(option);
-                setIsOpen(false);
-              }}
-              className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-orange-50"
-            >
-              {option}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
-
-// --- NewsPage Component ---
+import DropdownFilter from "~/common/dropdown-filter";
 
 export default function MemberPage() {
-  // STATE BARU untuk mengontrol sidebar
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true); // Default terbuka
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) setIsSidebarOpen(true);
+      else setIsSidebarOpen(false);
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const [selectedYear, setSelectedYear] = useState("All Year");
-  const [selectedRole, setselectedRole] = useState("All");
+  const [selectedRole, setSelectedRole] = useState("All");
   const [selectedSort, setSelectedSort] = useState("Latest");
   const [searchTerm, setSearchTerm] = useState("");
 
   const [memberList, setMemberList] = useState(member_dummy);
+  const [memberPending, setMemberPending] = useState(registration_dummy);
+  const [showPending, setShowPending] = useState(false);
 
   const stats = [
     {
@@ -99,7 +52,6 @@ export default function MemberPage() {
 
   // --- Filtering Logic ---
   const filteredData = useMemo(() => {
-    // ... (Logika filtering sama) ...
     let data = [...memberList];
     const getYearFromString = (dateString: string) => {
       const parts = dateString.trim().split(" ");
@@ -133,32 +85,35 @@ export default function MemberPage() {
     return data;
   }, [memberList, selectedYear, selectedRole, searchTerm, selectedSort]);
 
-  const [memberPending, setMemberPending] = useState(registration_dummy);
-
-  const [showPending, setShowPending] = useState(false);
-
   return (
-    <div className="flex">
-      {isSidebarOpen && <Sidebar />}
+    <div className="flex relative min-h-screen">
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
 
-      {/* Page Content - Mengontrol margin kiri berdasarkan status sidebar */}
+      {isSidebarOpen && <Sidebar onClose={() => setIsSidebarOpen(false)} />}
+
       <div
-        className={`w-full p-8 transition-all duration-300 ease-in-out ${isSidebarOpen ? "ml-64" : "ml-0"}`}
+        className={`w-full p-4 md:p-8 transition-all duration-300 ease-in-out ${
+          isSidebarOpen ? "lg:ml-64" : "ml-0"
+        }`}
       >
-        {/* Header dengan Tombol Toggle */}
         <div className="flex items-center mb-6">
-          {/* TOMBOL TOGGLE */}
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
             className="p-2 mr-4 text-gray-700 hover:text-orange-600 transition"
           >
             <Menu size={24} />
           </button>
-          <h1 className="text-3xl font-bold text-orange-600">Member</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-orange-600">
+            Member
+          </h1>
         </div>
 
-        {/* --- Stats Section --- */}
-        <div className="grid grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
           {stats.map((s) => (
             <div key={s.label} className={`border-1 rounded-lg p-4 ${s.color}`}>
               <div className="text-left">
@@ -169,9 +124,8 @@ export default function MemberPage() {
           ))}
         </div>
 
-        {/* --- Filters Section --- (Tetap) */}
-        <div className="flex items-center gap-3 mb-6">
-          <div className="flex items-center flex-1 border border-orange-500 rounded-lg bg-white px-4 py-2">
+        <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 mb-6 flex-wrap">
+          <div className="flex items-center flex-1 border border-orange-500 rounded-lg bg-white px-4 py-2 min-w-[200px]">
             <svg
               className="w-5 h-5 text-gray-400 mr-2"
               fill="none"
@@ -195,85 +149,92 @@ export default function MemberPage() {
             />
           </div>
 
-          <DropdownFilter
-            label="Tahun"
-            options={["All Year", "2025", "2024", "2023"]}
-            currentFilter={selectedYear}
-            onSelect={setSelectedYear}
-          />
-          <DropdownFilter
-            label="Kategori"
-            options={[
-              "All",
-              "UI/UX Designer",
-              "Game Developer",
-              "Frontend Developer",
-            ]}
-            currentFilter={selectedRole}
-            onSelect={setselectedRole}
-          />
-          <DropdownFilter
-            label="Urutkan"
-            options={["A-Z", "Z-A", "Latest"]}
-            currentFilter={selectedSort}
-            onSelect={setSelectedSort}
-          />
+          <div className="flex gap-2 flex-wrap w-full md:w-auto">
+            <DropdownFilter
+              label="Tahun"
+              options={["All Year", "2025", "2024", "2023"]}
+              currentFilter={selectedYear}
+              onSelect={setSelectedYear}
+            />
+            <DropdownFilter
+              label="Kategori"
+              options={[
+                "All",
+                "UI/UX Designer",
+                "Game Developer",
+                "Frontend Developer",
+              ]}
+              currentFilter={selectedRole}
+              onSelect={setSelectedRole}
+            />
+            <DropdownFilter
+              label="Urutkan"
+              options={["A-Z", "Z-A", "Latest"]}
+              currentFilter={selectedSort}
+              onSelect={setSelectedSort}
+            />
+          </div>
         </div>
 
-        {/* --- Table Section --- */}
         <div className="border border-orange-500 rounded-lg overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-orange-50">
-              <tr>
-                <th className="py-3">Name</th>
-                <th className="py-3">NIM/NIDN</th>
-                <th className="py-3">Role</th>
-                <th className="py-3">Start Date</th>
-                <th className="py-3">Position</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredData.map((row, index) => {
-                const isLastRow = index === filteredData.length - 1;
-                const borderClass = isLastRow ? "" : "border-b border-gray-200";
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm min-w-[800px]">
+              <thead className="bg-orange-50">
+                <tr>
+                  <th className="py-3 px-2">Name</th>
+                  <th className="py-3 px-2">NIM/NIDN</th>
+                  <th className="py-3 px-2">Role</th>
+                  <th className="py-3 px-2">Start Date</th>
+                  <th className="py-3 px-2">Position</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredData.map((row, index) => {
+                  const isLastRow = index === filteredData.length - 1;
+                  const borderClass = isLastRow
+                    ? ""
+                    : "border-b border-gray-200";
 
-                return (
-                  <tr key={index}>
-                    <td className={`py-3 ${borderClass} text-center`}>
-                      {row.name}
-                    </td>
-                    <td className={`py-3 ${borderClass} text-center`}>
-                      {row.identityNum}
-                    </td>
-                    <td className={`py-3 ${borderClass} text-center`}>
-                      {row.role}
-                    </td>
-                    <td className={`py-3 ${borderClass} text-center`}>
-                      {row.startDate}
-                    </td>
-                    <td
-                      className={`py-3 ${borderClass} font-medium text-center ${getStatusColorClass(row.position)}`}
-                    >
-                      {row.position}
+                  return (
+                    <tr key={index}>
+                      <td className={`py-3 px-2 ${borderClass} text-center`}>
+                        {row.name}
+                      </td>
+                      <td className={`py-3 px-2 ${borderClass} text-center`}>
+                        {row.identityNum}
+                      </td>
+                      <td className={`py-3 px-2 ${borderClass} text-center`}>
+                        {row.role}
+                      </td>
+                      <td className={`py-3 px-2 ${borderClass} text-center`}>
+                        {row.startDate}
+                      </td>
+                      <td
+                        className={`py-3 px-2 ${borderClass} font-medium text-center ${getStatusColorClass(
+                          row.position
+                        )}`}
+                      >
+                        {row.position}
+                      </td>
+                    </tr>
+                  );
+                })}
+                {filteredData.length === 0 && (
+                  <tr>
+                    <td colSpan={5} className="py-8 text-center text-gray-500">
+                      Tidak ada data yang cocok dengan filter yang diterapkan.
                     </td>
                   </tr>
-                );
-              })}
-              {filteredData.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="py-8 text-center text-gray-500">
-                    Tidak ada data yang cocok dengan filter yang diterapkan.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
 
         <div className="mt-8">
           <button
             onClick={() => setShowPending(!showPending)}
-            className="flex items-center justify-between w-full p-4 bg-orange-50 border border-orange-200 rounded-lg hover:bg-orange-100"
+            className="flex items-center justify-between w-full p-4 bg-orange-50 border border-orange-200 rounded-lg hover:bg-orange-100 transition"
           >
             <div className="flex items-center">
               <h3 className="text-lg font-semibold text-gray-800 mr-3">
@@ -284,7 +245,9 @@ export default function MemberPage() {
               </span>
             </div>
             <svg
-              className={`w-5 h-5 transform transition-transform ${showPending ? "rotate-0" : "rotate-180"}`}
+              className={`w-5 h-5 transform transition-transform ${
+                showPending ? "rotate-0" : "rotate-180"
+              }`}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -300,68 +263,64 @@ export default function MemberPage() {
 
           {showPending && (
             <div className="mt-4 border border-orange-500 rounded-lg overflow-hidden">
-              <table className="w-full text-sm">
-                <thead className="bg-orange-50">
-                  <tr>
-                    <th className="py-3">Name</th>
-                    <th className="py-3">NIM</th>
-                    <th className="py-3">Email</th>
-                    <th className="py-3">Role</th>
-                    <th className="py-3">Registration Date</th>
-                    <th className="py-3">Document</th>
-                    <th className="py-3">Action</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {memberPending.map((user) => (
-                    <tr key={user.id} className="border-b border-gray-200">
-                      <td className="py-3 text-center">{user.name}</td>
-                      <td className="py-3 text-center">{user.nim}</td>
-                      <td className="py-3 text-center">{user.email}</td>
-                      <td className="py-3 text-center">{user.role}</td>
-                      <td className="py-3 text-center">
-                        {user.registrationDate}
-                      </td>
-                      <td className="py-3 text-center">
-                        <div className="flex justify-center gap-3">
-                          {/* Icon CV */}
-                          <a
-                            href={user.cvUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="group relative p-2 text-blue-600 rounded-lg hover:bg-blue-100 transition flex items-center gap-1"
-                            title="Buka CV di tab baru"
-                          >
-                            <FileText size={18} />
-                          </a>
-
-                          
-                        </div>
-                      </td>
-                      <td className="py-3 text-center">
-                        <div className="flex items-center justify-center gap-3">
-                          {/* APPROVE */}
-                          <button
-                            onClick={() => alert(`Approved ${user.name}`)}
-                            className="text-green-600 hover:text-green-800"
-                          >
-                            <Check size={18} />
-                          </button>
-
-                          {/* REJECT */}
-                          <button
-                            onClick={() => alert(`Rejected ${user.name}`)}
-                            className="text-red-600 hover:text-red-800"
-                          >
-                            <X size={18} />
-                          </button>
-                        </div>
-                      </td>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm min-w-[800px]">
+                  <thead className="bg-orange-50">
+                    <tr>
+                      <th className="py-3 px-2">Name</th>
+                      <th className="py-3 px-2">NIM</th>
+                      <th className="py-3 px-2">Email</th>
+                      <th className="py-3 px-2">Role</th>
+                      <th className="py-3 px-2">Registration Date</th>
+                      <th className="py-3 px-2">Document</th>
+                      <th className="py-3 px-2">Action</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+
+                  <tbody>
+                    {memberPending.map((user) => (
+                      <tr key={user.id} className="border-b border-gray-200">
+                        <td className="py-3 px-2 text-center">{user.name}</td>
+                        <td className="py-3 px-2 text-center">{user.nim}</td>
+                        <td className="py-3 px-2 text-center">{user.email}</td>
+                        <td className="py-3 px-2 text-center">{user.role}</td>
+                        <td className="py-3 px-2 text-center">
+                          {user.registrationDate}
+                        </td>
+                        <td className="py-3 px-2 text-center">
+                          <div className="flex justify-center gap-3">
+                            <a
+                              href={user.cvUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="group relative p-2 text-blue-600 rounded-lg hover:bg-blue-100 transition flex items-center gap-1"
+                              title="Buka CV di tab baru"
+                            >
+                              <FileText size={18} />
+                            </a>
+                          </div>
+                        </td>
+                        <td className="py-3 px-2 text-center">
+                          <div className="flex items-center justify-center gap-3">
+                            <button
+                              onClick={() => alert(`Approved ${user.name}`)}
+                              className="text-green-600 hover:text-green-800"
+                            >
+                              <Check size={18} />
+                            </button>
+                            <button
+                              onClick={() => alert(`Rejected ${user.name}`)}
+                              className="text-red-600 hover:text-red-800"
+                            >
+                              <X size={18} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
         </div>

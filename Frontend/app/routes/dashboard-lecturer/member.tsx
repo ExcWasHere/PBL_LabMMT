@@ -4,8 +4,8 @@ import MemberPage from "~/components/Dashboard/lecturer/member.js";
 
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: "MMT | Dashboard-Viewer" },
-    { name: "Masuk", content: "Welcome to Lab MMT JTI!" },
+    { title: "MMT | Dashboard-Lecturer" },
+    { name: "Member", content: "Welcome to Lab MMT JTI!" },
   ];
 }
 

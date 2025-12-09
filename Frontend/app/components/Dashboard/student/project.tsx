@@ -1,27 +1,92 @@
 import Sidebar from "~/components/Dashboard/student/sidebar";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Menu, Plus } from "lucide-react";
+import DropdownFilter from "~/common/dropdown-filter";
+import ProjectForm, { type ProjectData } from "~/common/project-form";
 import TableAction from "~/common/table-action";
 import TableStatus from "~/common/table-status";
-import DropdownFilter from "~/common/dropdown-filter";
-import NewsForm from "~/common/project-form";
+const API_BASE_URL = "http://localhost:3000";
 
-import { project_dummy } from "~/components/Dashboard/student/dataDummy";
-
+const mapApiToProject = (p: any) => ({
+  id: p.id as string,
+  title: p.title ?? "-",
+  category: p.kategori ?? p.category ?? "-",
+  date: p.year || p.date || "",
+  publisher: p.publisher ?? "-",
+  stars: typeof p.stars === "number" ? String(p.stars) : (p.stars ?? "0"),
+  status: p.status ?? "Review",
+  description: p.description ?? "",
+  tech: p.tech ?? "",
+  teamMembers: Array.isArray(p.teamMembers) ? p.teamMembers : [],
+  githubLink: p.githubLink ?? "",
+  demoLink: p.demoLink ?? "",
+  mediaUrls: Array.isArray(p.mediaUrls) ? p.mediaUrls : [],
+});
 
 export default function ProjectPage() {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  const [isFormOpen, setIsFormOpen] = useState(false);
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) setIsSidebarOpen(true);
+      else setIsSidebarOpen(false);
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const [publisherName, setPublisherName] = useState("KetuaLab");
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("user");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        setPublisherName(
+          parsed.name ?? parsed.fullname ?? parsed.username ?? "KetuaLab"
+        );
+      }
+    } catch (e) {
+      console.error("Failed to parse user profile", e);
+    }
+  }, []);
+
   const [editData, setEditData] = useState<any | null>(null);
-
+  const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedYear, setSelectedYear] = useState("All Year");
-  const [selectedKategori, setSelectedKategori] = useState("All");
+  const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedSort, setSelectedSort] = useState("Latest");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("All Status");
 
-  const [projects, setProjects] = useState(project_dummy);
+  const [projects, setProjects] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    const fetchProjects = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const res = await fetch(`${API_BASE_URL}/project`);
+
+        if (!res.ok) {
+          throw new Error("Failed to fetch projects");
+        }
+
+        const data = await res.json();
+        const mapped = (Array.isArray(data) ? data : []).map(mapApiToProject);
+        setProjects(mapped);
+      } catch (err) {
+        console.error(err);
+        setError("Gagal memuat data project.");
+        setProjects([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProjects();
+  }, []);
 
   const stats = [
     {
@@ -50,18 +115,37 @@ export default function ProjectPage() {
     setSearchTerm(e.target.value);
   };
 
-  const handleToggleMute = (id: number) => {
-    setProjects((prevProjects) =>
-      prevProjects.map((project) => {
-        if (project.id === id) {
-          const newStatus =
-            project.status === "Muted" ? "Published" : "Muted";
-          return { ...project, status: newStatus };
-        }
-        return project;
-      })
-    );
+  const handleToggleMute = async (id: string) => {
+    const project = projects.find((p) => p.id === id);
+    if (!project) return;
+
+    const newStatus = project.status === "Muted" ? "Published" : "Muted";
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/project/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to update status");
+      }
+
+      setProjects((prev) =>
+        prev.map((p) => (p.id === id ? { ...p, status: newStatus } : p))
+      );
+    } catch (err) {
+      console.error(err);
+      alert("Gagal mengubah status project.");
+    }
   };
+
+  const handleEditClick = (project: any) => {
+    setEditData(project);
+    setIsFormOpen(true);
+  };
+
   const formatDate = (dateString: string) => {
     if (!dateString) return "-";
     const date = new Date(dateString);
@@ -78,12 +162,17 @@ export default function ProjectPage() {
     let data = [...projects];
 
     const getYearFromString = (dateString: string) => {
-      const parts = dateString.trim().split(" ");
-      return parts[parts.length - 1];
+      const d = new Date(dateString);
+      if (isNaN(d.getTime())) return "";
+      return String(d.getFullYear());
     };
 
-    if (selectedKategori !== "All") data = data.filter(row => row.category === selectedKategori);
-    if (selectedYear !== "All Year") data = data.filter(row => getYearFromString(row.date) === selectedYear);
+    if (selectedCategory !== "All") {
+      data = data.filter((row) => row.category === selectedCategory);
+    }
+    if (selectedYear !== "All Year") {
+      data = data.filter((row) => getYearFromString(row.date) === selectedYear);
+    }
 
     if (searchTerm) {
       const lowerCaseQuery = searchTerm.toLowerCase();
@@ -100,8 +189,7 @@ export default function ProjectPage() {
       data.sort((a, b) => b.title.localeCompare(a.title));
     } else if (selectedSort === "Latest") {
       data.sort(
-        (a, b) =>
-          new Date(b.date).getTime() - new Date(a.date).getTime()
+        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
       );
     } else if (selectedSort === "Most Popular") {
       data.sort((a, b) => Number(b.stars) - Number(a.stars));
@@ -115,64 +203,127 @@ export default function ProjectPage() {
   }, [
     projects,
     selectedYear,
-    selectedKategori,
+    selectedCategory,
     searchTerm,
     selectedSort,
     selectedStatus,
   ]);
-  const handleSaveProject = (formData: any) => {
-    if (editData) {
-      setProjects((prevProjects) =>
-        prevProjects.map((project) => {
-          if (project.id === editData.id) {
-            return {
-              ...project,
-              title: formData.title,
-              category: formData.type,
-              date: formData.date,
-            };
-          }
-          return project;
-        })
+
+  const handleSaveProject = async (formData: ProjectData) => {
+    const token = localStorage.getItem("token");
+
+    const headers: HeadersInit = {
+      "Content-Type": "application/json",
+    };
+
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+
+    const payload = {
+      title: formData.title,
+      kategori: formData.type,
+      year: formData.date,
+      description: formData.description,
+      publisher: publisherName,
+    };
+
+    try {
+      if (editData) {
+        const res = await fetch(`${API_BASE_URL}/project/${editData.id}`, {
+          method: "PATCH",
+          headers,
+          body: JSON.stringify({
+            ...payload,
+            status: "Review",
+            stars: 0,
+          }),
+        });
+
+        if (!res.ok) {
+          const text = await res.text();
+          console.error("Update project failed", res.status, text);
+          throw new Error("Failed to update project");
+        }
+
+        const updated = await res.json();
+        const mapped = mapApiToProject(updated);
+
+        setProjects((prev) =>
+          prev.map((p) => (p.id === mapped.id ? mapped : p))
+        );
+      } else {
+        // CREATE → status harus "Review" + stars 0
+        const res = await fetch(`${API_BASE_URL}/project`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            ...payload,
+            status: "Review",
+            stars: 0,
+          }),
+        });
+
+        if (!res.ok) {
+          const text = await res.text();
+          console.error("Create project failed", res.status, text);
+          throw new Error("Failed to create project");
+        }
+
+        const created = await res.json();
+        const mapped = mapApiToProject(created);
+
+        setProjects((prev) => [mapped, ...prev]);
+      }
+      setIsFormOpen(false);
+      setEditData(null);
+    } catch (err) {
+      console.error(err);
+      alert(
+        editData
+          ? "Gagal menyimpan perubahan project."
+          : "Gagal membuat project baru."
       );
-    } else {
-      const newNews = {
-        id: projects.length + 1,
-        title: formData.title,
-        category: formData.type,
-        date: formData.date,
-        publisher: "Me",
-        status: "Review",
-
-        stars: 0,
-      };
-      setProjects([newNews as any, ...projects]);
-    }
-
-    setIsFormOpen(false);
-    setEditData(null);
-  };
-
-  const handleDelete = (id: number) => {
-    if (window.confirm("Are you sure you want to delete this news?")) {
-      setProjects((prev) => prev.filter((item) => item.id !== id));
     }
   };
 
-  const handleEditClick = (news: any) => {
-    setEditData(news);
-    setIsFormOpen(true);
+  const handleDelete = async (id: string) => {
+    if (!window.confirm("Are you sure you want to delete this project?")) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/project/${id}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to delete project");
+      }
+
+      setProjects((prev) => prev.filter((p) => p.id !== id));
+    } catch (err) {
+      console.error(err);
+      alert("Gagal menghapus project.");
+    }
   };
 
   return (
-    <div className="flex">
-      {isSidebarOpen && <Sidebar />}
+    <div className="flex relative min-h-screen">
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
+      {isSidebarOpen && <Sidebar onClose={() => setIsSidebarOpen(false)} />}
 
       <div
-        className={`w-full p-8 transition-all duration-300 ease-in-out ${isSidebarOpen ? "ml-64" : "ml-0"
-          }`}
+        className={`w-full p-4 md:p-8 transition-all duration-300 ease-in-out ${
+          isSidebarOpen ? "lg:ml-64" : "ml-0"
+        }`}
       >
-        {/* Header */}
         <div className="flex items-center mb-6">
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -180,20 +331,24 @@ export default function ProjectPage() {
           >
             <Menu size={24} />
           </button>
-          <h1 className="text-3xl font-bold text-orange-600">Project</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-orange-600">
+            Project
+          </h1>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           {stats.map((s) => (
-            <div key={s.label} className={`border-1 rounded-lg p-4 ${s.color}`}>
-              <p className="text-sm">{s.label}</p>
-              <h2 className="text-3xl font-semibold">{s.value}</h2>
+            <div key={s.label} className={`border rounded-lg p-4 ${s.color}`}>
+              <div className="text-left">
+                <p className="text-sm">{s.label}</p>
+                <h2 className="text-2xl md:text-3xl font-semibold">
+                  {s.value}
+                </h2>
+              </div>
             </div>
           ))}
         </div>
 
-        {/* Filters */}
         <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 mb-6 flex-wrap">
           <div className="flex items-center flex-1 border border-orange-500 rounded-lg bg-white px-4 py-2 min-w-[200px]">
             <svg
@@ -229,8 +384,8 @@ export default function ProjectPage() {
             <DropdownFilter
               label="Category"
               options={["All", "UI/UX", "Game", "Web", "AR", "VR", "Mobile"]}
-              currentFilter={selectedKategori}
-              onSelect={setSelectedKategori}
+              currentFilter={selectedCategory}
+              onSelect={setSelectedCategory}
             />
             <DropdownFilter
               label="Urutkan"
@@ -246,7 +401,6 @@ export default function ProjectPage() {
                 "Waiting",
                 "Review",
                 "Muted",
-                "Denied",
               ]}
               currentFilter={selectedStatus}
               onSelect={setSelectedStatus}
@@ -262,86 +416,114 @@ export default function ProjectPage() {
           </button>
         </div>
 
-        {/* Table */}
+        {/* Table Section */}
         <div className="border border-orange-500 rounded-lg overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-orange-50">
-              <tr>
-                <th className="py-3">Title</th>
-                <th className="py-3">Category</th>
-                <th className="py-3">Date</th>
-                <th className="py-3">Publisher</th>
-                <th className="py-3">Stars</th>
-                <th className="py-3">Status</th>
-                <th className="py-3">Action</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {filteredData.map((row, index) => {
-                const isLastRow = index === filteredData.length - 1;
-                const borderClass = isLastRow
-                  ? "" : "border-b border-gray-200";
-
-                return (
-                  <tr key={index}>
-                    <td className={`py-3 ${borderClass} text-center`}>{row.title}</td>
-                    <td className={`py-3 ${borderClass} text-center`}>{row.category}</td>
-                    <td className={`py-3 ${borderClass} text-center`}>{formatDate(row.date)}</td>
-                    <td className={`py-3 ${borderClass} text-center`}>{row.publisher}</td>
-                    <td className={`py-3 px-2 ${borderClass} text-center`}>
-                        {row.stars}
-                      </td>
-                    <td className={`py-3 ${borderClass} text-center`}><TableStatus status={row.status} /></td>
-                    <td className={`py-3 ${borderClass} text-center`}>
-                      <TableAction
-                        status={row.status}
-                        onToggleMute={() => handleToggleMute(row.id)}
-                        onEdit={() => handleEditClick(row)}
-                        onDelete={() => handleDelete(row.id)}
-                      />
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm min-w-[800px]">
+              <thead className="bg-orange-50">
+                <tr>
+                  <th className="py-3 px-2">Title</th>
+                  <th className="py-3 px-2">Category</th>
+                  <th className="py-3 px-2">Date</th>
+                  <th className="py-3 px-2">Publisher</th>
+                  <th className="py-3 px-2">Stars</th>
+                  <th className="py-3 px-2">Status</th>
+                  <th className="py-3 px-2">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {isLoading && (
+                  <tr>
+                    <td colSpan={7} className="py-8 text-center text-gray-500">
+                      Loading projects...
                     </td>
                   </tr>
-                );
-              })}
-
-              {filteredData.length === 0 && (
-                <tr>
-                  <td
-                    colSpan={7}
-                    className="py-8 text-center text-gray-500"
-                  >
-                    No matching data found.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-        {isFormOpen && (
-                  <NewsForm
-                    onClose={() => {
-                      setIsFormOpen(false);
-                      setEditData(null);
-                    }}
-                    onSubmit={handleSaveProject}
-                    initialData={
-                      editData
-                        ? {
-                          title: editData.title,
-                          category: editData.category,
-                          date: editData.date,
-                          content: editData.description || "",
-                          coverUrl: editData.image || "",
-                          location: editData.location || "",
-                          publisher: editData.publisher || "",
-                          docGuide: editData.docGuide || "",
-                          newsLink: editData.newsLink || "",
-                        }
-                        : undefined
-                    }
-                  />
                 )}
+
+                {!isLoading && error && (
+                  <tr>
+                    <td colSpan={7} className="py-8 text-center text-red-500">
+                      {error}
+                    </td>
+                  </tr>
+                )}
+
+                {!isLoading &&
+                  !error &&
+                  filteredData.map((row, index) => {
+                    const isLastRow = index === filteredData.length - 1;
+                    const borderClass = isLastRow
+                      ? ""
+                      : "border-b border-gray-200";
+
+                    return (
+                      <tr key={row.id ?? index}>
+                        <td className={`py-3 px-2 ${borderClass} text-center`}>
+                          {row.title}
+                        </td>
+                        <td className={`py-3 px-2 ${borderClass} text-center`}>
+                          {row.category}
+                        </td>
+                        <td className={`py-3 px-2 ${borderClass} text-center`}>
+                          {formatDate(row.date)}
+                        </td>
+                        <td className={`py-3 px-2 ${borderClass} text-center`}>
+                          {row.publisher}
+                        </td>
+                        <td className={`py-3 px-2 ${borderClass} text-center`}>
+                          {row.stars}
+                        </td>
+                        <td className={`py-3 px-2 ${borderClass} text-center`}>
+                          <TableStatus status={row.status} />
+                        </td>
+                        <td className={`py-3 px-2 ${borderClass} text-center`}>
+                          <TableAction
+                            status={row.status}
+                            onToggleMute={() => handleToggleMute(row.id)}
+                            onEdit={() => handleEditClick(row)}
+                            onDelete={() => handleDelete(row.id)}
+                          />
+                        </td>
+                      </tr>
+                    );
+                  })}
+
+                {!isLoading && !error && filteredData.length === 0 && (
+                  <tr>
+                    <td colSpan={7} className="py-8 text-center text-gray-500">
+                      No matching data found.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {isFormOpen && (
+          <ProjectForm
+            onClose={() => {
+              setIsFormOpen(false);
+              setEditData(null);
+            }}
+            onSubmit={handleSaveProject}
+            initialData={
+              editData
+                ? {
+                    title: editData.title,
+                    description: editData.description || "",
+                    type: editData.category || "",
+                    date: editData.date || "",
+                    tech: editData.tech || "",
+                    teamMembers: editData.teamMembers || [],
+                    githubLink: editData.githubLink || "",
+                    demoLink: editData.demoLink || "",
+                    mediaUrls: editData.mediaUrls || [],
+                  }
+                : undefined
+            }
+          />
+        )}
       </div>
     </div>
   );

@@ -1,12 +1,54 @@
 import Sidebar from "~/components/Dashboard/lecturer/sidebar";
 import { useState, useMemo, useEffect } from "react";
 import { Menu, Plus } from "lucide-react";
-import { news_dummy } from "./dataDummy";
 import NewsForm from "~/common/news-form";
 import DropdownFilter from "~/common/dropdown-filter";
-import { useUserProfile } from "~/hook/useUserProfile";
 import TableAction from "~/common/table-action";
 import TableStatus from "~/common/table-status";
+
+const API_BASE_URL = "http://localhost:3000";
+const NEWS_ENDPOINT = `${API_BASE_URL}/news`;
+
+const getPublisherName = () => {
+  try {
+    const raw = localStorage.getItem("user");
+    if (!raw) return "KetuaLab";
+    const parsed = JSON.parse(raw);
+    return (
+      parsed.name ??
+      parsed.fullname ??
+      parsed.username ??
+      "KetuaLab"
+    );
+  } catch {
+    return "KetuaLab";
+  }
+};
+
+const getAuthHeaders = () => {
+  const token = localStorage.getItem("token");
+  const headers: HeadersInit = {
+    "Content-Type": "application/json",
+  };
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+  return headers;
+};
+
+const mapApiToNews = (n: any) => ({
+  id: n.id,
+  title: n.title ?? "-",
+  category: n.kategori ?? n.category ?? "-",
+  date: n.year ?? n.date ?? "",
+  publisher: n.publisher ?? "-",
+  status: n.status ?? "Review",
+  description: n.description ?? "",
+  image: n.coverUrl ?? n.image ?? "",
+  location: n.location ?? "",
+  docGuide: n.docGuide ?? "",
+  newsLink: n.newsLink ?? "",
+});
 
 export default function NewsPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -28,8 +70,31 @@ export default function NewsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("All Status");
 
-  const [newsList, setNewsList] = useState(news_dummy);
-  const profile = useUserProfile();
+  const [newsList, setNewsList] = useState<any[]>([]);
+  useEffect(() => {
+    const fetchNews = async () => {
+      try {
+        const res = await fetch(NEWS_ENDPOINT, {
+          headers: getAuthHeaders(),
+        });
+
+        if (!res.ok) {
+          const text = await res.text();
+          console.error("Fetch news failed", res.status, text);
+          throw new Error("Failed to fetch news");
+        }
+
+        const data = await res.json();
+        const mapped = (Array.isArray(data) ? data : []).map(mapApiToNews);
+        setNewsList(mapped);
+      } catch (err) {
+        console.error(err);
+        setNewsList([]);
+      }
+    };
+
+    fetchNews();
+  }, []);
 
   const stats = [
     {
@@ -58,16 +123,35 @@ export default function NewsPage() {
     setSearchTerm(e.target.value);
   };
 
-  const handleToggleMute = (id: number) => {
-    setNewsList((prevNews) =>
-      prevNews.map((news) => {
-        if (news.id === id) {
-          const newStatus = news.status === "Muted" ? "Published" : "Muted";
-          return { ...news, status: newStatus };
-        }
-        return news;
-      })
-    );
+  const handleToggleMute = async (id: number) => {
+    const item = newsList.find((n) => n.id === id);
+    if (!item) return;
+
+    const newStatus = item.status === "Muted" ? "Published" : "Muted";
+
+    try {
+      const res = await fetch(`${NEWS_ENDPOINT}/${id}`, {
+        method: "PATCH",
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        console.error("Update status failed", res.status, text);
+        throw new Error("Failed to update status");
+      }
+
+      const updated = await res.json();
+      const mapped = mapApiToNews(updated);
+
+      setNewsList((prev) =>
+        prev.map((n) => (n.id === mapped.id ? mapped : n))
+      );
+    } catch (err) {
+      console.error(err);
+      alert("Gagal mengubah status news.");
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -84,7 +168,12 @@ export default function NewsPage() {
 
   const filteredData = useMemo(() => {
     let data = [...newsList];
+
     const getYearFromString = (dateString: string) => {
+      const d = new Date(dateString);
+      if (!isNaN(d.getTime())) {
+        return String(d.getFullYear());
+      }
       const parts = dateString.trim().split(" ");
       return parts[parts.length - 1];
     };
@@ -93,7 +182,9 @@ export default function NewsPage() {
       data = data.filter((row) => row.category === selectedCategory);
     }
     if (selectedDate !== "All Year") {
-      data = data.filter((row) => getYearFromString(row.date) === selectedDate);
+      data = data.filter(
+        (row) => getYearFromString(row.date) === selectedDate
+      );
     }
 
     if (searchTerm) {
@@ -129,40 +220,96 @@ export default function NewsPage() {
     selectedStatus,
   ]);
 
-  const handleSaveNews = (formData: any) => {
-    if (editData) {
-      setNewsList((prevNews) =>
-        prevNews.map((news) => {
-          if (news.id === editData.id) {
-            return {
-              ...news,
-              title: formData.title,
-              category: formData.type,
-              date: formData.date,
-            };
-          }
-          return news;
-        })
-      );
-    } else {
-      const newNews = {
-        id: newsList.length + 1,
-        title: formData.title,
-        category: formData.type,
-        date: formData.date,
-        publisher: profile.name || "Me",
-        status: "Review",
-      };
-      setNewsList([newNews as any, ...newsList]);
-    }
+  const handleSaveNews = async (formData: any) => {
+    const publisherName = getPublisherName();
 
-    setIsFormOpen(false);
-    setEditData(null);
+    const payload = {
+      title: formData.title,
+      kategori: formData.type ?? formData.category,
+      year: formData.date,
+      description: formData.content ?? formData.description ?? "",
+      publisher: publisherName,
+      location: formData.location,
+      newsLink: formData.newsLink,
+      docGuide: formData.docGuide,
+      coverUrl: formData.coverUrl,
+    };
+
+    try {
+      if (editData) {
+        const res = await fetch(`${NEWS_ENDPOINT}/${editData.id}`, {
+          method: "PATCH",
+          headers: getAuthHeaders(),
+          body: JSON.stringify(payload),
+        });
+
+        if (!res.ok) {
+          const text = await res.text();
+          console.error("Update news failed", res.status, text);
+          throw new Error("Failed to update news");
+        }
+
+        const updated = await res.json();
+        const mapped = mapApiToNews(updated);
+
+        setNewsList((prev) =>
+          prev.map((n) => (n.id === mapped.id ? mapped : n))
+        );
+      } else {
+        const res = await fetch(NEWS_ENDPOINT, {
+          method: "POST",
+          headers: getAuthHeaders(),
+          body: JSON.stringify({
+            ...payload,
+            status: "Review",
+          }),
+        });
+
+        if (!res.ok) {
+          const text = await res.text();
+          console.error("Create news failed", res.status, text);
+          throw new Error("Failed to create news");
+        }
+
+        const created = await res.json();
+        const mapped = mapApiToNews(created);
+
+        setNewsList((prev) => [mapped, ...prev]);
+      }
+
+      setIsFormOpen(false);
+      setEditData(null);
+    } catch (err) {
+      console.error(err);
+      alert(
+        editData
+          ? "Gagal menyimpan perubahan news."
+          : "Gagal membuat news baru."
+      );
+    }
   };
 
-  const handleDelete = (id: number) => {
-    if (window.confirm("Are you sure you want to delete this news?")) {
+  const handleDelete = async (id: number) => {
+    if (!window.confirm("Are you sure you want to delete this news?")) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`${NEWS_ENDPOINT}/${id}`, {
+        method: "DELETE",
+        headers: getAuthHeaders(),
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        console.error("Delete news failed", res.status, text);
+        throw new Error("Failed to delete news");
+      }
+
       setNewsList((prev) => prev.filter((item) => item.id !== id));
+    } catch (err) {
+      console.error(err);
+      alert("Gagal menghapus news.");
     }
   };
 
@@ -201,7 +348,7 @@ export default function NewsPage() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           {stats.map((s) => (
-            <div key={s.label} className={`border-1 rounded-lg p-4 ${s.color}`}>
+            <div key={s.label} className={`border rounded-lg p-4 ${s.color}`}>
               <div className="text-left">
                 <p className="text-sm">{s.label}</p>
                 <h2 className="text-3xl font-semibold">{s.value}</h2>

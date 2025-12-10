@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
@@ -24,13 +26,54 @@ export class AuthService {
     role?: string;
     phoneNumber?: string;
     validationField?: string;
+    cvPath?: string | null;
+    photo?: string | null;
   }) {
     const existing = await this.usersService.findByEmail(payload.email);
     if (existing) {
       throw new ConflictException('Email already in use');
     }
+
     const user = await this.usersService.createUser(payload);
-    const { password, ...rest } = user as any;
+    const { password, ...rest } = user;
+    const mapRoleToPosition = (role?: string) => {
+      const r = (role ?? '').toLowerCase();
+      if (r === 'admin') return 'admin';
+      if (r === 'dosen' || r === 'lecturer') return 'lecturer';
+      if (r === 'mahasiswa' || r === 'student') return 'student';
+      return undefined;
+    };
+
+    try {
+      if ((payload.role ?? '').toLowerCase() === 'mahasiswa') {
+        await this.usersService.createPendingMember({
+          userId: user.id ?? undefined,
+          name: user.name,
+          identityNum: payload.validationField ?? '',
+          email: user.email,
+          role: payload.role ?? 'mahasiswa',
+          cvUrl: payload.cvPath ?? undefined,
+          photoUrl: user.photo ?? undefined,
+          position: mapRoleToPosition(payload.role),
+          status: 'pending',
+        } as any);
+      } else {
+        await this.usersService.createMember({
+          userId: user.id ?? undefined,
+          name: user.name,
+          identityNum: payload.validationField ?? '',
+          email: user.email,
+          role: payload.role ?? 'dosen',
+          cvUrl: payload.cvPath ?? undefined,
+          photoUrl: user.photo ?? undefined,
+          status: 'active',
+          position: mapRoleToPosition(payload.role),
+        } as any);
+      }
+    } catch (err) {
+      console.error('Member creation during register failed:', err);
+    }
+
     return rest;
   }
 

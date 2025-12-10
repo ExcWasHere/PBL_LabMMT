@@ -11,15 +11,15 @@ import { TeamSection } from "~/components/Project/project-detail/components/team
 export interface ProjectData {
   title: string;
   description: string;
-  type: string;          // -> back-end: kategori
-  date: string;          // -> back-end: year (DATE)
-  tech: string;          // backend: opsional (kalau ditambah kolom)
-  thumbnailUrl: string;  // preview only
+  type: string;
+  date: string;
+  tech: string;
+  thumbnailUrl: string;
   thumbnailFile?: File;
   teamMembers: TeamMember[];
   githubLink: string;
   demoLink: string;
-  mediaUrls: string[];   // preview image/video urls
+  mediaUrls: string[];
   mediaFiles?: File[];
 }
 
@@ -64,7 +64,6 @@ export default function ProjectForm({
           : [],
         mediaUrls:
           initialData.mediaUrls ??
-          // backward compat kalau dulu pakai photoUrls
           (initialData as any).photoUrls ??
           [],
         thumbnailUrl: initialData.thumbnailUrl ?? "",
@@ -118,7 +117,6 @@ export default function ProjectForm({
     }).format(date);
   };
 
-  // --- PREVIEW DATA HELPER ---
   const getPreviewProps = () => ({
     details: [
       { label: "Type", value: formData.type },

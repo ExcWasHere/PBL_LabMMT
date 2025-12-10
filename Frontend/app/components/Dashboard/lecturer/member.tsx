@@ -1,8 +1,35 @@
 import Sidebar from "~/components/Dashboard/lecturer/sidebar";
 import { useState, useMemo, useEffect } from "react";
 import { Menu, FileText, Check, X } from "lucide-react";
-import { member_dummy, registration_dummy } from "./dataDummy";
 import DropdownFilter from "~/common/dropdown-filter";
+
+const API_BASE = "http://localhost:3000";
+
+type MemberItem = {
+  id: string;
+  userId?: number | null;
+  name: string;
+  identityNum?: string;
+  role?: string;
+  startDate?: string;
+  position?: string;
+  email?: string;
+  phone?: string;
+  photoUrl?: string;
+  cvUrl?: string;
+  status?: "pending" | "active" | string;
+  createdAt?: string;
+};
+
+type PendingItem = {
+  id: string;
+  name: string;
+  nim?: string;
+  email?: string;
+  role?: string;
+  registrationDate?: string;
+  cvUrl?: string;
+};
 
 export default function MemberPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -20,20 +47,21 @@ export default function MemberPage() {
   const [selectedRole, setSelectedRole] = useState("All");
   const [selectedSort, setSelectedSort] = useState("Latest");
   const [searchTerm, setSearchTerm] = useState("");
-
-  const [memberList, setMemberList] = useState(member_dummy);
-  const [memberPending, setMemberPending] = useState(registration_dummy);
+  const [memberList, setMemberList] = useState<MemberItem[]>([]);
+  const [memberPending, setMemberPending] = useState<PendingItem[]>([]);
   const [showPending, setShowPending] = useState(false);
-
-  const stats = [
-    {
-      label: "Lecturer",
-      value: 40,
-      color: "border-orange-400 text-orange-500",
-    },
-    { label: "Student", value: 40, color: "border-blue-400 text-blue-500" },
-    { label: "Alumni", value: 40, color: "border-green-400 text-green-500" },
-  ];
+  const [isLoadingMembers, setIsLoadingMembers] = useState(false);
+  const [isLoadingPending, setIsLoadingPending] = useState(false);
+  const stats = useMemo(() => {
+    const lecturer = memberList.filter((m) => (m.role ?? "").toLowerCase() === "dosen" || (m.position ?? "").toLowerCase() === "lecturer" || (m.role ?? "").toLowerCase() === "lecturer").length;
+    const student = memberList.filter((m) => (m.role ?? "").toLowerCase() === "mahasiswa" || (m.position ?? "").toLowerCase() === "student").length;
+    const alumni = memberList.filter((m) => (m.role ?? "").toLowerCase() === "alumni").length;
+    return [
+      { label: "Lecturer", value: lecturer, color: "border-orange-400 text-orange-500" },
+      { label: "Student", value: student, color: "border-blue-400 text-blue-500" },
+      { label: "Alumni", value: alumni, color: "border-green-400 text-green-500" },
+    ];
+  }, [memberList]);
 
   const getStatusColorClass = (status: string) => {
     switch (status) {
@@ -49,8 +77,160 @@ export default function MemberPage() {
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
   };
+  const buildCvUrl = (raw?: string) => {
+    if (!raw) return "";
+    const trimmed = raw.trim();
+    if (/^https?:\/\//i.test(trimmed) || /^data:/i.test(trimmed)) return trimmed;
+    if (trimmed.startsWith("/")) return `${API_BASE}${trimmed}`;
+    return `${API_BASE}/${trimmed.replace(/^\/+/, "")}`;
+  };
 
-  // --- Filtering Logic ---
+  const formatDateShort = (raw?: string) => {
+    if (!raw) return "-";
+    try {
+      const d = new Date(raw);
+      if (!isNaN(d.getTime())) return d.toLocaleDateString("id-ID");
+      return raw;
+    } catch {
+      return raw;
+    }
+  };
+
+  const normalizeMembers = (rows: any[]): MemberItem[] => {
+    if (!Array.isArray(rows)) return [];
+    return rows.map((r: any) => {
+      const start = r.startDate ?? r.createdAt ?? r.start_date ?? r.created_at ?? null;
+      const startStr = start ? formatDateShort(start) : "-";
+      return {
+        id: r.id,
+        userId: r.userId ?? r.user_id ?? null,
+        name: r.name ?? r.fullname ?? r.username ?? "",
+        identityNum: r.identityNum ?? r.identity_num ?? r.validationField ?? r.nim ?? "",
+        role: r.role ?? "",
+        startDate: startStr,
+        position: r.position ?? "",
+        email: r.email ?? "",
+        phone: r.phone ?? "",
+        photoUrl: r.photoUrl ?? r.photo_url ?? r.photo ?? "",
+        cvUrl: r.cvUrl ?? r.cv_url ?? r.cvPath ?? r.cv_path ?? "",
+        status: r.status ?? "active",
+        createdAt: r.createdAt ?? r.created_at ?? null,
+      } as MemberItem;
+    });
+  };
+
+  const normalizePending = (rows: any[]): PendingItem[] => {
+    if (!Array.isArray(rows)) return [];
+    return rows.map((p: any) => {
+      const reg = p.createdAt ?? p.created_at ?? p.registrationDate ?? p.registration_date ?? null;
+      const regStr = reg ? formatDateShort(reg) : "-";
+      return {
+        id: p.id,
+        name: p.name ?? p.fullname ?? "",
+        nim: p.identityNum ?? p.validationField ?? p.nim ?? "",
+        email: p.email ?? "",
+        role: p.role ?? "",
+        registrationDate: regStr,
+        cvUrl: p.cvUrl ?? p.cv_url ?? p.cvPath ?? p.cv_path ?? "",
+      } as PendingItem;
+    });
+  };
+
+  const fetchMembers = async () => {
+    setIsLoadingMembers(true);
+    try {
+      const res = await fetch(`${API_BASE}/member`);
+      if (!res.ok) {
+        console.error("Failed to fetch members", res.status);
+        setMemberList([]);
+        return;
+      }
+      const data = await res.json();
+      const rows = Array.isArray(data) ? data : data.data ?? [];
+      const normalized = normalizeMembers(rows);
+      setMemberList(normalized);
+    } catch (err) {
+      console.error("Error fetching members", err);
+      setMemberList([]);
+    } finally {
+      setIsLoadingMembers(false);
+    }
+  };
+
+  const fetchPending = async () => {
+    setIsLoadingPending(true);
+    try {
+      const res = await fetch(`${API_BASE}/member/pending`);
+      if (!res.ok) {
+        console.error("Failed to fetch pending", res.status);
+        setMemberPending([]);
+        return;
+      }
+      const data = await res.json();
+      const rows = Array.isArray(data) ? data : data.data ?? [];
+      const normalized = normalizePending(rows);
+      setMemberPending(normalized);
+    } catch (err) {
+      console.error("Error fetching pending", err);
+      setMemberPending([]);
+    } finally {
+      setIsLoadingPending(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchMembers();
+    fetchPending();
+    const interval = setInterval(() => {
+      fetchMembers();
+      fetchPending();
+    }, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleApprove = async (p: PendingItem) => {
+    if (!p?.id) return;
+    if (!confirm(`Approve ${p.name}?`)) return;
+    try {
+      const res = await fetch(`${API_BASE}/member/approve/${p.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        alert(err.message || "Gagal approve");
+        return;
+      }
+      setMemberPending((prev) => prev.filter((x) => x.id !== p.id));
+      await fetchMembers();
+      alert(`${p.name} approved`);
+    } catch (err) {
+      console.error(err);
+      alert("Gagal approve, cek console");
+    }
+  };
+
+  const handleReject = async (p: PendingItem) => {
+    if (!p?.id) return;
+    if (!confirm(`Reject ${p.name}?`)) return;
+    try {
+      const res = await fetch(`${API_BASE}/member/reject/${p.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        alert(err.message || "Gagal reject");
+        return;
+      }
+      setMemberPending((prev) => prev.filter((x) => x.id !== p.id));
+      alert(`${p.name} rejected`);
+    } catch (err) {
+      console.error(err);
+      alert("Gagal reject, cek console");
+    }
+  };
+
   const filteredData = useMemo(() => {
     let data = [...memberList];
     const getYearFromString = (dateString: string) => {
@@ -59,27 +239,31 @@ export default function MemberPage() {
     };
 
     if (selectedRole !== "All") {
-      data = data.filter((row) => row.role === selectedRole);
+      data = data.filter((row) => (row.role ?? "").toLowerCase() === selectedRole.toLowerCase());
     }
     if (selectedYear !== "All Year") {
-      data = data.filter(
-        (row) => getYearFromString(row.startDate) === selectedYear
-      );
+      data = data.filter((row) => getYearFromString(row.startDate ?? "") === selectedYear);
     }
 
     if (searchTerm) {
       const lowerCaseQuery = searchTerm.toLowerCase();
       data = data.filter(
         (row) =>
-          row.name.toLowerCase().includes(lowerCaseQuery) ||
-          row.role.toLowerCase().includes(lowerCaseQuery)
+          (row.name ?? "").toLowerCase().includes(lowerCaseQuery) ||
+          (row.role ?? "").toLowerCase().includes(lowerCaseQuery)
       );
     }
 
     if (selectedSort === "A-Z") {
-      data.sort((a, b) => a.name.localeCompare(b.name));
+      data.sort((a, b) => (a.name ?? "").localeCompare(b.name ?? ""));
     } else if (selectedSort === "Z-A") {
-      data.sort((a, b) => b.name.localeCompare(a.name));
+      data.sort((a, b) => (b.name ?? "").localeCompare(a.name ?? ""));
+    } else {
+      data.sort((a, b) => {
+        const da = a.createdAt ? new Date(a.createdAt).getTime() : new Date(a.startDate ?? "").getTime();
+        const db = b.createdAt ? new Date(b.createdAt).getTime() : new Date(b.startDate ?? "").getTime();
+        return (db || 0) - (da || 0);
+      });
     }
 
     return data;
@@ -115,7 +299,7 @@ export default function MemberPage() {
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
           {stats.map((s) => (
-            <div key={s.label} className={`border-1 rounded-lg p-4 ${s.color}`}>
+            <div key={s.label} className={`border rounded-lg p-4 ${s.color}`}>
               <div className="text-left">
                 <p className="text-sm">{s.label}</p>
                 <h2 className="text-3xl font-semibold">{s.value}</h2>
@@ -196,7 +380,7 @@ export default function MemberPage() {
                     : "border-b border-gray-200";
 
                   return (
-                    <tr key={index}>
+                    <tr key={row.id ?? index}>
                       <td className={`py-3 px-2 ${borderClass} text-center`}>
                         {row.name}
                       </td>
@@ -211,7 +395,7 @@ export default function MemberPage() {
                       </td>
                       <td
                         className={`py-3 px-2 ${borderClass} font-medium text-center ${getStatusColorClass(
-                          row.position
+                          row.position ?? ""
                         )}`}
                       >
                         {row.position}
@@ -241,7 +425,7 @@ export default function MemberPage() {
                 Registrations
               </h3>
               <span className="bg-orange-500 text-white px-2 py-1 rounded-full text-xs">
-                1 new
+                {memberPending.length} new
               </span>
             </div>
             <svg
@@ -278,46 +462,62 @@ export default function MemberPage() {
                   </thead>
 
                   <tbody>
-                    {memberPending.map((user) => (
-                      <tr key={user.id} className="border-b border-gray-200">
-                        <td className="py-3 px-2 text-center">{user.name}</td>
-                        <td className="py-3 px-2 text-center">{user.nim}</td>
-                        <td className="py-3 px-2 text-center">{user.email}</td>
-                        <td className="py-3 px-2 text-center">{user.role}</td>
-                        <td className="py-3 px-2 text-center">
-                          {user.registrationDate}
-                        </td>
-                        <td className="py-3 px-2 text-center">
-                          <div className="flex justify-center gap-3">
-                            <a
-                              href={user.cvUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="group relative p-2 text-blue-600 rounded-lg hover:bg-blue-100 transition flex items-center gap-1"
-                              title="Buka CV di tab baru"
-                            >
-                              <FileText size={18} />
-                            </a>
-                          </div>
-                        </td>
-                        <td className="py-3 px-2 text-center">
-                          <div className="flex items-center justify-center gap-3">
-                            <button
-                              onClick={() => alert(`Approved ${user.name}`)}
-                              className="text-green-600 hover:text-green-800"
-                            >
-                              <Check size={18} />
-                            </button>
-                            <button
-                              onClick={() => alert(`Rejected ${user.name}`)}
-                              className="text-red-600 hover:text-red-800"
-                            >
-                              <X size={18} />
-                            </button>
-                          </div>
+                    {isLoadingPending ? (
+                      <tr>
+                        <td colSpan={7} className="py-8 text-center text-gray-500">
+                          Loading pending...
                         </td>
                       </tr>
-                    ))}
+                    ) : memberPending.length === 0 ? (
+                      <tr>
+                        <td colSpan={7} className="py-8 text-center text-gray-500">
+                          No pending registrations.
+                        </td>
+                      </tr>
+                    ) : (
+                      memberPending.map((user) => (
+                        <tr key={user.id} className="border-b border-gray-200">
+                          <td className="py-3 px-2 text-center">{user.name}</td>
+                          <td className="py-3 px-2 text-center">{user.nim}</td>
+                          <td className="py-3 px-2 text-center">{user.email}</td>
+                          <td className="py-3 px-2 text-center">{user.role}</td>
+                          <td className="py-3 px-2 text-center">
+                            {user.registrationDate}
+                          </td>
+                          <td className="py-3 px-2 text-center">
+                            <div className="flex justify-center gap-3">
+                              <a
+                                href={buildCvUrl(user.cvUrl)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="group relative p-2 text-blue-600 rounded-lg hover:bg-blue-100 transition flex items-center gap-1"
+                                title="Buka CV di tab baru"
+                              >
+                                <FileText size={18} />
+                              </a>
+                            </div>
+                          </td>
+                          <td className="py-3 px-2 text-center">
+                            <div className="flex items-center justify-center gap-3">
+                              <button
+                                onClick={() => handleApprove(user)}
+                                className="text-green-600 hover:text-green-800"
+                                title="Approve"
+                              >
+                                <Check size={18} />
+                              </button>
+                              <button
+                                onClick={() => handleReject(user)}
+                                className="text-red-600 hover:text-red-800"
+                                title="Reject"
+                              >
+                                <X size={18} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>

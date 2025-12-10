@@ -1,12 +1,47 @@
 import Sidebar from "~/components/Dashboard/lecturer/sidebar";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { Menu, Plus } from "lucide-react";
-import { gallery_dummy } from "./dataDummy";
 import GalleryForm from "~/common/gallery-form";
 import DropdownFilter from "~/common/dropdown-filter";
-import { useUserProfile } from "~/hook/useUserProfile";
 import TableAction from "~/common/table-action";
 import TableStatus from "~/common/table-status";
+const API_BASE_URL = "http://localhost:3000";
+const PHOTO_ENDPOINT = `${API_BASE_URL}/photo`;
+const VIDEO_ENDPOINT = `${API_BASE_URL}/video`;
+const PHOTO_UPLOAD = `${PHOTO_ENDPOINT}/upload`;
+const VIDEO_UPLOAD = `${VIDEO_ENDPOINT}/upload`;
+
+const mapPhotoToGalleryRow = (p: any) => ({
+  id: p.id,
+  title: p.title ?? "-",
+  photo: (p.media_type === "photo" || (p.photoUrl && String(p.photoUrl).match(/\.(jpg|jpeg|png|gif)$/i)) || (p.media_url && String(p.media_url).match(/\.(jpg|jpeg|png|gif)$/i))) ? "1" : "0",
+  video: (p.media_type === "video" || (p.videoUrl && String(p.videoUrl).match(/\.(mp4|webm|ogg|mov)$/i)) || (p.media_url && String(p.media_url).match(/\.(mp4|webm|ogg|mov)$/i))) ? "1" : "0",
+  animation: (p.photoUrl && String(p.photoUrl).endsWith?.(".gif")) || (p.media_url && String(p.media_url).endsWith?.(".gif")) ? "1" : "0",
+  date: p.date ?? p.year ?? p.createdAt ?? p.created_at ?? "",
+  publisher: p.publisher ?? "-",
+  status: p.status ?? "Review",
+  mediaFiles: p.media_urls ?? (p.mediaUrls ?? (p.media_url ? [p.media_url] : (p.mediaUrl ? [p.mediaUrl] : (p.photoUrl ? [p.photoUrl] : (p.videoUrl ? [p.videoUrl] : []))))),
+  mediaFilesRaw: undefined,
+  thumbnailUrl: p.cover_url ?? p.coverUrl ?? p.thumbnailUrl ?? "",
+  _raw: p,
+  type: p.media_type ?? (p.media_url && p.media_url.match(/\.(mp4|webm|ogg)$/i) ? "video" : (p.photoUrl || p.media_url && p.media_url.match(/\.(jpg|jpeg|png|gif)$/i) ? "photo" : "photo")),
+});
+
+const mapVideoToGalleryRow = (v: any) => ({
+  id: v.id,
+  title: v.title ?? "-",
+  photo: v.media_type === "photo" ? "1" : (v.photoUrl ? "1" : "0"),
+  video: v.media_type === "video" ? "1" : (v.videoUrl ? "1" : "0"),
+  animation: (v.media_url && v.media_url.endsWith?.(".gif")) ? "1" : "0",
+  date: v.date ?? v.year ?? v.createdAt ?? v.created_at ?? "",
+  publisher: v.publisher ?? "-",
+  status: v.status ?? "Review",
+  mediaFiles: v.media_urls ?? (v.mediaUrls ?? (v.media_url ? [v.media_url] : (v.mediaUrl ? [v.mediaUrl] : (v.videoUrl ? [v.videoUrl] : [])))),
+  mediaFilesRaw: undefined,
+  thumbnailUrl: v.cover_url ?? v.coverUrl ?? v.thumbnailUrl ?? "",
+  _raw: v,
+  type: v.media_type ?? (v.media_url && v.media_url.match(/\.(mp4|webm|ogg)$/i) ? "video" : "video"),
+});
 
 export default function GalleryPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -28,8 +63,72 @@ export default function GalleryPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("All Status");
 
-  const [galleryList, setGalleryList] = useState(gallery_dummy);
-  const profile = useUserProfile();
+  const [galleryList, setGalleryList] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem("token");
+    const headers: HeadersInit = {
+      "Content-Type": "application/json",
+    };
+    if (token) headers.Authorization = `Bearer ${token}`;
+    return headers;
+  };
+
+  const getAuthHeaderForFormData = (): HeadersInit | undefined => {
+    const token = localStorage.getItem("token");
+    if (!token) return undefined;
+    return { Authorization: `Bearer ${token}` };
+  };
+
+  const getPublisherName = () => {
+    try {
+      const raw = localStorage.getItem("user");
+      if (!raw) return "KetuaLab";
+      const parsed = JSON.parse(raw);
+      return parsed.name ?? parsed.fullname ?? parsed.username ?? "KetuaLab";
+    } catch {
+      return "KetuaLab";
+    }
+  };
+
+  const fetchGallery = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const [r1, r2] = await Promise.all([
+        fetch(PHOTO_ENDPOINT, { headers: getAuthHeaders() }),
+        fetch(VIDEO_ENDPOINT, { headers: getAuthHeaders() }),
+      ]);
+
+      if (!r1.ok || !r2.ok) {
+        const t1 = await r1.text().catch(() => "");
+        const t2 = await r2.text().catch(() => "");
+        throw new Error(`Fetch error: photo(${r1.status}) ${t1} / video(${r2.status}) ${t2}`);
+      }
+
+      const [photos, videos] = await Promise.all([r1.json(), r2.json()]);
+
+      const mappedPhotos = Array.isArray(photos) ? photos.map(mapPhotoToGalleryRow) : [];
+      const mappedVideos = Array.isArray(videos) ? videos.map(mapVideoToGalleryRow) : [];
+
+      const combined = [...mappedPhotos, ...mappedVideos].sort(
+        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+      );
+
+      setGalleryList(combined);
+    } catch (err) {
+      console.error("Failed to fetch gallery:", err);
+      setError("Gagal memuat gallery.");
+      setGalleryList([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchGallery();
+  }, [fetchGallery]);
 
   const stats = [
     {
@@ -58,23 +157,34 @@ export default function GalleryPage() {
     setSearchTerm(e.target.value);
   };
 
-  const handleToggleMute = (id: number) => {
-    setGalleryList((prevGallery) =>
-      prevGallery.map((gallery) => {
-        if (gallery.id === id) {
-          const newStatus = gallery.status === "Muted" ? "Published" : "Muted";
-          return { ...gallery, status: newStatus };
-        }
-        return gallery;
-      })
-    );
+  const handleToggleMute = async (id: string | number) => {
+    const item = galleryList.find((g) => g.id === id);
+    if (!item) return;
+
+    const newStatus = item.status === "Muted" ? "Published" : "Muted";
+    const endpoint = item.type === "video" ? VIDEO_ENDPOINT : PHOTO_ENDPOINT;
+
+    try {
+      const res = await fetch(`${endpoint}/${id}`, {
+        method: "PATCH",
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (!res.ok) {
+        const text = await res.text().catch(() => "");
+        throw new Error(`Toggle failed: ${res.status} ${text}`);
+      }
+      await fetchGallery();
+    } catch (err) {
+      console.error("Failed to toggle mute:", err);
+      alert("Gagal mengubah status gallery.");
+    }
   };
 
   const formatDate = (dateString: string) => {
     if (!dateString) return "-";
     const date = new Date(dateString);
     if (isNaN(date.getTime())) return dateString;
-
     return new Intl.DateTimeFormat("en-GB", {
       day: "numeric",
       month: "short",
@@ -82,11 +192,12 @@ export default function GalleryPage() {
     }).format(date);
   };
 
-  // --- Filtering Logic ---
   const filteredData = useMemo(() => {
     let data = [...galleryList];
     const getYearFromString = (dateString: string) => {
-      const parts = dateString.trim().split(" ");
+      const d = new Date(dateString);
+      if (!isNaN(d.getTime())) return String(d.getFullYear());
+      const parts = String(dateString ?? "").trim().split(" ");
       return parts[parts.length - 1];
     };
 
@@ -98,8 +209,8 @@ export default function GalleryPage() {
       const lowerCaseQuery = searchTerm.toLowerCase();
       data = data.filter(
         (row) =>
-          row.title.toLowerCase().includes(lowerCaseQuery) ||
-          row.publisher.toLowerCase().includes(lowerCaseQuery)
+          String(row.title).toLowerCase().includes(lowerCaseQuery) ||
+          String(row.publisher).toLowerCase().includes(lowerCaseQuery)
       );
     }
 
@@ -108,9 +219,7 @@ export default function GalleryPage() {
     } else if (selectedSort === "Z-A") {
       data.sort((a, b) => b.title.localeCompare(a.title));
     } else if (selectedSort === "Latest") {
-      data.sort(
-        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-      );
+      data.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     }
 
     if (selectedStatus !== "All Status") {
@@ -118,81 +227,110 @@ export default function GalleryPage() {
     }
 
     return data;
-  }, [
-    galleryList,
-    selectedYear,
-    selectedKategori,
-    searchTerm,
-    selectedSort,
-    selectedStatus,
-  ]);
+  }, [galleryList, selectedYear, selectedKategori, searchTerm, selectedSort, selectedStatus]);
 
-  const handleSaveGallery = (formData: any) => {
-    let photoCount = 0;
-    let videoCount = 0;
-    let animationCount = 0;
-
-    if (formData.mediaFilesRaw && formData.mediaFilesRaw.length > 0) {
-      formData.mediaFilesRaw.forEach((file: File) => {
-        if (file.type.startsWith("image/")) {
-          if (file.type === "image/gif") {
-            animationCount++;
-          } else {
-            photoCount++;
-          }
-        } else if (file.type.startsWith("video/")) {
-          videoCount++;
-        }
-      });
+  const uploadFile = async (file: File, type: "photo" | "video") => {
+    const fd = new FormData();
+    fd.append("file", file);
+    const url = type === "video" ? VIDEO_UPLOAD : PHOTO_UPLOAD;
+    const formHeaders = getAuthHeaderForFormData();
+    const res = await fetch(url, {
+      method: "POST",
+      body: fd,
+      headers: formHeaders,
+    });
+    if (!res.ok) {
+      const txt = await res.text().catch(() => "");
+      throw new Error(`Upload failed (${res.status}): ${txt}`);
     }
-
-    if (editData) {
-      setGalleryList((prevGallery) =>
-        prevGallery.map((gallery) => {
-          if (gallery.id === editData.id) {
-            return {
-              ...gallery,
-              title: formData.title,
-              description: formData.description,
-              location: formData.location,
-              date: formData.date,
-              mediaTypes: formData.mediaTypes,
-              mediaFiles: formData.mediaFiles,
-              thumbnailUrl: formData.thumbnailUrl,
-              photo: photoCount.toString(),
-              video: videoCount.toString(),
-              animation: animationCount.toString(),
-            };
-          }
-          return gallery;
-        })
-      );
-    } else {
-      const newGallery = {
-        id: galleryList.length + 1,
-        title: formData.title,
-        description: formData.description,
-        location: formData.location,
-        date: formData.date,
-        mediaTypes: formData.mediaTypes,
-        mediaFiles: formData.mediaFiles,
-        publisher: profile.name || "Me",
-        status: "Review",
-        photo: photoCount.toString(),
-        video: videoCount.toString(),
-        animation: animationCount.toString(),
-        thumbnailUrl: formData.thumbnailUrl || "",
-      };
-      setGalleryList([newGallery as any, ...galleryList]);
-    }
-
-    setIsFormOpen(false);
-    setEditData(null);
+    const j = await res.json();
+    return j.url ?? j.media_url ?? j.data?.url ?? j.uploadedUrl ?? null;
   };
 
-  const handleDelete = (id: number) => {
-    if (window.confirm("Are you sure you want to delete this gallery?")) {
-      setGalleryList((prev) => prev.filter((item) => item.id !== id));
+  const handleSaveGallery = async (formData: any) => {
+    const publisher = getPublisherName();
+    let coverUrl = "";
+    try {
+      if (formData.thumbnailFile) {
+        coverUrl = await uploadFile(formData.thumbnailFile, "photo");
+      }
+    } catch (err) {
+      console.error("Thumbnail upload failed", err);
+      alert("Gagal upload thumbnail.");
+      return;
+    }
+
+    const files: File[] = formData.mediaFilesRaw ?? [];
+    if (!files || files.length === 0) {
+      alert("Please attach at least one media file.");
+      return;
+    }
+
+    try {
+      for (const file of files) {
+        const isVideo = file.type.startsWith("video/");
+        const uploadedUrl = await uploadFile(file, isVideo ? "video" : "photo");
+        if (!uploadedUrl) {
+          throw new Error("Upload returned no url");
+        }
+
+        const endpoint = isVideo ? VIDEO_ENDPOINT : PHOTO_ENDPOINT;
+        const payload: any = {
+          title: formData.title,
+          description: formData.description,
+          location: formData.location,
+          date: formData.date,
+          publisher,
+          status: "Review",
+          cover_url: coverUrl || uploadedUrl,
+        };
+
+        if (isVideo) {
+          payload.videoUrl = uploadedUrl;
+        } else {
+          payload.photoUrl = uploadedUrl;
+        }
+
+        const res = await fetch(endpoint, {
+          method: "POST",
+          headers: getAuthHeaders(),
+          body: JSON.stringify(payload),
+        });
+
+        if (!res.ok) {
+          const text = await res.text().catch(() => "");
+          throw new Error(`Create record failed: ${res.status} ${text}`);
+        }
+      }
+      await fetchGallery();
+      setIsFormOpen(false);
+      setEditData(null);
+    } catch (err) {
+      console.error("Failed to save gallery:", err);
+      alert("Gagal menyimpan gallery. Cek console untuk detail.");
+    }
+  };
+
+  const handleDelete = async (id: string | number) => {
+    if (!window.confirm("Are you sure you want to delete this gallery?")) return;
+
+    const item = galleryList.find((g) => g.id === id);
+    if (!item) return;
+
+    const endpoint = item.type === "video" ? VIDEO_ENDPOINT : PHOTO_ENDPOINT;
+    try {
+      const res = await fetch(`${endpoint}/${id}`, {
+        method: "DELETE",
+        headers: getAuthHeaders(),
+      });
+      if (!res.ok) {
+        const text = await res.text().catch(() => "");
+        throw new Error(`Delete failed: ${res.status} ${text}`);
+      }
+      await fetchGallery();
+    } catch (err) {
+      console.error("Delete failed:", err);
+      alert("Gagal menghapus gallery.");
     }
   };
 
@@ -318,36 +456,31 @@ export default function GalleryPage() {
                 </tr>
               </thead>
               <tbody>
-                {filteredData.map((row, index) => {
+                {isLoading && (
+                  <tr>
+                    <td colSpan={8} className="py-8 text-center text-gray-500">Loading gallery...</td>
+                  </tr>
+                )}
+
+                {!isLoading && error && (
+                  <tr>
+                    <td colSpan={8} className="py-8 text-center text-red-500">{error}</td>
+                  </tr>
+                )}
+
+                {!isLoading && !error && filteredData.map((row, index) => {
                   const isLastRow = index === filteredData.length - 1;
-                  const borderClass = isLastRow
-                    ? ""
-                    : "border-b border-gray-200";
+                  const borderClass = isLastRow ? "" : "border-b border-gray-200";
 
                   return (
-                    <tr key={index}>
-                      <td className={`py-3 px-2 ${borderClass} text-center`}>
-                        {row.title}
-                      </td>
-                      <td className={`py-3 px-2 ${borderClass} text-center`}>
-                        {row.photo}
-                      </td>
-                      <td className={`py-3 px-2 ${borderClass} text-center`}>
-                        {row.video}
-                      </td>
-                      <td className={`py-3 px-2 ${borderClass} text-center`}>
-                        {row.animation}
-                      </td>
-                      <td className={`py-3 px-2 ${borderClass} text-center`}>
-                        {formatDate(row.date)}
-                      </td>
-                      <td className={`py-3 px-2 ${borderClass} text-center`}>
-                        {row.publisher}
-                      </td>
-                      <td className={`py-3 px-2 ${borderClass} text-center`}>
-                        <TableStatus status={row.status} />
-                      </td>
-
+                    <tr key={row.id ?? index}>
+                      <td className={`py-3 px-2 ${borderClass} text-center`}>{row.title}</td>
+                      <td className={`py-3 px-2 ${borderClass} text-center`}>{row.photo}</td>
+                      <td className={`py-3 px-2 ${borderClass} text-center`}>{row.video}</td>
+                      <td className={`py-3 px-2 ${borderClass} text-center`}>{row.animation}</td>
+                      <td className={`py-3 px-2 ${borderClass} text-center`}>{formatDate(row.date)}</td>
+                      <td className={`py-3 px-2 ${borderClass} text-center`}>{row.publisher}</td>
+                      <td className={`py-3 px-2 ${borderClass} text-center`}><TableStatus status={row.status} /></td>
                       <td className={`py-3 px-2 ${borderClass} text-center`}>
                         <TableAction
                           status={row.status}
@@ -359,11 +492,10 @@ export default function GalleryPage() {
                     </tr>
                   );
                 })}
-                {filteredData.length === 0 && (
+
+                {!isLoading && !error && filteredData.length === 0 && (
                   <tr>
-                    <td colSpan={8} className="py-8 text-center text-gray-500">
-                      No matching data found.
-                    </td>
+                    <td colSpan={8} className="py-8 text-center text-gray-500">No matching data found.</td>
                   </tr>
                 )}
               </tbody>

@@ -32,7 +32,7 @@ export default function AuthPages() {
   const [cvFile, setCvFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
   const slides = [
     { src: "/images/photo-1.jpg", alt: "Foto 1" },
     { src: "/images/photo-2.jpg", alt: "Foto 2" },
@@ -92,7 +92,7 @@ export default function AuthPages() {
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
-    
+
     const files = e.dataTransfer.files;
     if (files.length > 0) {
       const file = files[0];
@@ -123,8 +123,55 @@ export default function AuthPages() {
     }
   };
 
-  const handleLoginSubmit = async (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
+  // === START: Fixed Enter handler (safe, won't click toggle buttons) ===
+  // Behavior: prefer button[type="submit"] or button[data-role="auth-submit"] inside same form.
+  // As a fallback, search ancestor containers for that data-role button only (do NOT click arbitrary buttons).
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key !== "Enter") return;
+
+    try {
+      // 1) If the input is inside a <form>, try to find proper submit-like buttons there first.
+      const form = (e.currentTarget as HTMLInputElement).form;
+      let btn: HTMLButtonElement | null = null;
+
+      if (form) {
+        btn = form.querySelector(
+          'button[type="submit"], button[data-role="auth-submit"]'
+        ) as HTMLButtonElement | null;
+      }
+
+      // 2) Fallback: climb ancestors but ONLY look for button[data-role="auth-submit"].
+      // This avoids accidentally clicking UI controls like the eye toggle.
+      if (!btn) {
+        let el: HTMLElement | null = e.currentTarget as HTMLElement;
+        for (let i = 0; i < 6 && el; i++) {
+          if (el.querySelector) {
+            const maybe = el.querySelector(
+              'button[data-role="auth-submit"], button[type="submit"]'
+            ) as HTMLButtonElement | null;
+            if (maybe) {
+              btn = maybe;
+              break;
+            }
+          }
+          el = el.parentElement;
+        }
+      }
+
+      if (btn) {
+        btn.click();
+      }
+    } catch (err) {
+      // silent
+    }
+  };
+  // === END: Fixed Enter handler ===
+
+  const handleLoginSubmit = async (e: React.MouseEvent<HTMLButtonElement> | any) => {
+    try {
+      e?.preventDefault?.();
+    } catch (err) {}
+
     setIsLoading(true);
 
     try {
@@ -162,8 +209,10 @@ export default function AuthPages() {
     }
   };
 
-  const handleRegisterSubmit = async (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
+  const handleRegisterSubmit = async (e: React.MouseEvent<HTMLButtonElement> | any) => {
+    try {
+      e?.preventDefault?.();
+    } catch (err) {}
 
     if (registerPassword !== registerConfirmPassword) {
       alert("Password dan konfirmasi password tidak cocok!");
@@ -184,7 +233,7 @@ export default function AuthPages() {
       formData.append("role", registerRole);
       formData.append("password", registerPassword);
       formData.append("validationField", validationField);
-      
+
       if (cvFile) {
         formData.append("cv", cvFile);
       }
@@ -207,6 +256,16 @@ export default function AuthPages() {
         localStorage.setItem("access_token", token);
         localStorage.setItem("user", JSON.stringify(user));
         localStorage.setItem("role", user.role ?? registerRole);
+      }
+
+      // If role mahasiswa, inform user they are in a pending queue (don't auto-login into dashboard)
+      if (registerRole === "mahasiswa") {
+        alert(
+          "Registrasi berhasil. Data kamu telah masuk ke antrian verifikasi. Tunggu konfirmasi dari dosen/admin."
+        );
+        // keep UX simple: redirect to homepage or a public landing page
+        window.location.href = "/";
+        return;
       }
 
       alert("Registrasi berhasil!");
@@ -335,6 +394,7 @@ export default function AuthPages() {
                         type="email"
                         value={loginEmail}
                         onChange={(e) => setLoginEmail(e.target.value)}
+                        onKeyDown={handleKeyDown}
                         className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-orange-400 focus:ring-2 focus:ring-orange-100 outline-none transition-all"
                         placeholder="Masukkan email anda"
                       />
@@ -348,6 +408,7 @@ export default function AuthPages() {
                         type={showPassword ? "text" : "password"}
                         value={loginPassword}
                         onChange={(e) => setLoginPassword(e.target.value)}
+                        onKeyDown={handleKeyDown}
                         className="w-full pl-12 pr-12 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-orange-400 focus:ring-2 focus:ring-orange-100 outline-none transition-all"
                         placeholder="Masukkan sandi anda"
                       />
@@ -366,6 +427,7 @@ export default function AuthPages() {
 
                     {/* LOGIN button */}
                     <button
+                      data-role="auth-submit"
                       onClick={handleLoginSubmit}
                       disabled={isLoading}
                       className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 rounded-lg transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed"
@@ -394,6 +456,7 @@ export default function AuthPages() {
                         type="text"
                         value={registerName}
                         onChange={(e) => setRegisterName(e.target.value)}
+                        onKeyDown={handleKeyDown}
                         className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-orange-400 focus:ring-2 focus:ring-orange-100 outline-none transition-all"
                         placeholder="Masukkan nama anda"
                       />
@@ -408,6 +471,7 @@ export default function AuthPages() {
                         type="email"
                         value={registerEmail}
                         onChange={(e) => setRegisterEmail(e.target.value)}
+                        onKeyDown={handleKeyDown}
                         className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-orange-400 focus:ring-2 focus:ring-orange-100 outline-none transition-all"
                         placeholder="Masukkan email anda"
                       />
@@ -458,6 +522,7 @@ export default function AuthPages() {
                         type="text"
                         value={validationField}
                         onChange={(e) => setValidationField(e.target.value)}
+                        onKeyDown={handleKeyDown}
                         className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-orange-400 focus:ring-2 focus:ring-orange-100 outline-none transition-all"
                         placeholder={`Masukkan ${getValidationLabel()} anda`}
                       />
@@ -489,7 +554,7 @@ export default function AuthPages() {
                             onChange={handleFileSelect}
                             className="hidden"
                           />
-                          
+
                           {cvFile ? (
                             <div className="flex items-center justify-center gap-3">
                               <FileText className="h-8 w-8 text-green-600" />
@@ -541,6 +606,7 @@ export default function AuthPages() {
                         type={showPassword ? "text" : "password"}
                         value={registerPassword}
                         onChange={(e) => setRegisterPassword(e.target.value)}
+                        onKeyDown={handleKeyDown}
                         className="w-full pl-12 pr-12 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-orange-400 focus:ring-2 focus:ring-orange-100 outline-none transition-all"
                         placeholder="Masukkan sandi anda"
                       />
@@ -568,6 +634,7 @@ export default function AuthPages() {
                         onChange={(e) =>
                           setRegisterConfirmPassword(e.target.value)
                         }
+                        onKeyDown={handleKeyDown}
                         className="w-full pl-12 pr-12 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-orange-400 focus:ring-2 focus:ring-orange-100 outline-none transition-all"
                         placeholder="Konfirmasi sandi anda"
                       />
@@ -588,6 +655,7 @@ export default function AuthPages() {
 
                     {/* submit */}
                     <button
+                      data-role="auth-submit"
                       onClick={handleRegisterSubmit}
                       disabled={isLoading}
                       className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 rounded-lg transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed"

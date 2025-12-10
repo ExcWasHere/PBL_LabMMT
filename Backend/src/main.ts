@@ -19,16 +19,23 @@ async function bootstrap() {
     console.log('✅ Folder uploads berhasil dibuat!');
   }
 
+  // ensure singular folder names that match controllers: photo, video, cv
   const cvDir = path.join(uploadsRoot, 'cv');
   if (!fs.existsSync(cvDir)) {
     fs.mkdirSync(cvDir, { recursive: true });
     console.log('✅ Folder uploads/cv berhasil dibuat!');
   }
 
-  const photosDir = path.join(uploadsRoot, 'photos');
+  const photosDir = path.join(uploadsRoot, 'photo'); // <-- singular
   if (!fs.existsSync(photosDir)) {
     fs.mkdirSync(photosDir, { recursive: true });
-    console.log('✅ Folder uploads/photos berhasil dibuat!');
+    console.log('✅ Folder uploads/photo berhasil dibuat!');
+  }
+
+  const videosDir = path.join(uploadsRoot, 'video');
+  if (!fs.existsSync(videosDir)) {
+    fs.mkdirSync(videosDir, { recursive: true });
+    console.log('✅ Folder uploads/video berhasil dibuat!');
   }
 
   app.useStaticAssets(uploadsRoot, {

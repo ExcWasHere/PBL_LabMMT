@@ -13,13 +13,11 @@ export class MemberService {
     private readonly memberRepo: Repository<Member>,
   ) {}
 
-  // replace the create(...) method in src/member/member.service.ts with this
   async create(createMemberDto: CreateMemberDto) {
     if (!createMemberDto || !createMemberDto.name) {
       throw new BadRequestException('Missing member data');
     }
 
-    // decide default status based on role
     const roleLower = (createMemberDto.role ?? '').toLowerCase();
     const defaultStatus = roleLower === 'mahasiswa' ? 'pending' : 'active';
     const payload: DeepPartial<Member> = {

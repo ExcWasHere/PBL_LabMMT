@@ -119,7 +119,6 @@ export default function GalleryForm({
     }).format(date);
   };
 
-  // --- LOGIC PREVIEW POPUP ---
   const openPreview = () => {
     if (formData.mediaFiles.length === 0) {
       alert("Please upload media first to preview.");

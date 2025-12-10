@@ -35,37 +35,37 @@ export class AuthService {
     }
 
     const user = await this.usersService.createUser(payload);
-    const { password, ...rest } = user as any;
+    const { password, ...rest } = user;
     const mapRoleToPosition = (role?: string) => {
       const r = (role ?? '').toLowerCase();
       if (r === 'admin') return 'admin';
       if (r === 'dosen' || r === 'lecturer') return 'lecturer';
       if (r === 'mahasiswa' || r === 'student') return 'student';
-      return undefined; // let DB default if present
+      return undefined;
     };
 
     try {
       if ((payload.role ?? '').toLowerCase() === 'mahasiswa') {
         await this.usersService.createPendingMember({
-          userId: (user as any).id ?? undefined,
+          userId: user.id ?? undefined,
           name: user.name,
           identityNum: payload.validationField ?? '',
           email: user.email,
           role: payload.role ?? 'mahasiswa',
           cvUrl: payload.cvPath ?? undefined,
-          photoUrl: (user as any).photo ?? undefined,
+          photoUrl: user.photo ?? undefined,
           position: mapRoleToPosition(payload.role),
           status: 'pending',
         } as any);
       } else {
         await this.usersService.createMember({
-          userId: (user as any).id ?? undefined,
+          userId: user.id ?? undefined,
           name: user.name,
           identityNum: payload.validationField ?? '',
           email: user.email,
           role: payload.role ?? 'dosen',
           cvUrl: payload.cvPath ?? undefined,
-          photoUrl: (user as any).photo ?? undefined,
+          photoUrl: user.photo ?? undefined,
           status: 'active',
           position: mapRoleToPosition(payload.role),
         } as any);

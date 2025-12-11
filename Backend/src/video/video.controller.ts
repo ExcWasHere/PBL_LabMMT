@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import {
   Controller,
   Get,
@@ -6,18 +7,41 @@ import {
   Patch,
   Param,
   Delete,
+  UseInterceptors,
+  UploadedFile,
+  BadRequestException,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
 import { VideoService } from './video.service';
-import { CreateVideoDto } from './dto/create-video.dto';
 import { UpdateVideoDto } from './dto/update-video.dto';
 
 @Controller('video')
 export class VideoController {
   constructor(private readonly videoService: VideoService) {}
-
-  @Post()
-  create(@Body() createVideoDto: CreateVideoDto) {
-    return this.videoService.create(createVideoDto);
+  @Post('upload')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: './uploads/video',
+        filename: (_req, file, cb) => {
+          const unique = Date.now() + '-' + Math.round(Math.random() * 1e9);
+          cb(null, `${unique}${extname(file.originalname)}`);
+        },
+      }),
+      limits: {
+        fileSize: 200 * 1024 * 1024,
+      },
+    }),
+  )
+  uploadVideo(@UploadedFile() file: Express.Multer.File) {
+    if (!file) {
+      throw new BadRequestException('No file uploaded');
+    }
+    const base = process.env.SERVER_BASE_URL || 'http://localhost:3000';
+    const publicUrl = `${base}/uploads/video/${file.filename}`;
+    return { url: publicUrl };
   }
 
   @Get()
@@ -28,6 +52,12 @@ export class VideoController {
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.videoService.findOne(id);
+  }
+
+  @Post()
+  async create(@Body() createDto: any) {
+    if (!createDto.status) createDto.status = 'Review';
+    return this.videoService.create(createDto);
   }
 
   @Patch(':id')

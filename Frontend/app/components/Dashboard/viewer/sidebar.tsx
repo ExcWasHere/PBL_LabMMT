@@ -59,7 +59,7 @@ const Sidebar: FC = () => {
   ];
 
   const menuBottom: MenuItem[] = [
-    { name: "Beranda", route: "/", icon: <Home size={18} /> },
+    { name: "Home", route: "/", icon: <Home size={18} /> },
     {
       name: "Keluar",
       route: "/masuk",

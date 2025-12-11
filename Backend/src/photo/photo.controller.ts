@@ -16,15 +16,11 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { PhotoService } from './photo.service';
-// import DTOs if you have them
-// import { CreatePhotoDto } from './dto/create-photo.dto';
-// import { UpdatePhotoDto } from './dto/update-photo.dto';
 
 @Controller('photo')
 export class PhotoController {
   constructor(private readonly photoService: PhotoService) {}
 
-  // UPLOAD FILE
   @Post('upload')
   @UseInterceptors(
     FileInterceptor('file', {
@@ -36,7 +32,7 @@ export class PhotoController {
         },
       }),
       limits: {
-        fileSize: 30 * 1024 * 1024, // 30MB
+        fileSize: 30 * 1024 * 1024,
       },
     }),
   )
@@ -49,7 +45,6 @@ export class PhotoController {
     return { url: publicUrl };
   }
 
-  // CRUD metadata endpoints (used by frontend)
   @Get()
   findAll() {
     return this.photoService.findAll();
@@ -62,10 +57,7 @@ export class PhotoController {
 
   @Post()
   async create(@Body() createDto: any) {
-    // set default status to Review if not provided
     if (!createDto.status) createDto.status = 'Review';
-    // optionally attach publisher from req.user if using auth
-    // createDto.publisher = req?.user?.name ?? createDto.publisher ?? 'Unknown';
     return this.photoService.create(createDto);
   }
 

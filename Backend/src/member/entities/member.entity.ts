@@ -11,6 +11,9 @@ export class Member {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @Column({ type: 'int' })
+  userId: number;
+
   @Column({ type: 'varchar', length: 255 })
   name: string;
 
@@ -23,13 +26,6 @@ export class Member {
   @Column({ type: 'date' })
   startDate: Date;
 
-  @Column({
-    type: 'enum',
-    enum: ['Researcher', 'Lecturer', 'Student', 'Alumni'],
-    default: 'Researcher',
-  })
-  position: string;
-
   @Column({ type: 'varchar', length: 255, nullable: true })
   email: string;
 
@@ -38,6 +34,23 @@ export class Member {
 
   @Column({ type: 'varchar', length: 500, nullable: true })
   photoUrl: string;
+
+  @Column({ type: 'varchar', length: 500, nullable: true })
+  cvUrl: string;
+
+  @Column({
+    type: 'enum',
+    enum: ['researcher', 'admin'],
+    default: 'researcher',
+  })
+  position: string;
+
+  @Column({
+    type: 'enum',
+    enum: ['pending', 'active'],
+    default: 'pending',
+  })
+  status: string;
 
   @CreateDateColumn()
   createdAt: Date;

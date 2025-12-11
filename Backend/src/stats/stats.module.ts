@@ -1,4 +1,3 @@
-// src/stats/stats.module.ts
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { StatsController } from './stats.controller';

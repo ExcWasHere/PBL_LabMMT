@@ -22,23 +22,16 @@ export default function MediaUploader({
   accept = "image/*,video/*",
   allowMultiple = true,
 }: MediaUploaderProps) {
-  // URL yang sudah ada dari backend (string, non-blob)
   const [existingUrls, setExistingUrls] = useState<string[]>([]);
-
-  // File baru yang dipilih user
   const [newFiles, setNewFiles] = useState<File[]>([]);
   const [newPreviewUrls, setNewPreviewUrls] = useState<string[]>([]);
-
   const [isDragging, setIsDragging] = useState(false);
 
-  // 💡 kalau initialMedia berubah, ambil HANYA yang bukan blob:
-  // supaya blob URL yang dibuat parent nggak bikin duplikat preview
   useEffect(() => {
     const nonBlob = initialMedia.filter((url) => !url.startsWith("blob:"));
     setExistingUrls(nonBlob);
   }, [initialMedia]);
 
-  // cleanup blob URL untuk file baru
   useEffect(() => {
     return () => {
       newPreviewUrls.forEach((url) => {
@@ -70,8 +63,6 @@ export default function MediaUploader({
     if (!fileList) return;
 
     const incoming = Array.from(fileList);
-
-    // total = existing (dari backend) + new + incoming
     const currentCount = existingUrls.length + newFiles.length;
     if (currentCount + incoming.length > maxFiles) {
       alert(`Maksimal ${maxFiles} file`);
@@ -87,32 +78,28 @@ export default function MediaUploader({
       updatedFiles = [...newFiles, ...incoming];
       updatedPreviewUrls = [...newPreviewUrls, ...incomingUrls];
     } else {
-      // kalau cuma boleh 1: replace semuanya (existing + new)
       newPreviewUrls.forEach((url) => {
         if (url.startsWith("blob:")) URL.revokeObjectURL(url);
       });
 
       updatedFiles = incoming.slice(0, 1);
       updatedPreviewUrls = incomingUrls.slice(0, 1);
-      setExistingUrls([]); // gak pake lagi existing kalau single
+      setExistingUrls([]);
     }
 
     setNewFiles(updatedFiles);
     setNewPreviewUrls(updatedPreviewUrls);
-    onMediaChange(updatedFiles); // cuma kirim file baru ke parent
+    onMediaChange(updatedFiles);
   };
 
   const handleRemove = (index: number) => {
-    // kalau index masih di dalam existingUrls → hapus dari existing saja
     if (index < existingUrls.length) {
       const newExisting = existingUrls.filter((_, i) => i !== index);
       setExistingUrls(newExisting);
-      // newFiles tidak berubah; onMediaChange tetap newFiles sekarang
       onMediaChange(newFiles);
       return;
     }
 
-    // kalau yang dihapus adalah file baru
     const newIndex = index - existingUrls.length;
     const urlToRemove = newPreviewUrls[newIndex];
 

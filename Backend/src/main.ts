@@ -19,14 +19,13 @@ async function bootstrap() {
     console.log('✅ Folder uploads berhasil dibuat!');
   }
 
-  // ensure singular folder names that match controllers: photo, video, cv
   const cvDir = path.join(uploadsRoot, 'cv');
   if (!fs.existsSync(cvDir)) {
     fs.mkdirSync(cvDir, { recursive: true });
     console.log('✅ Folder uploads/cv berhasil dibuat!');
   }
 
-  const photosDir = path.join(uploadsRoot, 'photo'); // <-- singular
+  const photosDir = path.join(uploadsRoot, 'photo');
   if (!fs.existsSync(photosDir)) {
     fs.mkdirSync(photosDir, { recursive: true });
     console.log('✅ Folder uploads/photo berhasil dibuat!');

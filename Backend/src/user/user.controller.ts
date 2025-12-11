@@ -1,7 +1,9 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
 import {
   Controller,
   Get,
+  Post,
   Put,
   UseGuards,
   Req,
@@ -10,31 +12,35 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { UsersService } from './user.service';
-import { UpdateBioDto } from './dto/update-bio.dto';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @Controller('user')
-@UseGuards(JwtAuthGuard)
 export class UserController {
   constructor(private readonly usersService: UsersService) {}
 
+  @UseGuards(JwtAuthGuard)
   @Get('profile')
-  getProfile(@Req() req: any) {
-    const userId = Number(req.user.id);
+  async profile(@Req() req: any) {
+    const userId = Number(req.user?.sub ?? req.user?.id);
     return this.usersService.getProfile(userId);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Put('bio')
-  updateBio(@Req() req: any, @Body() dto: UpdateBioDto) {
-    const userId = Number(req.user.id);
-    return this.usersService.updateBio(userId, dto.bio);
+  async updateBio(@Req() req: any, @Body() dto: { bio?: string }) {
+    const userId = Number(req.user?.sub ?? req.user?.id);
+    return this.usersService.updateBio(userId, dto.bio ?? undefined);
   }
 
-  @Put('photo')
-  @UseInterceptors(FileInterceptor('photo', { dest: './uploads/photos' }))
-  updatePhoto(@Req() req: any, @UploadedFile() file: Express.Multer.File) {
-    const userId = Number(req.user.id);
+  @UseGuards(JwtAuthGuard)
+  @Post('photo')
+  @UseInterceptors(FileInterceptor('file'))
+  async updatePhoto(
+    @Req() req: any,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    const userId = Number(req.user?.sub ?? req.user?.id);
     return this.usersService.updatePhoto(userId, file);
   }
 }

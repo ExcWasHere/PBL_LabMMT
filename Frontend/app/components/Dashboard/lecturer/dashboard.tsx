@@ -1,4 +1,4 @@
-import Sidebar from "~/components/Dashboard/viewer/sidebar";
+import Sidebar from "~/components/Dashboard/lecturer/sidebar";
 import { useState, useEffect } from "react";
 import {
   Menu,

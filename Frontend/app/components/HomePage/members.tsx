@@ -111,7 +111,6 @@ const getMemberPath = (m: { id?: string; slug?: string } | undefined) => {
           <motion.div
             drag="x"
             dragConstraints={{ left: -1, right: 1 }}
-            onDragEnd={onDragEnd}
             style={{ cursor: "grab" }}
             whileTap={{ cursor: "grabbing" }}
             animate={{ x: `-${safeIndex * shiftPercent}%` }}

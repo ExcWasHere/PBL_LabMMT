@@ -388,7 +388,7 @@ export default function ProjectPage() {
                   teamMembers: editData.teamMembers || "",
                   githubLink: editData.githubLink || "",
                   demoLink: editData.demoLink || "",
-                  photoUrls: editData.photoUrls || [],
+                  mediaUrls: editData.mediaUrls || [],
                 }
                 : undefined
             }

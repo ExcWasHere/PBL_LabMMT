@@ -10,7 +10,7 @@ type MemberItem = {
   userId?: number | null;
   name: string;
   identityNum?: string;
-  role?: string;
+  field?: string;
   startDate?: string;
   position?: string;
   email?: string;
@@ -26,7 +26,7 @@ type PendingItem = {
   name: string;
   nim?: string;
   email?: string;
-  role?: string;
+  field?: string;
   registrationDate?: string;
   cvUrl?: string;
 };
@@ -44,7 +44,7 @@ export default function MemberPage() {
   }, []);
 
   const [selectedYear, setSelectedYear] = useState("All Year");
-  const [selectedRole, setSelectedRole] = useState("All");
+  const [selectedField, setSelectedField] = useState("All"); 
   const [selectedSort, setSelectedSort] = useState("Latest");
   const [searchTerm, setSearchTerm] = useState("");
   const [memberList, setMemberList] = useState<MemberItem[]>([]);
@@ -52,10 +52,11 @@ export default function MemberPage() {
   const [showPending, setShowPending] = useState(false);
   const [isLoadingMembers, setIsLoadingMembers] = useState(false);
   const [isLoadingPending, setIsLoadingPending] = useState(false);
+  
   const stats = useMemo(() => {
-    const lecturer = memberList.filter((m) => (m.role ?? "").toLowerCase() === "dosen" || (m.position ?? "").toLowerCase() === "lecturer" || (m.role ?? "").toLowerCase() === "lecturer").length;
-    const student = memberList.filter((m) => (m.role ?? "").toLowerCase() === "mahasiswa" || (m.position ?? "").toLowerCase() === "student").length;
-    const alumni = memberList.filter((m) => (m.role ?? "").toLowerCase() === "alumni").length;
+    const lecturer = memberList.filter((m) => (m.field ?? "").toLowerCase() === "dosen" || (m.position ?? "").toLowerCase() === "lecturer" || (m.field ?? "").toLowerCase() === "lecturer").length;
+    const student = memberList.filter((m) => (m.field ?? "").toLowerCase() === "mahasiswa" || (m.position ?? "").toLowerCase() === "student").length;
+    const alumni = memberList.filter((m) => (m.field ?? "").toLowerCase() === "alumni").length;
     return [
       { label: "Lecturer", value: lecturer, color: "border-orange-400 text-orange-500" },
       { label: "Student", value: student, color: "border-blue-400 text-blue-500" },
@@ -106,7 +107,7 @@ export default function MemberPage() {
         userId: r.userId ?? r.user_id ?? null,
         name: r.name ?? r.fullname ?? r.username ?? "",
         identityNum: r.identityNum ?? r.identity_num ?? r.validationField ?? r.nim ?? "",
-        role: r.role ?? "",
+        field: r.role ?? r.field ?? "",
         startDate: startStr,
         position: r.position ?? "",
         email: r.email ?? "",
@@ -129,7 +130,7 @@ export default function MemberPage() {
         name: p.name ?? p.fullname ?? "",
         nim: p.identityNum ?? p.validationField ?? p.nim ?? "",
         email: p.email ?? "",
-        role: p.role ?? "",
+        field: p.role ?? p.field ?? "", 
         registrationDate: regStr,
         cvUrl: p.cvUrl ?? p.cv_url ?? p.cvPath ?? p.cv_path ?? "",
       } as PendingItem;
@@ -198,7 +199,7 @@ export default function MemberPage() {
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        alert(err.message || "Gagal approve");
+        alert(err.message || "Failed to approve");
         return;
       }
       setMemberPending((prev) => prev.filter((x) => x.id !== p.id));
@@ -206,7 +207,7 @@ export default function MemberPage() {
       alert(`${p.name} approved`);
     } catch (err) {
       console.error(err);
-      alert("Gagal approve, cek console");
+      alert("Failed to approve, check console");
     }
   };
 
@@ -220,14 +221,14 @@ export default function MemberPage() {
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        alert(err.message || "Gagal reject");
+        alert(err.message || "Failed to reject");
         return;
       }
       setMemberPending((prev) => prev.filter((x) => x.id !== p.id));
       alert(`${p.name} rejected`);
     } catch (err) {
       console.error(err);
-      alert("Gagal reject, cek console");
+      alert("Failed to reject, check console");
     }
   };
 
@@ -238,8 +239,8 @@ export default function MemberPage() {
       return parts[parts.length - 1];
     };
 
-    if (selectedRole !== "All") {
-      data = data.filter((row) => (row.role ?? "").toLowerCase() === selectedRole.toLowerCase());
+    if (selectedField !== "All") {
+      data = data.filter((row) => (row.field ?? "").toLowerCase() === selectedField.toLowerCase());
     }
     if (selectedYear !== "All Year") {
       data = data.filter((row) => getYearFromString(row.startDate ?? "") === selectedYear);
@@ -250,7 +251,7 @@ export default function MemberPage() {
       data = data.filter(
         (row) =>
           (row.name ?? "").toLowerCase().includes(lowerCaseQuery) ||
-          (row.role ?? "").toLowerCase().includes(lowerCaseQuery)
+          (row.field ?? "").toLowerCase().includes(lowerCaseQuery)
       );
     }
 
@@ -267,7 +268,7 @@ export default function MemberPage() {
     }
 
     return data;
-  }, [memberList, selectedYear, selectedRole, searchTerm, selectedSort]);
+  }, [memberList, selectedYear, selectedField, searchTerm, selectedSort]);
 
   return (
     <div className="flex relative min-h-screen">
@@ -348,8 +349,8 @@ export default function MemberPage() {
                 "Game Developer",
                 "Frontend Developer",
               ]}
-              currentFilter={selectedRole}
-              onSelect={setSelectedRole}
+              currentFilter={selectedField}
+              onSelect={setSelectedField}
             />
             <DropdownFilter
               label="Urutkan"
@@ -367,7 +368,7 @@ export default function MemberPage() {
                 <tr>
                   <th className="py-3 px-2">Name</th>
                   <th className="py-3 px-2">NIM/NIDN</th>
-                  <th className="py-3 px-2">Role</th>
+                  <th className="py-3 px-2">Field</th> 
                   <th className="py-3 px-2">Start Date</th>
                   <th className="py-3 px-2">Position</th>
                 </tr>
@@ -388,7 +389,7 @@ export default function MemberPage() {
                         {row.identityNum}
                       </td>
                       <td className={`py-3 px-2 ${borderClass} text-center`}>
-                        {row.role}
+                        {row.field} 
                       </td>
                       <td className={`py-3 px-2 ${borderClass} text-center`}>
                         {row.startDate}
@@ -406,7 +407,7 @@ export default function MemberPage() {
                 {filteredData.length === 0 && (
                   <tr>
                     <td colSpan={5} className="py-8 text-center text-gray-500">
-                      Tidak ada data yang cocok dengan filter yang diterapkan.
+                    No data matches the applied filter.
                     </td>
                   </tr>
                 )}
@@ -454,7 +455,7 @@ export default function MemberPage() {
                       <th className="py-3 px-2">Name</th>
                       <th className="py-3 px-2">NIM</th>
                       <th className="py-3 px-2">Email</th>
-                      <th className="py-3 px-2">Role</th>
+                      <th className="py-3 px-2">Field</th> 
                       <th className="py-3 px-2">Registration Date</th>
                       <th className="py-3 px-2">Document</th>
                       <th className="py-3 px-2">Action</th>
@@ -480,7 +481,7 @@ export default function MemberPage() {
                           <td className="py-3 px-2 text-center">{user.name}</td>
                           <td className="py-3 px-2 text-center">{user.nim}</td>
                           <td className="py-3 px-2 text-center">{user.email}</td>
-                          <td className="py-3 px-2 text-center">{user.role}</td>
+                          <td className="py-3 px-2 text-center">{user.field}</td> 
                           <td className="py-3 px-2 text-center">
                             {user.registrationDate}
                           </td>
@@ -491,7 +492,7 @@ export default function MemberPage() {
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="group relative p-2 text-blue-600 rounded-lg hover:bg-blue-100 transition flex items-center gap-1"
-                                title="Buka CV di tab baru"
+                                title="Open CV in new tab"
                               >
                                 <FileText size={18} />
                               </a>

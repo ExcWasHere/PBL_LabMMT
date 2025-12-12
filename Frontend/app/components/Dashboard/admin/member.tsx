@@ -18,7 +18,7 @@ export default function MemberPage() {
     }, []);
 
   const [selectedYear, setSelectedYear] = useState("All Year");
-  const [selectedRole, setselectedRole] = useState("All");
+  const [selectedField, setselectedField] = useState("All");
   const [selectedSort, setSelectedSort] = useState("Latest");
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -49,17 +49,15 @@ export default function MemberPage() {
     setSearchTerm(e.target.value);
   };
 
-  // --- Filtering Logic ---
   const filteredData = useMemo(() => {
-    // ... (Logika filtering sama) ...
     let data = [...memberList];
     const getYearFromString = (dateString: string) => {
       const parts = dateString.trim().split(" ");
       return parts[parts.length - 1];
     };
 
-    if (selectedRole !== "All") {
-      data = data.filter((row) => row.role === selectedRole);
+    if (selectedField !== "All") {
+      data = data.filter((row) => row.field === selectedField);
     }
     if (selectedYear !== "All Year") {
       data = data.filter(
@@ -72,7 +70,7 @@ export default function MemberPage() {
       data = data.filter(
         (row) =>
           row.name.toLowerCase().includes(lowerCaseQuery) ||
-          row.role.toLowerCase().includes(lowerCaseQuery)
+          row.field.toLowerCase().includes(lowerCaseQuery)
       );
     }
 
@@ -83,7 +81,7 @@ export default function MemberPage() {
     }
 
     return data;
-  }, [memberList, selectedYear, selectedRole, searchTerm, selectedSort]);
+  }, [memberList, selectedYear, selectedField, searchTerm, selectedSort]);
 
   const [memberPending, setMemberPending] = useState(registration_dummy);
   const pendingCounter = [{value: memberPending.length}]
@@ -94,13 +92,10 @@ export default function MemberPage() {
     <div className="flex">
       {isSidebarOpen && <Sidebar />}
 
-      {/* Page Content - Mengontrol margin kiri berdasarkan status sidebar */}
       <div
         className={`w-full p-8 transition-all duration-300 ease-in-out ${isSidebarOpen ? "ml-64" : "ml-0"}`}
       >
-        {/* Header dengan Tombol Toggle */}
         <div className="flex items-center mb-6">
-          {/* TOMBOL TOGGLE */}
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
             className="p-2 mr-4 text-gray-700 hover:text-orange-600 transition"
@@ -110,7 +105,6 @@ export default function MemberPage() {
           <h1 className="text-3xl font-bold text-orange-600">Member</h1>
         </div>
 
-        {/* --- Stats Section --- */}
         <div className="grid grid-cols-3 gap-4 mb-6">
           {stats.map((s) => (
             <div key={s.label} className={`border-1 rounded-lg p-4 ${s.color}`}>
@@ -122,7 +116,6 @@ export default function MemberPage() {
           ))}
         </div>
 
-        {/* --- Filters Section --- (Tetap) */}
         <div className="flex items-center gap-3 mb-6">
           <div className="flex items-center flex-1 border border-orange-500 rounded-lg bg-white px-4 py-2">
             <svg
@@ -162,8 +155,8 @@ export default function MemberPage() {
               "Game Developer",
               "Frontend Developer",
             ]}
-            currentFilter={selectedRole}
-            onSelect={setselectedRole}
+            currentFilter={selectedField}
+            onSelect={setselectedField}
           />
           <DropdownFilter
             label="Urutkan"
@@ -173,14 +166,13 @@ export default function MemberPage() {
           />
         </div>
 
-        {/* --- Table Section --- */}
         <div className="border border-orange-500 rounded-lg overflow-hidden">
           <table className="w-full text-sm">
             <thead className="bg-orange-50">
               <tr>
                 <th className="py-3">Name</th>
                 <th className="py-3">NIM/NIDN</th>
-                <th className="py-3">Role</th>
+                <th className="py-3">Field</th>
                 <th className="py-3">Start Date</th>
                 <th className="py-3">Position</th>
               </tr>
@@ -199,7 +191,7 @@ export default function MemberPage() {
                       {row.identityNum}
                     </td>
                     <td className={`py-3 ${borderClass} text-center`}>
-                      {row.role}
+                      {row.field}
                     </td>
                     <td className={`py-3 ${borderClass} text-center`}>
                       {row.startDate}
@@ -259,7 +251,7 @@ export default function MemberPage() {
                     <th className="py-3">Name</th>
                     <th className="py-3">NIM</th>
                     <th className="py-3">Email</th>
-                    <th className="py-3">Role</th>
+                    <th className="py-3">Field</th>
                     <th className="py-3">Date</th>
                     <th className="py-3">Document</th>
                     <th className="py-3">Action</th>
@@ -272,13 +264,12 @@ export default function MemberPage() {
                       <td className="py-3 text-center">{user.name}</td>
                       <td className="py-3 text-center">{user.nim}</td>
                       <td className="py-3 text-center">{user.email}</td>
-                      <td className="py-3 text-center">{user.role}</td>
+                      <td className="py-3 text-center">{user.field}</td>
                       <td className="py-3 text-center">
                         {user.registrationDate}
                       </td>
                       <td className="py-3 text-center">
                         <div className="flex justify-center gap-3">
-                          {/* Icon CV */}
                           <a
                             href={user.cvUrl}
                             target="_blank"
@@ -293,7 +284,6 @@ export default function MemberPage() {
                       </td>
                       <td className="py-3 text-center">
                         <div className="flex items-center justify-center gap-3">
-                          {/* APPROVE */}
                           <button
                             onClick={() => alert(`Approved ${user.name}`)}
                             className="text-green-600 hover:text-green-800"
@@ -301,7 +291,6 @@ export default function MemberPage() {
                             <Check size={18} />
                           </button>
 
-                          {/* REJECT */}
                           <button
                             onClick={() => alert(`Rejected ${user.name}`)}
                             className="text-red-600 hover:text-red-800"

@@ -131,7 +131,7 @@ interface MemberRow {
   id?: string;
   name: string;
   identityNum: string;
-  role: string;
+  field: string; 
   startDate: string;
   position: string;
 }
@@ -140,7 +140,7 @@ export default function MemberPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   const [selectedYear, setSelectedYear] = useState("All Years");
-  const [selectedRole, setSelectedRole] = useState("All");
+  const [selectedField, setSelectedField] = useState("All"); 
   const [selectedSort, setSelectedSort] = useState("A-Z");
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -165,7 +165,7 @@ export default function MemberPage() {
             id: m.id,
             name: m.name ?? "-",
             identityNum: m.identityNum ?? "-",
-            role: m.role ?? "-",
+            field: m.role ?? m.field ?? "-", 
             startDate: m.startDate ? formatDateForViewer(m.startDate) : "",
             position: m.position ?? "Researcher",
           })
@@ -224,8 +224,8 @@ export default function MemberPage() {
   const filteredData = useMemo(() => {
     let data = [...allTableData];
 
-    if (selectedRole !== "All") {
-      data = data.filter((row) => row.role === selectedRole);
+    if (selectedField !== "All") {
+      data = data.filter((row) => row.field === selectedField);
     }
     if (selectedYear !== "All Years") {
       data = data.filter(
@@ -238,7 +238,7 @@ export default function MemberPage() {
       data = data.filter(
         (row) =>
           row.name.toLowerCase().includes(lower) ||
-          row.role.toLowerCase().includes(lower)
+          row.field.toLowerCase().includes(lower)
       );
     }
 
@@ -257,7 +257,7 @@ export default function MemberPage() {
     }
 
     return data;
-  }, [allTableData, selectedYear, selectedRole, searchTerm, selectedSort]);
+  }, [allTableData, selectedYear, selectedField, searchTerm, selectedSort]);
 
   return (
     <div className="flex">
@@ -323,15 +323,15 @@ export default function MemberPage() {
             onSelect={setSelectedYear}
           />
           <DropdownFilter
-            label="Role"
+            label="Field" 
             options={[
               "All",
               "UI/UX Designer",
               "Game Developer",
               "Frontend Developer",
             ]}
-            currentFilter={selectedRole}
-            onSelect={setSelectedRole}
+            currentFilter={selectedField} 
+            onSelect={setSelectedField}
           />
           <DropdownFilter
             label="Urutkan"
@@ -347,7 +347,7 @@ export default function MemberPage() {
               <tr>
                 <th className="py-3">Name</th>
                 <th className="py-3">NIM/NIDN</th>
-                <th className="py-3">Role</th>
+                <th className="py-3">Field</th> 
                 <th className="py-3">Start Date</th>
                 <th className="py-3">Position</th>
               </tr>
@@ -392,7 +392,7 @@ export default function MemberPage() {
                         {row.identityNum}
                       </td>
                       <td className={`py-3 ${borderClass} text-center`}>
-                        {row.role}
+                        {row.field}
                       </td>
                       <td className={`py-3 ${borderClass} text-center`}>
                         {row.startDate}

@@ -1,5 +1,4 @@
-import { DetailMember } from "~/components/HomePage/detail";
-import type { Route } from "./+types/detailteam-member";
+import MemberDetailPage from "~/components/HomePage/detail";
 
 
 export function meta() {
@@ -12,5 +11,5 @@ export function meta() {
   ];
 }
 export default function MemberDetailRoute() {
-  return <DetailMember />;
+  return <MemberDetailPage />;
 }

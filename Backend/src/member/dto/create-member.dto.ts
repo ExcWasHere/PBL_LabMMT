@@ -4,6 +4,8 @@ import {
   IsNumber,
   IsEmail,
   IsEnum,
+  IsArray,
+  IsObject,
 } from 'class-validator';
 
 export class CreateMemberDto {
@@ -47,4 +49,63 @@ export class CreateMemberDto {
   @IsOptional()
   @IsString()
   startDate?: string;
+
+  // ============================
+  // Added lecturer fields
+  // ============================
+
+  @IsOptional()
+  @IsString()
+  nip?: string;
+
+  @IsOptional()
+  @IsString()
+  nidn?: string;
+
+  @IsOptional()
+  @IsString()
+  prodi?: string;
+
+  @IsOptional()
+  @IsString()
+  jabatan_akademik?: string;
+
+  @IsOptional()
+  @IsString()
+  bio?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  tags?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  pendidikan?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  sertifikasi?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  matkul_ganjil?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  matkul_genap?: string[];
+
+  @IsOptional()
+  @IsObject()
+  social_links?: {
+    linkedin?: string;
+    email?: string;
+    scholar?: string;
+    sinta?: string;
+    cv?: string;
+  };
 }

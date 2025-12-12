@@ -17,23 +17,21 @@ export class Member {
   @Column({ type: 'varchar', length: 255 })
   name: string;
 
-  @Column({ type: 'varchar', length: 50 })
+  @Column({ type: 'varchar', length: 50, nullable: true })
   identityNum: string;
 
-  @Column({ type: 'varchar', length: 100 })
+  @Column({ type: 'varchar', length: 100, nullable: true })
   role: string;
 
-  @Column({ type: 'date' })
-  startDate: Date;
+  // =====================================================
+  // REQUIRED by your existing MemberService + DB
+  // =====================================================
 
   @Column({ type: 'varchar', length: 255, nullable: true })
   email: string;
 
   @Column({ type: 'varchar', length: 20, nullable: true })
   phone: string;
-
-  @Column({ type: 'varchar', length: 500, nullable: true })
-  photoUrl: string;
 
   @Column({ type: 'varchar', length: 500, nullable: true })
   cvUrl: string;
@@ -51,6 +49,58 @@ export class Member {
     default: 'pending',
   })
   status: string;
+
+  @Column({ type: 'date', nullable: true })
+  startDate: Date;
+
+  // =====================================================
+  // NEW FIELDS (lecturer)
+  // =====================================================
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  nip?: string;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  nidn?: string;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  prodi?: string;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  jabatan_akademik?: string;
+
+  @Column({ type: 'text', nullable: true })
+  bio?: string;
+
+  @Column({ type: 'text', array: true, nullable: true, default: [] })
+  tags?: string[];
+
+  @Column({ type: 'text', array: true, nullable: true, default: [] })
+  pendidikan?: string[];
+
+  @Column({ type: 'text', array: true, nullable: true, default: [] })
+  sertifikasi?: string[];
+
+  @Column({ type: 'text', array: true, nullable: true, default: [] })
+  matkul_ganjil?: string[];
+
+  @Column({ type: 'text', array: true, nullable: true, default: [] })
+  matkul_genap?: string[];
+
+  @Column({ type: 'json', nullable: true })
+  social_links?: {
+    linkedin?: string;
+    email?: string;
+    scholar?: string;
+    sinta?: string;
+    cv?: string;
+  };
+
+  @Column({ type: 'varchar', length: 500, nullable: true })
+  photoUrl?: string;
+
+  @Column({ type: 'varchar', length: 255, unique: true, nullable: true })
+  slug?: string;
 
   @CreateDateColumn()
   createdAt: Date;

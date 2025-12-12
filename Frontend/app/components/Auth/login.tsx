@@ -124,8 +124,6 @@ export default function AuthPages() {
   };
 
   // === START: Fixed Enter handler (safe, won't click toggle buttons) ===
-  // Behavior: prefer button[type="submit"] or button[data-role="auth-submit"] inside same form.
-  // As a fallback, search ancestor containers for that data-role button only (do NOT click arbitrary buttons).
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key !== "Enter") return;
 
@@ -140,8 +138,7 @@ export default function AuthPages() {
         ) as HTMLButtonElement | null;
       }
 
-      // 2) Fallback: climb ancestors but ONLY look for button[data-role="auth-submit"].
-      // This avoids accidentally clicking UI controls like the eye toggle.
+      // 2) Fallback: climb ancestors but ONLY look for button[data-role="auth-submit"] or type="submit".
       if (!btn) {
         let el: HTMLElement | null = e.currentTarget as HTMLElement;
         for (let i = 0; i < 6 && el; i++) {
@@ -159,7 +156,20 @@ export default function AuthPages() {
       }
 
       if (btn) {
-        btn.click();
+        // Instead of blindly clicking, do a small validation pre-check to avoid
+        // clicking when fields are empty (this prevents the behavior you reported).
+        // We'll call the same handlers programmatically so validation inside handlers still runs.
+        if (btn.dataset.role === "auth-submit") {
+          // determine which page we're on to call the correct handler
+          if (currentPage === "login") {
+            // call login handler
+            (btn as HTMLButtonElement).click();
+          } else {
+            (btn as HTMLButtonElement).click();
+          }
+        } else {
+          btn.click();
+        }
       }
     } catch (err) {
       // silent
@@ -167,10 +177,37 @@ export default function AuthPages() {
   };
   // === END: Fixed Enter handler ===
 
+  // -----------------------
+  // VALIDATION HELPERS
+  // -----------------------
+  const isEmailValid = (email: string) => {
+    // simple email regex
+    return /^\S+@\S+\.\S+$/.test(email.trim());
+  };
+
+  const canLogin = loginEmail.trim() !== "" && loginPassword !== "";
+  const canRegister =
+    registerName.trim() !== "" &&
+    registerEmail.trim() !== "" &&
+    registerPassword !== "" &&
+    registerConfirmPassword !== "" &&
+    validationField.trim() !== "" &&
+    (registerRole !== "mahasiswa" || cvFile !== null);
+
   const handleLoginSubmit = async (e: React.MouseEvent<HTMLButtonElement> | any) => {
     try {
       e?.preventDefault?.();
     } catch (err) {}
+
+    // --- CLIENT-SIDE VALIDATION ---
+    if (loginEmail.trim() === "" || loginPassword === "") {
+      alert("Email dan password wajib diisi.");
+      return;
+    }
+    if (!isEmailValid(loginEmail)) {
+      alert("Format email tidak valid.");
+      return;
+    }
 
     setIsLoading(true);
 
@@ -179,7 +216,7 @@ export default function AuthPages() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          email: loginEmail,
+          email: loginEmail.trim(),
           password: loginPassword,
         }),
       });
@@ -198,9 +235,8 @@ export default function AuthPages() {
       }
       if (user.role === "admin") window.location.href = "/dashboard-admin";
       else if (user.role === "dosen") window.location.href = "/dashboard-lecturer";
-      else if (user.role === "mahasiswa") window.location.href = "/dashboard-student"
+      else if (user.role === "mahasiswa") window.location.href = "/dashboard-student";
       else window.location.href = "/dashboard-viewer";
-
     } catch (err) {
       alert("Gagal terhubung ke server!");
       console.error(err);
@@ -214,11 +250,23 @@ export default function AuthPages() {
       e?.preventDefault?.();
     } catch (err) {}
 
+    // --- CLIENT-SIDE VALIDATION ---
+    if (registerName.trim() === "" || registerEmail.trim() === "" || validationField.trim() === "") {
+      alert("Nama, email, dan field validasi wajib diisi.");
+      return;
+    }
+    if (!isEmailValid(registerEmail)) {
+      alert("Format email tidak valid.");
+      return;
+    }
+    if (registerPassword === "" || registerConfirmPassword === "") {
+      alert("Password dan konfirmasi password wajib diisi.");
+      return;
+    }
     if (registerPassword !== registerConfirmPassword) {
       alert("Password dan konfirmasi password tidak cocok!");
       return;
     }
-
     if (registerRole === "mahasiswa" && !cvFile) {
       alert("CV wajib diupload untuk mahasiswa!");
       return;
@@ -229,7 +277,7 @@ export default function AuthPages() {
     try {
       const formData = new FormData();
       formData.append("name", registerName);
-      formData.append("email", registerEmail);
+      formData.append("email", registerEmail.trim());
       formData.append("role", registerRole);
       formData.append("password", registerPassword);
       formData.append("validationField", validationField);
@@ -258,12 +306,10 @@ export default function AuthPages() {
         localStorage.setItem("role", user.role ?? registerRole);
       }
 
-      // If role mahasiswa, inform user they are in a pending queue (don't auto-login into dashboard)
       if (registerRole === "mahasiswa") {
         alert(
           "Registrasi berhasil. Data kamu telah masuk ke antrian verifikasi. Tunggu konfirmasi dari dosen/admin."
         );
-        // keep UX simple: redirect to homepage or a public landing page
         window.location.href = "/";
         return;
       }
@@ -272,7 +318,6 @@ export default function AuthPages() {
       if (user.role === "admin") window.location.href = "/dashboard-admin";
       else if (user.role === "dosen") window.location.href = "/dashboard-lecturer";
       else window.location.href = "/dashboard-viewer";
-
     } catch (err) {
       console.error(err);
       alert("Gagal terhubung ke server.");
@@ -429,7 +474,7 @@ export default function AuthPages() {
                     <button
                       data-role="auth-submit"
                       onClick={handleLoginSubmit}
-                      disabled={isLoading}
+                      disabled={isLoading || !canLogin}
                       className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 rounded-lg transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed"
                     >
                       {isLoading ? (
@@ -657,7 +702,7 @@ export default function AuthPages() {
                     <button
                       data-role="auth-submit"
                       onClick={handleRegisterSubmit}
-                      disabled={isLoading}
+                      disabled={isLoading || !canRegister}
                       className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 rounded-lg transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed"
                     >
                       {isLoading ? (

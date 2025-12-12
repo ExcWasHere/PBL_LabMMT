@@ -4,7 +4,7 @@ import GalleryPage from "~/components/Dashboard/student/gallery.js";
 
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: "MMT | Dashboard-Viewer" },
+    { title: "MMT | Dashboard-Student" },
     { name: "Masuk", content: "Welcome to Lab MMT JTI!" },
   ];
 }

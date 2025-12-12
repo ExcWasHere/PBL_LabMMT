@@ -84,11 +84,11 @@ export default function GalleryPage() {
   const getPublisherName = () => {
     try {
       const raw = localStorage.getItem("user");
-      if (!raw) return "KetuaLab";
+      if (!raw) return "LabHead";
       const parsed = JSON.parse(raw);
-      return parsed.name ?? parsed.fullname ?? parsed.username ?? "KetuaLab";
+      return parsed.name ?? parsed.fullname ?? parsed.username ?? "LabHead";
     } catch {
-      return "KetuaLab";
+      return "LabHead";
     }
   };
 

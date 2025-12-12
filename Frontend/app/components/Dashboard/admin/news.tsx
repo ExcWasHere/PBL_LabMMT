@@ -169,7 +169,6 @@ export default function NewsPage() {
 
       <div className={`w-full p-8 transition-all ${isSidebarOpen ? "ml-64" : "ml-0"}`}>
 
-        {/* Header */}
         <div className="flex items-center mb-6">
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -180,7 +179,6 @@ export default function NewsPage() {
           <h1 className="text-3xl font-bold text-orange-600">News</h1>
         </div>
 
-        {/* Stats */}
         <div className="grid grid-cols-4 gap-4 mb-6">
           {stats.map((s) => (
             <div key={s.label} className={`border-1 rounded-lg p-4 ${s.color}`}>
@@ -190,7 +188,6 @@ export default function NewsPage() {
           ))}
         </div>
 
-        {/* Filters — FIX 1 BARIS */}
         <div className="flex items-center flex-nowrap gap-2 mb-6 text-sm">
 
           <div className="flex items-center flex-1 border border-orange-500 rounded-lg px-3 py-2 bg-white">
@@ -220,7 +217,6 @@ export default function NewsPage() {
           </button>
         </div>
 
-        {/* Table */}
         <div className="border border-orange-500 rounded-lg overflow-hidden">
           <table className="w-full text-sm">
             <thead className="bg-orange-50">
@@ -282,7 +278,6 @@ export default function NewsPage() {
           </table>
         </div>
 
-        {/* Pending */}
         <div className="mt-8">
           <button
             onClick={() => setShowPending(!showPending)}

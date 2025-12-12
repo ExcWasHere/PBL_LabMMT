@@ -88,7 +88,6 @@ export default function GalleryPage() {
         }).format(date);
     };
 
-    // --- Filtering Logic ---
     const filteredData = useMemo(() => {
         let data = [...galleryList];
         const getYearFromString = (dateString: string) => {
@@ -208,13 +207,10 @@ export default function GalleryPage() {
         <div className="flex">
             {isSidebarOpen && <Sidebar />}
 
-            {/* Page Content - Mengontrol margin kiri berdasarkan status sidebar */}
             <div
                 className={`w-full p-8 transition-all duration-300 ease-in-out ${isSidebarOpen ? 'ml-64' : 'ml-0'}`}
             >
-                {/* Header dengan Tombol Toggle */}
                 <div className="flex items-center mb-6">
-                    {/* TOMBOL TOGGLE */}
                     <button
                         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
                         className="p-2 mr-4 text-gray-700 hover:text-orange-600 transition"
@@ -224,7 +220,6 @@ export default function GalleryPage() {
                     <h1 className="text-3xl font-bold text-orange-600">Gallery</h1>
                 </div>
 
-                {/* --- Stats Section --- */}
                 <div className="grid grid-cols-4 gap-4 mb-6">
                     {stats.map((s) => (
                         <div
@@ -239,7 +234,6 @@ export default function GalleryPage() {
                     ))}
                 </div>
 
-                {/* --- Filters Section --- (Tetap) */}
                 <div className="flex items-center gap-3 mb-6">
                     <div className="flex items-center flex-1 border border-orange-500 rounded-lg bg-white px-4 py-2">
                         <svg className="w-5 h-5 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -265,7 +259,6 @@ export default function GalleryPage() {
                     </button>
                 </div>
 
-                {/* --- Table Section --- */}
                 <div className="border border-orange-500 rounded-lg overflow-hidden">
                     <table className="w-full text-sm">
                         <thead className="bg-orange-50">

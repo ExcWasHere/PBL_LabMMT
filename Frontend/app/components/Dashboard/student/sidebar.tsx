@@ -10,6 +10,7 @@ import {
   Home,
   LogOut,
   User,
+  X, // Tambahkan import X
 } from "lucide-react";
 
 interface MenuItem {
@@ -19,7 +20,13 @@ interface MenuItem {
   route?: string;
 }
 
-const Sidebar: FC = () => {
+// Tambahkan Interface Props
+interface SidebarProps {
+  onClose?: () => void;
+}
+
+// Update definisi component menerima props
+const Sidebar: FC<SidebarProps> = ({ onClose }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [active, setActive] = useState<string>("Dashboard");
@@ -157,18 +164,35 @@ const Sidebar: FC = () => {
     if (menuItem.route) {
       navigate(menuItem.route);
     }
+    // Update logic navigasi untuk menutup sidebar di mobile
+    if (window.innerWidth < 1024 && onClose) {
+      onClose();
+    }
   };
 
   return (
-    <div className="w-64 h-screen bg-[#f6ece4] border-r border-gray-300 p-5 flex flex-col justify-between fixed">
+    // Update className agar support responsive mobile (z-index, shadow, overflow)
+    <div className="w-64 h-screen bg-[#f6ece4] border-r border-gray-300 p-5 flex flex-col justify-between fixed left-0 top-0 z-50 overflow-y-auto shadow-lg lg:shadow-none">
       {/* profile section */}
       <div>
+        {/* Tambahkan Tombol Close (X) hanya untuk mobile */}
+        <div className="lg:hidden flex justify-end mb-2">
+          <button
+            onClick={onClose}
+            className="p-2 text-gray-600 hover:text-red-500"
+          >
+            <X size={24} />
+          </button>
+        </div>
+
         {/* Bio Cloud */}
         {profile?.bio && (
           <div className="mb-4 relative">
             <div className="bg-white rounded-2xl p-3 shadow-md border-2 border-orange-200 relative">
               <div className="absolute -top-5 -left-3 text-3xl">☁️</div>
-              <div className="absolute -top-5 -right-4 text-3xl rotate-12">☁️</div>
+              <div className="absolute -top-5 -right-4 text-3xl rotate-12">
+                ☁️
+              </div>
               <p className="text-xs text-gray-700 italic text-center leading-relaxed">
                 "{profile.bio}"
               </p>
@@ -221,7 +245,7 @@ const Sidebar: FC = () => {
       </div>
 
       {/* Bottom Menu */}
-      <div className="space-y-1">
+      <div className="space-y-1 mt-6">
         <hr className="my-3 border-gray-300" />
         {menuBottom.map((m) => (
           <button

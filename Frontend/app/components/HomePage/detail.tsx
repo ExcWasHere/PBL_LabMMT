@@ -227,8 +227,7 @@ const MemberDetailPage = () => {
                           <span className="text-gray-600 font-medium">Program Studi:</span>
                           <span className="text-gray-900">{member.prodi}</span>
                         </div>
-                      )}
-                      {member.jabatan_akademik && (
+                      )}                   {member.jabatan_akademik && (
                         <div className="flex flex-col gap-1">
                           <span className="text-gray-600 font-medium">Jabatan:</span>
                           <span className="text-gray-900">{member.jabatan_akademik}</span>

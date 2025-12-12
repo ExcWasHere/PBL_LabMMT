@@ -58,9 +58,9 @@ export function HomeMember() {
 const getMemberPath = (m: { id?: string; slug?: string } | undefined) => {
   if (!m) return "/members";
   // prefer slug (kamu memilih pakai slug route)
-  if (m.slug) return /members/slug/${encodeURIComponent(String(m.slug))};
+  if (m.slug) return `/members/slug/${encodeURIComponent(String(m.slug))}`;
   // fallback: kalau tidak ada slug, gunakan id (jika nanti kamu punya id)
-  return /members/${encodeURIComponent(String(m.id ?? ""))};
+  return `/members/${encodeURIComponent(String(m.id ?? ""))}`;
 };
 
   return (
@@ -103,7 +103,7 @@ const getMemberPath = (m: { id?: string; slug?: string } | undefined) => {
         {/* Slider */}
         <div className="overflow-hidden w-full">
           <motion.div
-            animate={{ x: -${safeIndex * shiftPercent}% }}
+            animate={{ x: `-${safeIndex * shiftPercent}%` }}
             transition={{ duration: 0.5, ease: "easeInOut" }}
             className="flex gap-4 sm:gap-5"
           >
@@ -129,7 +129,7 @@ const getMemberPath = (m: { id?: string; slug?: string } | undefined) => {
               className={`h-2.5 rounded-full transition-all ${
                 safeIndex === dotIndex ? "bg-orange-500 w-6" : "bg-gray-300 w-2.5"
               }`}
-              aria-label={Slide ${dotIndex + 1}}
+              aria-label={`Slide ${dotIndex + 1}`}
             />
           ))}
         </div>

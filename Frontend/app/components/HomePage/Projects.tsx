@@ -1,35 +1,15 @@
 import Card from "../../common/card";
 import { motion } from "framer-motion";
+import { projects } from "~/components/Project/dataProjects";
+import { Link } from "react-router-dom";
 
 export function HomeProject() {
-  const projects = [
-    {
-      image: "/proyek/test2.jpg",
-      date: "11 Nov 2025",
-      title: "Project A",
-      desc: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-      tags: ["Tailwind"],
-      info: "Game",
-    },
-    {
-      image: "/proyek/test2.jpg",
-      date: "11 Nov 2025",
-      title: "Project B",
-      desc: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-      tags: ["Tailwind", "React"],
-      info: "UI / UX",
-    },
-    {
-      image: "/proyek/test2.jpg",
-      date: "11 Nov 2025",
-      title: "Project C",
-      desc: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-      tags: ["Tailwind", "Javascript"],
-      info: "AR / VR",
-    },
-  ];
+
+
+  const homeProjects = projects.slice(0, 3);
 
   return (
+
     <section className="bg-white text-left py-16 sm:py-20 lg:py-24 px-4 sm:px-6 lg:px-20">
       <div className="max-w-7xl mx-auto">
         <motion.div
@@ -51,35 +31,49 @@ export function HomeProject() {
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 mb-10 sm:mb-12">
-          {projects.map((project, index) => (
+        <div className="grid md:grid-cols-3 gap-6">
+          {homeProjects.map((e, i) => (
             <motion.div
-              key={index}
-              initial={{ scale: 0.96, opacity: 0 }}
-              whileInView={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.4, delay: index * 0.1 }}
+              key={i}
+              initial={{ opacity: 0, scale: 0.96 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.35, delay: i * 0.08 }}
               viewport={{ once: true }}
             >
-              <Card {...project} />
+              {e.title === "Project A" ? (
+                <Link to="/project-detail" className="block h-full">
+                  <Card {...e} />
+                </Link>
+              ) : (
+                <div className="h-full">
+                  <Card {...e} />
+                </div>
+              )}
             </motion.div>
           ))}
         </div>
 
-        <motion.div
-          initial={{ scale: 0.9, opacity: 0 }}
-          whileInView={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.25 }}
-          viewport={{ once: true }}
-        >
-          <div className="text-center">
+
+
+        {/* BUTTON DI LUAR GRID */}
+        <div className="flex justify-center mt-8">
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            whileInView={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.25 }}
+            viewport={{ once: true }}
+          >
             <a href="/project">
               <button className="bg-orange-500 text-white px-8 py-3 rounded-lg hover:bg-orange-600 duration-300 hover:scale-105">
                 See All
               </button>
             </a>
-          </div>
-        </motion.div>
+          </motion.div>
+        </div>
       </div>
     </section>
+
+
+
   );
 }

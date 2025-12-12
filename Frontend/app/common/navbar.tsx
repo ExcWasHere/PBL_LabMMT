@@ -32,7 +32,7 @@ const Navbar: React.FC<HeaderProps> = () => {
 
     const path = currentPage.pathname;
     if (path === "/") {
-      setActiveItem("Beranda");
+      setActiveItem("Home");
     } else {
       const matchedItem = navItems.find(
         (item) => path === `/${item.toLowerCase().replace(/\s+/g, "-")}`
@@ -45,7 +45,7 @@ const Navbar: React.FC<HeaderProps> = () => {
     };
   }, [currentPage.pathname]);
 
-  const navItems = ["Beranda", "Project", "News", "Gallery", "Masuk"];
+  const navItems = ["Home", "Project", "News", "Gallery", "Sign in"];
 
   const toggleDarkMode = () => {
     const newMode = !isDarkMode;

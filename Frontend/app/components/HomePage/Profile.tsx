@@ -11,7 +11,7 @@ export default function ProfileSingkat() {
           viewport={{ once: true }}
           className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 tracking-tight"
         >
-          <h2>Profile Singkat</h2>
+          <h2>Profile</h2>
         </motion.div>
 
         <div className="mt-3 sm:mt-4 mb-8 sm:mb-10 overflow-hidden">
@@ -25,7 +25,7 @@ export default function ProfileSingkat() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mb-8 md:mb-12">
-          {/* SEJARAH */}
+          {/* HISTORY */}
           <motion.div
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -34,17 +34,17 @@ export default function ProfileSingkat() {
             className="bg-orange-50 rounded-lg p-6 md:p-8"
           >
             <h3 className="text-xs md:text-sm font-semibold text-gray-900 uppercase tracking-widest mb-4 md:mb-6">
-              Sejarah
+              History
             </h3>
             <p className="text-gray-700 leading-relaxed text-sm md:text-base">
-              Laboratorium Multimedia dan Perangkat Bergerak merupakan salah satu
-              laboratorium unggulan di Jurusan Teknologi Informasi yang berfokus
-              pada riset, pengembangan, serta implementasi teknologi mobile computing
-              dan multimedia interaktif.
+              The Multimedia & Mobile Tech Laboratory is one of the
+              leading laboratories in the Department of Information Technology, focusing
+              on research, development, and implementation of mobile computing
+              and interactive multimedia technologies.
             </p>
           </motion.div>
 
-          {/* VISI */}
+          {/* VISION */}
           <motion.div
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -53,16 +53,16 @@ export default function ProfileSingkat() {
             className="bg-orange-50 rounded-lg p-6 md:p-8"
           >
             <h3 className="text-xs md:text-sm font-semibold text-gray-900 uppercase tracking-widest mb-4 md:mb-6">
-              Visi
+              Vision
             </h3>
             <p className="text-gray-700 leading-relaxed text-sm md:text-base">
-              Memposisikan Lab Multimedia & Game sebagai pusat keunggulan yang
-              responsif terhadap kebutuhan industri dan pendidikan tinggi.
+              Positioning the Multimedia & Mobile Tech Laboratory as a center of excellence that is
+              responsive to the needs of industry and higher education.
             </p>
           </motion.div>
         </div>
 
-        {/* MISI */}
+        {/* MISION */}
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -71,33 +71,31 @@ export default function ProfileSingkat() {
           className="bg-orange-50 rounded-lg p-6 md:p-8"
         >
           <h3 className="text-xs md:text-sm font-semibold text-gray-900 uppercase tracking-widest mb-4 md:mb-6">
-            Misi
+            Mision
           </h3>
           <div className="space-y-3 md:space-y-4 text-gray-700 leading-relaxed text-sm md:text-base">
             <p>
-              Menyelenggarakan pendidikan praktikum dan penelitian yang berkualitas
-              di bidang aplikasi teknologi Immersive, mobile, multimedia, serta
-              teknologi interaktif.
+              Providing quality practical education and research
+              in the fields of immersive, mobile, multimedia, and interactive technology applications.
             </p>
             <p>
-              Mengembangkan riset dan inovasi berbasis mobile computing, multimedia,
-              VR/AR, dan sensor interaktif untuk mendukung kemajuan ilmu
-              pengetahuan dan teknologi.
+              Developing research and innovation based on mobile computing, multimedia,
+              VR/AR, and interactive sensors to support the advancement of science
+              and technology.
             </p>
             <p>
-              Menyediakan fasilitas laboratorium yang modern dan relevan dengan
-              perkembangan industri agar mahasiswa dapat menguasai keterampilan
-              yang aplikatif.
+              Providing modern laboratory facilities that are relevant to
+              industrial developments so that students can master
+              applicable skills.
             </p>
             <p>
-              Mendorong kolaborasi antara mahasiswa, dosen, industri, dan
-              masyarakat dalam pengembangan solusi berbasis teknologi multimedia
-              dan perangkat bergerak.
+              Encouraging collaboration between students, lecturers, industry, and
+              the community in developing solutions based on multimedia technology
+              and mobile devices.
             </p>
             <p>
-              Menghasilkan karya inovatif berupa aplikasi, produk, maupun publikasi
-              ilmiah yang memberi manfaat nyata bagi masyarakat dan mendukung
-              kemajuan bangsa.
+              Produce innovative works in the form of applications, products, and scientific publications
+              that provide tangible benefits to society and support national progress.
             </p>
           </div>
         </motion.div>

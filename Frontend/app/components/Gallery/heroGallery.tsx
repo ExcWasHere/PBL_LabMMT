@@ -37,7 +37,7 @@ export default function Header() {
               isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
             }`}
           >
-            Koleksi foto dan video kegiatan di Lab MMT JTI.
+            A collection of photos and videos of activities at the JTI MMT Lab.
           </p>
         </div>
       </div>

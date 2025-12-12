@@ -1,13 +1,13 @@
 import { motion } from "framer-motion";
 import { useState, useEffect, useMemo } from "react";
-import { Link } from "react-router-dom"
+import { Link } from "react-router-dom";
 import MemberCard from "../../common/memberCard";
-import type { PanInfo } from "framer-motion";
 
 export function HomeMember() {
   const leader = {
-    id : 1,
+    id: "1",
     image: "/member/person1.jpg",
+    slug: "dimas-wahyu-wibowo-st-mt",
     name: "Dimas Wahyu Wibowo, ST., MT.",
     role: "Kepala Lab",
     tags: ["DSS", "ARVAR"],
@@ -19,30 +19,26 @@ export function HomeMember() {
   };
 
   const teamMembers = [
-    { id : 2,image: "/member/person1.jpg", name: "Anugrafi Nur Rahmanto, S.Sn., M.Ds", role: "Peneliti", tags: ["DSS", "ARVR"], socials: { linkedin: "https://www.linkedin.com/in", email: "anugrafi@gmail.com", website: "https://website.com" } },
-    { id : 3,image: "/member/person1.jpg", name: "Eka Larasati Amalia, S.ST., MT.", role: "Peneliti", tags: ["DSS", "ARVR"], socials: { linkedin: "https://www.linkedin.com/in", email: "eka@gmail.com", website: "https://website.com" } },
-    { id : 4,image: "/member/person1.jpg", name: "Budi Santoso, S.Kom., M.IT", role: "Peneliti", tags: ["AI", "ML"], socials: { linkedin: "https://www.linkedin.com/in", email: "budi@gmail.com", website: "https://website.com" } },
-    { id : 5,image: "/member/person1.jpg", name: "Siti Nurhaliza, S.Kom.", role: "Junior Researcher", tags: ["Web", "Mobile"], socials: { linkedin: "https://www.linkedin.com/in", email: "siti@gmail.com", website: "https://website.com" } },
-    { id : 6,image: "/member/person1.jpg", name: "Ahmad Ridho, S.ST.", role: "Junior Researcher", tags: ["AR", "VR"], socials: { linkedin: "https://www.linkedin.com/in", email: "ahmad@gmail.com", website: "https://website.com" } },
-    { id : 7,image: "/member/person1.jpg", name: "Rina Wulandari, S.Ds., M.Des", role: "Designer", tags: ["UI/UX", "Graphic"], socials: { linkedin: "https://www.linkedin.com/in", email: "rina@gmail.com", website: "https://website.com" } },
-    { id : 8,image: "/member/person1.jpg", name: "Dewi Rahayu, S.Kom., M.Tech", role: "Data Analyst", tags: ["Analytics", "Data Science"], socials: { linkedin: "https://www.linkedin.com/in", email: "dewi@gmail.com", website: "https://website.com" } },
+    { id: "2", image: "/member/person1.jpg", name: "Anugrafi Nur Rahmanto, S.Sn., M.Ds", role: "Peneliti", tags: ["DSS", "ARVR"], socials: { linkedin: "https://www.linkedin.com/in", email: "anugrafi@gmail.com", website: "https://website.com" } },
+    { id: "3", image: "/member/person1.jpg", name: "Eka Larasati Amalia, S.ST., MT.", role: "Peneliti", tags: ["DSS", "ARVR"], socials: { linkedin: "https://www.linkedin.com/in", email: "eka@gmail.com", website: "https://website.com" } },
+    { id: "4", image: "/member/person1.jpg", name: "Budi Santoso, S.Kom., M.IT", role: "Peneliti", tags: ["AI", "ML"], socials: { linkedin: "https://www.linkedin.com/in", email: "budi@gmail.com", website: "https://website.com" } },
+    { id: "5", image: "/member/person1.jpg", name: "Siti Nurhaliza, S.Kom.", role: "Junior Researcher", tags: ["Web", "Mobile"], socials: { linkedin: "https://www.linkedin.com/in", email: "siti@gmail.com", website: "https://website.com" } },
+    { id: "6", image: "/member/person1.jpg", name: "Ahmad Ridho, S.ST.", role: "Junior Researcher", tags: ["AR", "VR"], socials: { linkedin: "https://www.linkedin.com/in", email: "ahmad@gmail.com", website: "https://website.com" } },
+    { id: "7", image: "/member/person1.jpg", name: "Rina Wulandari, S.Ds., M.Des", role: "Designer", tags: ["UI/UX", "Graphic"], socials: { linkedin: "https://www.linkedin.com/in", email: "rina@gmail.com", website: "https://website.com" } },
+    { id: "8", image: "/member/person1.jpg", name: "Dewi Rahayu, S.Kom., M.Tech", role: "Data Analyst", tags: ["Analytics", "Data Science"], socials: { linkedin: "https://www.linkedin.com/in", email: "dewi@gmail.com", website: "https://website.com" } },
   ];
 
+  // Responsive slider state
   const [index, setIndex] = useState(0);
   const [itemsPerView, setItemsPerView] = useState(1);
-
-  const swipeConfidenceThreshold = 10000;
-  const swipePower = (offset: number, velocity: number): number => {
-    return Math.abs(offset) * velocity;
-  };
 
   useEffect(() => {
     const updateItemsPerView = () => {
       if (typeof window === "undefined") return;
       const w = window.innerWidth;
-      if (w < 768) setItemsPerView(2);
-      else if (w < 1280) setItemsPerView(3);
-      else setItemsPerView(4);
+      if (w < 768) setItemsPerView(1);       // mobile
+      else if (w < 1024) setItemsPerView(2); // tablet
+      else setItemsPerView(3);               // desktop
     };
 
     updateItemsPerView();
@@ -58,27 +54,17 @@ export function HomeMember() {
   const safeIndex = Math.min(index, maxIndex);
   const shiftPercent = 100 / itemsPerView;
 
-  const paginate = (newDirection: number) => {
-    setIndex(prev => Math.min(maxIndex, Math.max(0, prev + newDirection)));
-  };
-
-  type DragEvent = MouseEvent | TouchEvent | PointerEvent;
-
-  const onDragEnd = (
-    event: DragEvent | null,
-    info: PanInfo
-  ) => {
-    const swipe = swipePower(info.offset.x, info.velocity.x);
-
-    if (swipe < -swipeConfidenceThreshold) {
-      paginate(1);
-    } else if (swipe > swipeConfidenceThreshold) {
-      paginate(-1);
-    }
-  };
+  // ganti fungsi getMemberPath di HomeMember dengan ini:
+const getMemberPath = (m: { id?: string; slug?: string } | undefined) => {
+  if (!m) return "/members";
+  // prefer slug (kamu memilih pakai slug route)
+  if (m.slug) return /members/slug/${encodeURIComponent(String(m.slug))};
+  // fallback: kalau tidak ada slug, gunakan id (jika nanti kamu punya id)
+  return /members/${encodeURIComponent(String(m.id ?? ""))};
+};
 
   return (
-    <section className="bg-white text-left py-16 sm:py-20 lg:py-24 px-4 sm:px-6 lg:py-20 scroll-mt-20">
+    <section className="bg-white text-left py-16 sm:py-20 lg:py-24 px-4 sm:px-6 lg:px-20 scroll-mt-20">
       <div className="max-w-7xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -108,31 +94,25 @@ export function HomeMember() {
             viewport={{ once: true }}
             className="w-full max-w-xs sm:max-w-sm"
           >
-            <Link to={`/members/${leader.id}`} className="block">
+            <Link to={getMemberPath(leader)} className="block">
               <MemberCard {...leader} isLeader />
             </Link>
           </motion.div>
         </div>
-        
 
         {/* Slider */}
         <div className="overflow-hidden w-full">
           <motion.div
-            drag="x"
-            dragConstraints={{ left: -1, right: 1 }}
-            onDragEnd={onDragEnd}
-            style={{ cursor: "grab" }}
-            whileTap={{ cursor: "grabbing" }}
-            animate={{ x: `-${safeIndex * shiftPercent}%` }}
+            animate={{ x: -${safeIndex * shiftPercent}% }}
             transition={{ duration: 0.5, ease: "easeInOut" }}
-            className="flex gap-4 sm:gap-5 items-stretch"
+            className="flex gap-4 sm:gap-5"
           >
-            {teamMembers.map((member, i) => (
+            {teamMembers.map((member) => (
               <div
-                key={i}
-                className="basis-1/2 md:basis-1/3 xl:basis-1/4 shrink-0 h-full"
+                key={member.id}
+                className="basis-full sm:basis-1/2 lg:basis-1/3 shrink-0"
               >
-                <Link to={`/members/${member.id}`} className="block">
+                <Link to={getMemberPath(member)} className="block">
                   <MemberCard {...member} />
                 </Link>
               </div>
@@ -147,11 +127,9 @@ export function HomeMember() {
               key={dotIndex}
               onClick={() => setIndex(dotIndex)}
               className={`h-2.5 rounded-full transition-all ${
-                safeIndex === dotIndex
-                  ? "bg-orange-500 w-6"
-                  : "bg-gray-300 w-2.5"
+                safeIndex === dotIndex ? "bg-orange-500 w-6" : "bg-gray-300 w-2.5"
               }`}
-              aria-label={`Slide ${dotIndex + 1}`}
+              aria-label={Slide ${dotIndex + 1}}
             />
           ))}
         </div>
@@ -159,4 +137,5 @@ export function HomeMember() {
     </section>
   );
 }
+
 export default HomeMember;

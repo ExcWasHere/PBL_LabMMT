@@ -39,11 +39,11 @@ export default function IndexHero() {
 
           <h1 className="text-white text-4xl md:text-7xl font-bold mb-6 leading-tight">
             Featured 
-            <span className="text-orange-500">News</span>
+            <span className="text-orange-500"> News</span>
           </h1>
 
           <p className="text-white text-lg md:text-xl max-w-2xl mx-auto">
-           Jendela informasi yang menampilkan hasil kolaborasi mahasiswa dan dosen dalam menciptakan inovasi multimedia yang berdampak pada dunia digital
+           Information on collaboration between students and lecturers in multimedia and digital innovation.
           </p>
         </div>
       </div>

@@ -7,7 +7,7 @@ export function Register() {
       <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-8 md:gap-10 items-center">
         <div>
           <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold text-gray-800 mb-6 sm:mb-8">
-            Tertarik Bergabung <br /> Dengan Kami?
+            Interested in  Being <br/> Part of Us?
           </h2>
 
           <motion.div

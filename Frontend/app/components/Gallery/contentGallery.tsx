@@ -183,7 +183,7 @@ export function ContentGallery() {
             <div className="flex justify-center mt-10">
               <button
                 onClick={loadMore}
-                className="bg-orange-500 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-lg shadow-md transition duration-200"
+                className="px-5 py-2 bg-orange-500 text-white rounded-lg hover:bg-gray-800"
               >
                 Load More
               </button>

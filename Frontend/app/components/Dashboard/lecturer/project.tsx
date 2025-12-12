@@ -253,7 +253,6 @@ export default function ProjectPage() {
           prev.map((p) => (p.id === mapped.id ? mapped : p))
         );
       } else {
-        // CREATE → status harus "Review" + stars 0
         const res = await fetch(`${API_BASE_URL}/project`, {
           method: "POST",
           headers,

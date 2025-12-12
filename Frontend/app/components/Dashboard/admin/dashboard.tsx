@@ -37,7 +37,6 @@ export default function Dashboard() {
       <div 
         className={`w-full p-8 transition-all duration-300 ease-in-out bg-[#fef7f2] min-h-screen ${isSidebarOpen ? 'ml-64' : 'ml-0'}`}
       >
-        {/* Header */}
         <div className="flex items-center mb-6">
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -48,7 +47,6 @@ export default function Dashboard() {
           <h1 className="text-3xl font-bold text-orange-600">Dashboard</h1>
         </div>
 
-        {/* Stats Cards */}
         <div className="grid grid-cols-5 gap-4 mb-6">
           {stats.map((stat) => (
             <div
@@ -64,9 +62,7 @@ export default function Dashboard() {
           ))}
         </div>
 
-        {/* Traffic & Recent Activity */}
         <div className="grid grid-cols-3 gap-6">
-          {/* Total Traffic */}
           <div className="col-span-2 bg-white border border-orange-400 rounded-lg p-6">
             <h3 className="text-xl font-semibold text-orange-600 mb-4">Total Traffic</h3>
             <ResponsiveContainer width="100%" height={300}>
@@ -103,7 +99,6 @@ export default function Dashboard() {
             </p>
           </div>
 
-          {/* Recent Activity */}
           <div className="bg-white border border-orange-400 rounded-lg p-6">
             <h3 className="text-xl font-semibold text-orange-600 mb-4">Recent Activity</h3>
             <div className="space-y-4">

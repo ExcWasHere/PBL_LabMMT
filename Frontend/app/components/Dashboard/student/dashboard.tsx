@@ -1,4 +1,4 @@
-import Sidebar from "~/components/Dashboard/lecturer/sidebar";
+import Sidebar from "~/components/Dashboard/student/sidebar";
 import { useState, useEffect } from "react";
 import {
   Menu,
@@ -34,6 +34,10 @@ type RecentActivity = {
   activity: string;
   at: string;
   type: string;
+  // optional photo fields that backend may provide
+  photo?: string;
+  avatar?: string;
+  userPhoto?: string;
 };
 
 function formatTimeAgo(dateStr: string): string {
@@ -75,6 +79,78 @@ function getActivityColor(type: string): string {
   }
 }
 
+// === MATCH Sidebar's getPhotoUrl EXACTLY ===
+function getPhotoUrl(raw?: string) {
+  if (!raw) return "../member/person1.jpg";
+  if (raw.startsWith("/uploads")) {
+    return `http://localhost:3000${raw}`;
+  }
+  return raw;
+}
+// === END getPhotoUrl ===
+
+function toISODateLocal(date: Date) {
+  const tzOffset = date.getTimezoneOffset() * 60000;
+  const localISO = new Date(date.getTime() - tzOffset).toISOString().slice(0, 10);
+  return localISO;
+}
+
+function getWeekRange(date: Date) {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diffToMonday = (day === 0 ? -6 : 1 - day);
+  const monday = new Date(d);
+  monday.setDate(d.getDate() + diffToMonday);
+  monday.setHours(0, 0, 0, 0);
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  sunday.setHours(23, 59, 59, 999);
+  return { monday, sunday };
+}
+
+function weekDatesArrayFor(date: Date) {
+  const { monday } = getWeekRange(date);
+  const arr: string[] = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    arr.push(toISODateLocal(d));
+  }
+  return arr;
+}
+
+function keepCurrentWeekPoints(points: TrafficPoint[], refDate = new Date()): TrafficPoint[] {
+  const weekDates = weekDatesArrayFor(refDate);
+  if (!points || points.length === 0) {
+    return weekDates.map((d) => {
+      const dt = new Date(d);
+      return { date: d, dayLabel: dt.toLocaleDateString("id-ID", { weekday: "short" }).slice(0, 3), views: 0 };
+    });
+  }
+
+  const normalized = points.map((p) => {
+    let d = p.date;
+    try {
+      const dt = new Date(p.date);
+      if (!isNaN(dt.getTime())) d = toISODateLocal(dt);
+    } catch {}
+    return { ...p, date: d };
+  });
+
+  const map = new Map<string, number>();
+  normalized.forEach((p) => {
+    if (!weekDates.includes(p.date)) return;
+    const prev = map.get(p.date) ?? 0;
+    map.set(p.date, prev + Number(p.views ?? 0));
+  });
+
+  return weekDates.map((d) => {
+    const v = map.get(d) ?? 0;
+    const dt = new Date(d);
+    return { date: d, dayLabel: dt.toLocaleDateString("id-ID", { weekday: "short" }).slice(0, 3), views: v };
+  });
+}
+
 export default function Dashboard() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [trafficData, setTrafficData] = useState<TrafficPoint[]>([]);
@@ -92,7 +168,9 @@ export default function Dashboard() {
   });
   const [isLoadingStats, setIsLoadingStats] = useState(true);
 
-  const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([]);
+  const [recentActivities, setRecentActivities] = useState<RecentActivity[]>(
+    []
+  );
   const [isLoadingActivity, setIsLoadingActivity] = useState(true);
 
   const stats = [
@@ -133,18 +211,23 @@ export default function Dashboard() {
 
     const points = rows
       .map((r: any) => {
-        const date = String(r.date ?? r.day ?? "");
+        const rawDate = String(r.date ?? r.day ?? r.createdAt ?? "");
+        let dateStr = rawDate;
+        try {
+          const d = new Date(rawDate);
+          if (!isNaN(d.getTime())) dateStr = toISODateLocal(d);
+        } catch {}
         let label: string | undefined = undefined;
         try {
-          const d = new Date(date);
+          const d = new Date(dateStr);
           if (!isNaN(d.getTime())) {
             label = d.toLocaleDateString("id-ID", { weekday: "short" });
           }
         } catch {}
         return {
-          date,
+          date: dateStr,
           dayLabel: label || String(r.dayLabel ?? r.label ?? "").slice(0, 3),
-          views: Number(r.views ?? r.count ?? 0),
+          views: Number(r.views ?? r.count ?? r.value ?? 0),
         } as TrafficPoint;
       })
       .filter((p: TrafficPoint) => p.date)
@@ -155,61 +238,81 @@ export default function Dashboard() {
     return points;
   }
 
+  // --- STATS fetch (robust/fallback) ---
   useEffect(() => {
+    const base = "http://localhost:3000";
+    let isCancelled = false;
+
     const fetchStats = async () => {
       setIsLoadingStats(true);
       try {
-        const res = await fetch("http://localhost:3000/stats");
-
+        const res = await fetch(`${base}/stats`, { cache: "no-store" });
         if (!res.ok) {
           console.error("Failed to fetch stats");
           return;
         }
         const data = await res.json();
+
+        if (isCancelled) return;
+
         setStatsData({
-          totalProject: data.totalProject || 0,
-          totalNews: data.totalNews || 0,
-          totalVideo: data.totalVideo || 0,
-          totalPhoto: data.totalPhoto || 0,
-          totalMembers: data.totalMembers || 0,
+          totalProject:
+            Number(data.totalProject ?? data.projects ?? data.projectCount ?? 0) ||
+            0,
+          totalNews:
+            Number(data.totalNews ?? data.news ?? data.newsCount ?? 0) || 0,
+          totalVideo:
+            Number(data.totalVideo ?? data.videos ?? data.videoCount ?? 0) || 0,
+          totalPhoto:
+            Number(data.totalPhoto ?? data.photos ?? data.photoCount ?? 0) || 0,
+          totalMembers:
+            Number(data.totalMembers ?? data.members ?? data.memberCount ?? 0) ||
+            0,
         });
       } catch (err) {
         console.error("Failed to fetch stats:", err);
       } finally {
-        setIsLoadingStats(false);
+        if (!isCancelled) setIsLoadingStats(false);
       }
     };
 
     fetchStats();
     const interval = setInterval(fetchStats, 30000);
-    return () => clearInterval(interval);
+    return () => {
+      isCancelled = true;
+      clearInterval(interval);
+    };
   }, []);
 
+  // --- TRAFFIC (current week Mon..Sun) + socket updates ---
   useEffect(() => {
+    const base = "http://localhost:3000";
+    let isCancelled = false;
+
     const fetchTraffic = async () => {
       setIsLoadingTraffic(true);
-
       try {
-        const res = await fetch("http://localhost:3000/api/analytics/landing");
-
+        const res = await fetch(`${base}/api/analytics/landing`, { cache: "no-store" });
         if (!res.ok) {
-          setTrafficData([]);
+          setTrafficData(keepCurrentWeekPoints([], new Date()));
           return;
         }
-
         const data = await res.json();
-        const pts = rowsToPoints(data);
+        if (isCancelled) return;
+        let pts = rowsToPoints(data);
+        pts = keepCurrentWeekPoints(pts, new Date());
         setTrafficData(pts);
       } catch (err) {
         console.error("Failed to fetch traffic data:", err);
-        setTrafficData([]);
+        setTrafficData(keepCurrentWeekPoints([], new Date()));
       } finally {
-        setIsLoadingTraffic(false);
+        if (!isCancelled) setIsLoadingTraffic(false);
       }
     };
 
     fetchTraffic();
-    const socket: Socket = io("http://localhost:3000/analytics", {
+
+    const socket: Socket = io(`${base}/analytics`, {
       transports: ["websocket", "polling"],
       reconnection: true,
       reconnectionDelay: 1000,
@@ -219,54 +322,79 @@ export default function Dashboard() {
     socket.on("connect", () => {
       setConnectionStatus("connected");
     });
-
-    socket.on("connect_error", () => {
-      setConnectionStatus("disconnected");
-    });
-
-    socket.on("disconnect", () => {
-      setConnectionStatus("disconnected");
-    });
+    socket.on("connect_error", () => setConnectionStatus("disconnected"));
+    socket.on("disconnect", () => setConnectionStatus("disconnected"));
 
     socket.on("traffic_update", (data: any[]) => {
-      const incoming = rowsToPoints(data);
-      if (!incoming || incoming.length === 0) return;
+      try {
+        const incoming = rowsToPoints(data);
+        if (!incoming || incoming.length === 0) return;
 
-      setTrafficData((prev) => {
-        const map = new Map(prev.map((p) => [p.date, p]));
-        incoming.forEach((p) => map.set(p.date, p));
-        const merged = Array.from(map.values()).sort((a, b) =>
-          a.date > b.date ? 1 : a.date < b.date ? -1 : 0
-        );
-        return merged;
-      });
+        setTrafficData((prev) => {
+          const map = new Map<string, number>();
+          prev.forEach((p) => {
+            map.set(p.date, (map.get(p.date) ?? 0) + Number(p.views ?? 0));
+          });
+          incoming.forEach((p) => {
+            map.set(p.date, (map.get(p.date) ?? 0) + Number(p.views ?? 0));
+          });
 
-      setIsLoadingTraffic(false);
+          const merged: TrafficPoint[] = Array.from(map.entries()).map(([date, views]) => {
+            const dt = new Date(date);
+            const dayLabel = isNaN(dt.getTime())
+              ? date
+              : dt.toLocaleDateString("id-ID", { weekday: "short" }).slice(0, 3);
+            return { date, dayLabel, views };
+          });
+
+          const trimmed = keepCurrentWeekPoints(merged, new Date());
+          return trimmed;
+        });
+
+        setIsLoadingTraffic(false);
+      } catch (err) {
+        console.error("Error processing traffic_update:", err);
+      }
     });
 
     return () => {
+      isCancelled = true;
       socket.off("traffic_update");
       socket.off("connect");
-      socket.off("connect_error");
       socket.off("disconnect");
+      socket.off("connect_error");
       socket.disconnect();
     };
   }, []);
 
+  // --- RECENT ACTIVITIES (show profile photo if available) ---
   useEffect(() => {
+    const base = "http://localhost:3000";
+    let isCancelled = false;
+
     const fetchActivities = async () => {
       setIsLoadingActivity(true);
       try {
-        const res = await fetch(
-          "http://localhost:3000/activity/recent?limit=3"
-        );
+        // limit 3 as requested
+        const res = await fetch(`${base}/activity/recent?limit=3`, {
+          cache: "no-store",
+        });
         if (!res.ok) {
           setRecentActivities([]);
           return;
         }
         const data = await res.json();
+        if (isCancelled) return;
+
         if (Array.isArray(data)) {
-          setRecentActivities(data);
+          const normalized: RecentActivity[] = data.slice(0, 3).map((a: any) => ({
+            user: a.user ?? a.username ?? a.name ?? "Unknown",
+            activity: a.activity ?? a.message ?? a.action ?? "",
+            at: a.at ?? a.createdAt ?? a.timestamp ?? new Date().toISOString(),
+            type: a.type ?? a.category ?? "other",
+            photo: a.photo ?? a.avatar ?? a.userPhoto ?? undefined,
+          }));
+          setRecentActivities(normalized);
         } else {
           setRecentActivities([]);
         }
@@ -274,13 +402,16 @@ export default function Dashboard() {
         console.error("Failed to fetch recent activities:", err);
         setRecentActivities([]);
       } finally {
-        setIsLoadingActivity(false);
+        if (!isCancelled) setIsLoadingActivity(false);
       }
     };
 
     fetchActivities();
     const interval = setInterval(fetchActivities, 30000);
-    return () => clearInterval(interval);
+    return () => {
+      isCancelled = true;
+      clearInterval(interval);
+    };
   }, []);
 
   const totalViews = trafficData.reduce((sum, p) => sum + p.views, 0);
@@ -325,11 +456,11 @@ export default function Dashboard() {
           ))}
         </div>
 
-        <div className="grid grid-cols-3 gap-6">
+        <div className="grid grid-cols-3 gap-6 mb-6">
           <div className="col-span-2 bg-white border border-orange-400 rounded-lg p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-xl font-semibold text-orange-600">
-                Total Views
+                Total Views (Weekly)
               </h3>
             </div>
 
@@ -359,8 +490,8 @@ export default function Dashboard() {
                     {totalViews.toLocaleString("id-ID")}
                   </p>
                   <p className="text-sm text-gray-600">
-                    Total Views{" "}
-                    {trafficData.length > 0 && `(${trafficData.length} hari)`}
+                    Total Views dalam minggu berjalan (Senin–Minggu)
+                    {trafficData.length > 0 && ` (${trafficData.length} hari)`}
                   </p>
                 </div>
 
@@ -400,18 +531,6 @@ export default function Dashboard() {
                 </ResponsiveContainer>
               </>
             )}
-
-            <p className="text-sm text-gray-500 mt-4 text-center">
-              {trafficData.length > 0
-                ? `Tracking since ${new Date(
-                    trafficData[0].date
-                  ).toLocaleDateString("id-ID", {
-                    day: "numeric",
-                    month: "long",
-                    year: "numeric",
-                  })}`
-                : "Jumlah pengunjung landing page per hari"}
-            </p>
           </div>
 
           <div className="bg-white border border-orange-400 rounded-lg p-6">
@@ -439,22 +558,19 @@ export default function Dashboard() {
                   </div>
                 </>
               ) : recentActivities.length === 0 ? (
-                <p className="text-sm text-gray-500">
-                  Belum ada aktivitas terbaru.
-                </p>
+                <p className="text-sm text-gray-500">Belum ada aktivitas terbaru.</p>
               ) : (
                 recentActivities.map((activity, index) => (
                   <div
                     key={index}
                     className="flex items-start gap-3 p-3 rounded-lg hover:bg-orange-50 transition"
                   >
-                    <div
-                      className={`w-10 h-10 rounded-full ${getActivityColor(
-                        activity.type
-                      )} flex items-center justify-center text-white font-semibold text-sm shrink-0`}
-                    >
-                      {(activity.user || "?").charAt(0).toUpperCase()}
-                    </div>
+                    <img
+                      src={getPhotoUrl(activity.photo ?? activity.avatar ?? activity.userPhoto)}
+                      alt={activity.user}
+                      className="w-10 h-10 rounded-full object-cover shrink-0"
+                    />
+
                     <div className="flex-1">
                       <p className="text-sm text-gray-500">{activity.user}</p>
                       <p className="font-medium text-gray-800">

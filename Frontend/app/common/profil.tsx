@@ -16,8 +16,7 @@ type Profile = {
   phone: string;
   bio: string;
   photo: string;
-
-  // lecturer/admin
+  // lecture/admin ya ges
   nip?: string;
   nidn?: string;
   prodi?: string;
@@ -109,7 +108,6 @@ const ProfilPage = () => {
 
   useEffect(() => {
     fetchProfile();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchProfile = async () => {
@@ -126,7 +124,6 @@ const ProfilPage = () => {
       }
 
       const userData = await userRes.json();
-
       const base = {
         name: userData.name ?? userData.fullname ?? userData.username ?? "User",
         role: (userData.role ?? "mahasiswa").toLowerCase(),
@@ -135,8 +132,6 @@ const ProfilPage = () => {
         bio: userData.bio ?? userData.status ?? "",
         photo: userData.photo ?? "",
       };
-
-      // if lecturer/admin, fetch member/me
       if (base.role === "dosen" || base.role === "admin") {
         try {
           const memberRes = await fetch("http://localhost:3000/member/me", {
@@ -162,7 +157,6 @@ const ProfilPage = () => {
               photo: member.photoUrl ?? base.photo,
               bio: member.bio ?? base.bio,
             };
-
             setProfile(merged);
             setEditData({
               bio: merged.bio,
@@ -184,7 +178,6 @@ const ProfilPage = () => {
             });
             return;
           } else {
-            // no member row, use base user
             setProfile(base as any);
             setEditData((prev) => ({ ...prev, bio: base.bio, photo: base.photo }));
             return;
@@ -196,8 +189,6 @@ const ProfilPage = () => {
           return;
         }
       }
-
-      // not lecturer -> set base
       setProfile(base as any);
       setEditData((prev) => ({ ...prev, bio: base.bio, photo: base.photo }));
     } catch (e) {
@@ -310,8 +301,6 @@ const ProfilPage = () => {
         return;
       }
       const bioData = await bioResponse.json();
-
-      // if lecturer/admin -> update member/me
       if (profile.role === "dosen" || profile.role === "admin") {
         const payload = {
           nip: editData.nip || undefined,
@@ -350,7 +339,6 @@ const ProfilPage = () => {
         }
 
         const updated = await memberRes.json();
-        // merge updated
         setProfile((prev) => ({
           ...prev,
           bio: bioData.bio,
@@ -489,7 +477,7 @@ const ProfilPage = () => {
 
               {(profile.role === "dosen" || profile.role === "admin") && (
                 <div className="space-y-6 mt-6">
-                  <div className="bg-gray-50 p-4 rounded-lg border">
+                  <div className="bg-gray-50 p-4 rounded-lg border border-orange-300">
                     <h3 className="font-semibold mb-3 text-gray-700">Informasi Akademik</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-gray-800">
                       <p><strong>NIP:</strong> {profile.nip || "-"}</p>
@@ -499,53 +487,53 @@ const ProfilPage = () => {
                     </div>
                     {isEditing && (
                       <div className="mt-4 space-y-3">
-                        <input type="text" placeholder="NIP" value={editData.nip} onChange={(e) => setEditData((p) => ({ ...p, nip: e.target.value }))} className="w-full border px-3 py-2 rounded" />
-                        <input type="text" placeholder="NIDN" value={editData.nidn} onChange={(e) => setEditData((p) => ({ ...p, nidn: e.target.value }))} className="w-full border px-3 py-2 rounded" />
-                        <input type="text" placeholder="Program Studi" value={editData.prodi} onChange={(e) => setEditData((p) => ({ ...p, prodi: e.target.value }))} className="w-full border px-3 py-2 rounded" />
-                        <input type="text" placeholder="Jabatan Akademik" value={editData.jabatan_akademik} onChange={(e) => setEditData((p) => ({ ...p, jabatan_akademik: e.target.value }))} className="w-full border px-3 py-2 rounded" />
+                        <input type="text" placeholder="NIP" value={editData.nip} onChange={(e) => setEditData((p) => ({ ...p, nip: e.target.value }))} className="w-full border border-orange-300 px-3 py-2 rounded" />
+                        <input type="text" placeholder="NIDN" value={editData.nidn} onChange={(e) => setEditData((p) => ({ ...p, nidn: e.target.value }))} className="w-full border border-orange-300 px-3 py-2 rounded" />
+                        <input type="text" placeholder="Program Studi" value={editData.prodi} onChange={(e) => setEditData((p) => ({ ...p, prodi: e.target.value }))} className="w-full border border-orange-300 px-3 py-2 rounded" />
+                        <input type="text" placeholder="Jabatan Akademik" value={editData.jabatan_akademik} onChange={(e) => setEditData((p) => ({ ...p, jabatan_akademik: e.target.value }))} className="w-full border border-orange-300 px-3 py-2 rounded" />
                       </div>
                     )}
                   </div>
 
-                  <div className="bg-gray-50 p-4 rounded-lg border">
+                  <div className="bg-gray-50 p-4 rounded-lg border border-orange-300">
                     <h3 className="font-semibold mb-3 text-gray-700">Keahlian / Tags</h3>
                     <div className="flex flex-wrap gap-2 text-gray-800">
                       {(profile.tags || []).map((t, i) => <span key={i} className="px-3 py-1 bg-orange-100 rounded-full text-sm">{t}</span>)}
                     </div>
-                    {isEditing && <textarea placeholder="Pisahkan dengan koma. Contoh: AI, ML" value={editData.tags} onChange={(e) => setEditData((p) => ({ ...p, tags: e.target.value }))} className="w-full mt-3 px-3 py-2 border rounded" />}
+                    {isEditing && <textarea placeholder="Pisahkan dengan koma. Contoh: AI, ML" value={editData.tags} onChange={(e) => setEditData((p) => ({ ...p, tags: e.target.value }))} className="w-full mt-3 px-3 py-2 border border-orange-300 rounded" />}
                   </div>
 
-                  <div className="bg-gray-50 p-4 rounded-lg border">
+                  <div className="bg-gray-50 p-4 rounded-lg border border-orange-300">
                     <h3 className="font-semibold mb-3 text-gray-700">Pendidikan</h3>
                     <ul className="list-disc ml-6 text-gray-800">
                       {(profile.pendidikan || []).map((p, i) => <li key={i}>{p}</li>)}
                     </ul>
-                    {isEditing && <textarea placeholder="Pisahkan baris per baris" value={editData.pendidikan} onChange={(e) => setEditData((p) => ({ ...p, pendidikan: e.target.value }))} className="w-full mt-3 px-3 py-2 border rounded" />}
+                    {isEditing && <textarea placeholder="Pisahkan baris per baris" value={editData.pendidikan} onChange={(e) => setEditData((p) => ({ ...p, pendidikan: e.target.value }))} className="w-full mt-3 px-3 py-2 border border-orange-300 rounded" />}
                   </div>
 
-                  <div className="bg-gray-50 p-4 rounded-lg border">
+                  <div className="bg-gray-50 p-4 rounded-lg border border-orange-300">
                     <h3 className="font-semibold mb-3 text-gray-700">Sertifikasi</h3>
                     <ul className="list-disc ml-6 text-gray-800">
                       {(profile.sertifikasi || []).map((s, i) => <li key={i}>{s}</li>)}
                     </ul>
-                    {isEditing && <textarea placeholder="Pisahkan baris per baris" value={editData.sertifikasi} onChange={(e) => setEditData((p) => ({ ...p, sertifikasi: e.target.value }))} className="w-full mt-3 px-3 py-2 border rounded" />}
+                    {isEditing && <textarea placeholder="Pisahkan baris per baris" value={editData.sertifikasi} onChange={(e) => setEditData((p) => ({ ...p, sertifikasi: e.target.value }))} className="w-full mt-3 px-3 py-2 border border-orange-300 rounded" />}
                   </div>
 
                   <div className="grid md:grid-cols-2 gap-4">
-                    <div className="bg-gray-50 p-4 rounded-lg border">
+                    <div className="bg-gray-50 p-4 rounded-lg border border-orange-300">
                       <h3 className="font-semibold mb-3 text-gray-700">Semester Ganjil</h3>
                       <ul className="list-disc ml-6 text-gray-800">
                         {(profile.matkul_ganjil || []).map((m, i) => <li key={i}>{m}</li>)}
                       </ul>
-                      {isEditing && <textarea placeholder="Pisahkan baris per baris" value={editData.matkul_ganjil} onChange={(e) => setEditData((p) => ({ ...p, matkul_ganjil: e.target.value }))} className="w-full mt-3 px-3 py-2 border rounded" />}
+                      {isEditing && <textarea placeholder="Pisahkan baris per baris" value={editData.matkul_ganjil} onChange={(e) => setEditData((p) => ({ ...p, matkul_ganjil: e.target.value }))} className="w-full mt-3 px-3 py-2 border border-orange-300 rounded" />}
                     </div>
 
-                    <div className="bg-gray-50 p-4 rounded-lg border">
+                    <div className="bg-gray-50 p-4 rounded-lg border border-orange-300">
                       <h3 className="font-semibold mb-3 text-gray-700">Semester Genap</h3>
                       <ul className="list-disc ml-6 text-gray-800">
                         {(profile.matkul_genap || []).map((m, i) => <li key={i}>{m}</li>)}
                       </ul>
-                      {isEditing && <textarea placeholder="Pisahkan baris per baris" value={editData.matkul_genap} onChange={(e) => setEditData((p) => ({ ...p, matkul_genap: e.target.value }))} className="w-full mt-3 px-3 py-2 border rounded" />}
+                      {isEditing && <textarea placeholder="Pisahkan baris per baris" value={editData.matkul_genap} onChange={(e) => setEditData((p) => ({ ...p, matkul_genap: e.target.value }))} className="w-full mt-3 px-3 py-2 border border-orange-300 rounded" />}
                     </div>
                   </div>
                 </div>

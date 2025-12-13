@@ -5,6 +5,7 @@ export default [
     route("members/slug/:slug", "routes/detailteam-member.tsx"),
     route("project", "routes/project.tsx"),
     route("project-detail", "routes/project-detail.tsx"),
+    route("preview-project/:id", "routes/preview-project.tsx"),
     route("gallery", "routes/gallery.tsx"),
     route("news", "routes/news.tsx"),
     route("news-detail", "routes/news-detail.tsx"),

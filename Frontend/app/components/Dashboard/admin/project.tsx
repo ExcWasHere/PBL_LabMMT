@@ -1,6 +1,7 @@
 import Sidebar from "~/components/Dashboard/admin/sidebar";
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { Menu, Plus, Link as LinkIcon, Check, X as XIcon } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import DropdownFilter from "~/common/dropdown-filter";
 import ProjectForm, { type ProjectData } from "~/common/project-form";
 import TableAction from "~/common/table-action";
@@ -37,12 +38,13 @@ const mapApiToProject = (p: any) => ({
 });
 
 const getAuthHeaders = (json = true) => {
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem("access_token");
   const headers: HeadersInit = {};
   if (json) headers["Content-Type"] = "application/json";
   if (token) headers["Authorization"] = `Bearer ${token}`;
   return headers;
 };
+
 
 export default function ProjectPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -64,7 +66,7 @@ export default function ProjectPage() {
   const [selectedSort, setSelectedSort] = useState("Latest");
   const [selectedStatus, setSelectedStatus] = useState("All Status");
   const [showPending, setShowPending] = useState(false);
-
+  const navigate = useNavigate();
   const [publisherName, setPublisherName] = useState("Admin");
   useEffect(() => {
     try {
@@ -193,7 +195,6 @@ export default function ProjectPage() {
     searchTerm,
   ]);
 
-  // upload helper (optional — backend dependent)
   const uploadFiles = async (files: File[] = []) => {
     if (!files || files.length === 0) return [];
     try {
@@ -340,18 +341,13 @@ export default function ProjectPage() {
     }
   };
 
-  const handleViewFile = (item: any) => {
-    const raw =
-      item.thumbnailUrl ||
-      item.mediaUrls?.[0] ||
-      item.raw?.fileUrl ||
-      item.raw?.mediaUrl;
+  const handlePreviewProject = (item: any) => {
+    if (!item?.id) {
+      alert("Project ID not found");
+      return;
+    }
 
-    const url = typeof raw === "string" ? raw : raw?.url || raw?.path;
-
-    if (!url) return alert("No file to preview");
-
-    window.open(url, "_blank");
+    navigate(`/preview-project/${item.id}`);
   };
 
   const handleApprove = async (item: any) => {
@@ -638,11 +634,13 @@ export default function ProjectPage() {
                       <td className="py-3 text-center">
                         <div className="flex items-center justify-center gap-3">
                           <button
-                            onClick={() => handleViewFile(item)}
+                            onClick={() => handlePreviewProject(item)}
                             className="text-blue-500 hover:text-blue-800"
+                            title="Preview Project"
                           >
                             <LinkIcon size={18} />
                           </button>
+
                           <button
                             onClick={() => handleApprove(item)}
                             className="text-green-600 hover:text-green-800"

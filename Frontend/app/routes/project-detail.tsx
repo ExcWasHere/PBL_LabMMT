@@ -1,5 +1,5 @@
 import Navbar from "~/common/navbar";
-import { Detail1 } from "~/components/Project/project-detail/index"
+import ProjectDetail from "~/components/Project/project-detail/project-detail";
 
 export function meta() {
   return [
@@ -12,7 +12,7 @@ export default function Proyek() {
     return (
     <>
     <Navbar />
-    <Detail1 />
+    <ProjectDetail />
     </>
   );
 }

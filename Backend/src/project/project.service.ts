@@ -22,6 +22,19 @@ export class ProjectService {
     return this.projectRepo.save(project);
   }
 
+  async findBySlug(slug: string) {
+    return this.projectRepo.findOne({
+      where: { slug },
+    });
+  }
+
+  async findPublished() {
+    return this.projectRepo.find({
+      where: { status: 'Published' },
+      order: { createdAt: 'DESC' },
+    });
+  }
+
   findAll() {
     return this.projectRepo.find({
       order: { createdAt: 'DESC' },

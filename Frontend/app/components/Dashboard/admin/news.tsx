@@ -6,7 +6,9 @@ import DropdownFilter from "~/common/dropdown-filter";
 import TableAction from "~/common/table-action";
 import TableStatus from "~/common/table-status";
 
-const API_URL = "http://localhost:3000/news";
+const API_BASE = "http://localhost:3000";
+const API_URL = `${API_BASE}/news`;
+const UPLOAD_ENDPOINT = `${API_BASE}/upload`;
 
 export default function NewsPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -34,6 +36,42 @@ export default function NewsPage() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  const uploadFiles = async (files: File[]) => {
+    const uploadPromises = files.map(async (file) => {
+      const formData = new FormData();
+      formData.append("files", file); 
+
+      try {
+        const res = await fetch(UPLOAD_ENDPOINT, {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!res.ok) {
+          const errorText = await res.text();
+          throw new Error(errorText || `Upload failed: ${res.statusText}`);
+        }
+        
+        return await res.json();
+      } catch (err) {
+        console.error("Upload error details:", err);
+        throw err;
+      }
+    });
+
+    return await Promise.all(uploadPromises);
+  };
+
+  const extractUrlFromResponse = (raw: any): string | null => {
+    if (!raw) return null;
+    if (Array.isArray(raw)) {
+        if (raw.length === 0) return null;
+        raw = raw[0];
+    }
+    if (typeof raw === "string") return raw;
+    return raw?.url || raw?.path || raw?.data || raw?.file || raw?.filename || raw?.name || null;
+  };
+
   const fetchNews = async () => {
     try {
       setIsLoading(true);
@@ -48,8 +86,8 @@ export default function NewsPage() {
           date: item.year,
           publisher: item.publisher,
           status: item.status,
-          description: item.content,
-          image: item.imageUrl,
+          description: item.content, 
+          image: item.imageUrl,      
           docGuide: item.docGuide,
           location: item.location || "",
           newsLink: item.newsLink,
@@ -215,19 +253,41 @@ export default function NewsPage() {
   };
 
   const handleSaveNews = async (formData: any) => {
+    console.log("Admin Save News Payload:", formData);
+
     const payload = {
       title: formData.title,
-      kategori: formData.category,
+      kategori: formData.category ?? formData.type,
       year: formData.date,
-      publisher: formData.publisher,
+      publisher: formData.publisher ?? "Admin",
       status: "Review", 
-      content: formData.content,
-      imageUrl: formData.coverUrl,
-      docGuide: formData.docGuide,
-      newsLink: formData.newsLink,
+
+      content: formData.content ?? formData.description ?? "",
+      imageUrl: formData.coverUrl ?? "", 
+      docGuide: formData.docGuide ?? "",
+      location: formData.location ?? formData.place ?? "",
+      newsLink: formData.newsLink ?? formData.link ?? "",
     };
 
+    const coverFile = formData.coverFile || (formData.image instanceof File ? formData.image : null);
+    const docFile = formData.docFile || formData.documentFile || (formData.docGuide instanceof File ? formData.docGuide : null);
+
     try {
+      if (coverFile) {
+        console.log("Uploading cover...", coverFile);
+        const uploadRes = await uploadFiles([coverFile]);
+        const url = extractUrlFromResponse(uploadRes[0]);
+        if (url) payload.imageUrl = url;
+      }
+
+      if (docFile) {
+        console.log("Uploading doc...", docFile);
+        const uploadRes = await uploadFiles([docFile]);
+        const url = extractUrlFromResponse(uploadRes[0]);
+        if (url) payload.docGuide = url;
+      }
+
+      console.log("Final Payload to Backend:", payload);
       let response;
       if (editData) {
         response = await fetch(`${API_URL}/${editData.id}`, {
@@ -252,6 +312,7 @@ export default function NewsPage() {
       }
     } catch (error) {
       console.error("Error saving:", error);
+      alert("Terjadi kesalahan saat menyimpan data (Cek Console).");
     }
   };
 

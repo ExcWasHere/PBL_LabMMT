@@ -1,5 +1,5 @@
 import Sidebar from "~/components/Dashboard/student/sidebar";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { Menu, Plus } from "lucide-react";
 import NewsForm from "~/common/news-form";
 import DropdownFilter from "~/common/dropdown-filter";
@@ -8,6 +8,7 @@ import TableStatus from "~/common/table-status";
 
 const API_BASE_URL = "http://localhost:3000";
 const NEWS_ENDPOINT = `${API_BASE_URL}/news`;
+const UPLOAD_ENDPOINT = `${API_BASE_URL}/upload`;
 
 const getPublisherName = () => {
   try {
@@ -36,22 +37,30 @@ const getAuthHeaders = () => {
   return headers;
 };
 
-const mapApiToNews = (n: any) => ({
-  id: n.id,
-  title: n.title ?? "-",
-  category: n.kategori ?? n.category ?? "-",
-  date: n.year ?? n.date ?? "",
-  publisher: n.publisher ?? "-",
-  status: n.status ?? "Review",
-  description: n.description ?? "",
-  image: n.coverUrl ?? n.image ?? "",
-  location: n.location ?? "",
-  docGuide: n.docGuide ?? "",
-  newsLink: n.newsLink ?? "",
+const mapApiToNews = (item: any) => ({
+  id: item.id,
+  title: item.title,
+
+  category: item.kategori, 
+
+  date: item.year ? new Date(item.year).toISOString().split('T')[0] : "", 
+  
+  publisher: item.publisher,
+  status: item.status,
+
+  description: item.content, 
+
+  image: item.imageUrl,      
+  
+  docGuide: item.docGuide,
+  newsLink: item.newsLink,
+  
+  location: "", 
 });
 
 export default function NewsPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth >= 1024) setIsSidebarOpen(true);
@@ -64,38 +73,196 @@ export default function NewsPage() {
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editData, setEditData] = useState<any | null>(null);
+  
   const [selectedDate, setSelectedDate] = useState("All Year");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedSort, setSelectedSort] = useState("Latest");
-  const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("All Status");
+  const [searchTerm, setSearchTerm] = useState("");
 
   const [newsList, setNewsList] = useState<any[]>([]);
+
+  const fetchNews = useCallback(async () => {
+    try {
+      const res = await fetch(NEWS_ENDPOINT, {
+        headers: getAuthHeaders(),
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to fetch news");
+      }
+
+      const data = await res.json();
+      const mapped = (Array.isArray(data) ? data : []).map(mapApiToNews);
+      setNewsList(mapped);
+    } catch (err) {
+      console.error(err);
+      setNewsList([]);
+    }
+  }, []);
+
   useEffect(() => {
-    const fetchNews = async () => {
+    fetchNews();
+  }, [fetchNews]);
+
+  const uploadFiles = async (files: File[]) => {
+    const token = localStorage.getItem("token");
+    
+    const uploadPromises = files.map(async (file) => {
+      const formData = new FormData();
+      formData.append("files", file); 
+
       try {
-        const res = await fetch(NEWS_ENDPOINT, {
-          headers: getAuthHeaders(),
+        const res = await fetch(UPLOAD_ENDPOINT, {
+          method: "POST",
+          headers: {
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: formData,
         });
 
         if (!res.ok) {
-          const text = await res.text();
-          console.error("Fetch news failed", res.status, text);
-          throw new Error("Failed to fetch news");
+          const errorText = await res.text();
+          throw new Error(errorText || `Upload failed: ${res.statusText}`);
         }
-
-        const data = await res.json();
-        const mapped = (Array.isArray(data) ? data : []).map(mapApiToNews);
-        setNewsList(mapped);
+        
+        return await res.json();
       } catch (err) {
-        console.error(err);
-        setNewsList([]);
+        console.error("Upload error details:", err);
+        throw err;
       }
-    };
+    });
 
-    fetchNews();
-  }, []);
+    return await Promise.all(uploadPromises);
+  };
 
+  const extractUrlFromResponse = (raw: any): string | null => {
+    if (!raw) return null;
+    if (Array.isArray(raw)) {
+        if (raw.length === 0) return null;
+        raw = raw[0];
+    }
+    if (typeof raw === "string") return raw;
+    return raw?.url || raw?.path || raw?.data || raw?.file || raw?.filename || raw?.name || null;
+  };
+
+  const handleSaveNews = async (formData: any) => {
+    console.log("Raw FormData dari Form:", formData);
+    const publisherName = getPublisherName();
+
+    const docFile = 
+      formData.docFile || 
+      formData.documentFile || 
+      formData.file || 
+      (formData.docGuide instanceof File ? formData.docGuide : null); 
+
+    const coverFile = formData.coverFile || (formData.image instanceof File ? formData.image : null);
+
+    let finalImageUrl = typeof formData.image === 'string' ? formData.image : ""; 
+    if (formData.image instanceof File) finalImageUrl = ""; 
+
+    if (typeof formData.coverUrl === 'string' && formData.coverUrl !== "") finalImageUrl = formData.coverUrl;
+
+    let finalDocUrl = typeof formData.docGuide === 'string' ? formData.docGuide : "";
+
+    try {
+      if (coverFile) { 
+        console.log("Uploading Cover...", coverFile);
+        const uploadRes = await uploadFiles([coverFile]);
+        const url = extractUrlFromResponse(uploadRes[0]);
+        if (url) finalImageUrl = url;
+      }
+
+      if (docFile) {
+        console.log("Uploading Document...", docFile);
+        const uploadRes = await uploadFiles([docFile]);
+        const url = extractUrlFromResponse(uploadRes[0]);
+        if (url) finalDocUrl = url;
+      }
+
+      const payload: any = {
+        title: formData.title,
+        kategori: formData.category || formData.type, 
+        year: formData.date, 
+        publisher: publisherName,
+        content: formData.description || formData.content || "", 
+        imageUrl: finalImageUrl, 
+        docGuide: finalDocUrl,
+        newsLink: formData.newsLink || "",
+      };
+
+      console.log("Final Payload to Database:", payload);
+
+      if (editData) {
+        const res = await fetch(`${NEWS_ENDPOINT}/${editData.id}`, {
+          method: "PATCH",
+          headers: getAuthHeaders(),
+          body: JSON.stringify(payload),
+        });
+        if (!res.ok) throw new Error("Failed to update news");
+      } else {
+        const res = await fetch(NEWS_ENDPOINT, {
+          method: "POST",
+          headers: getAuthHeaders(),
+          body: JSON.stringify({ ...payload, status: "Review" }),
+        });
+        if (!res.ok) throw new Error("Failed to create news");
+      }
+
+      await fetchNews();
+      setIsFormOpen(false);
+      setEditData(null);
+    } catch (err) {
+      console.error(err);
+      alert("Gagal menyimpan news. Cek Console untuk detail.");
+    }
+  };
+
+  const handleDelete = async (id: string) => { 
+    if (!window.confirm("Are you sure you want to delete this news?")) return;
+    try {
+      const res = await fetch(`${NEWS_ENDPOINT}/${id}`, {
+        method: "DELETE",
+        headers: getAuthHeaders(),
+      });
+      if (!res.ok) throw new Error("Failed to delete news");
+      setNewsList((prev) => prev.filter((item) => item.id !== id));
+    } catch (err) {
+      console.error(err);
+      alert("Gagal menghapus news.");
+    }
+  };
+
+  const handleEditClick = (news: any) => {
+    setEditData(news);
+    setIsFormOpen(true);
+  };
+
+  const handleToggleMute = async (id: string) => { 
+    const item = newsList.find((n) => n.id === id);
+    if (!item) return;
+
+    const newStatus = item.status === "Muted" ? "Published" : "Muted";
+
+    try {
+      const res = await fetch(`${NEWS_ENDPOINT}/${id}`, {
+        method: "PATCH",
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (!res.ok) throw new Error("Failed to update status");
+
+      const updated = await res.json();
+      const mapped = mapApiToNews(updated);
+      setNewsList((prev) => prev.map((n) => (n.id === mapped.id ? mapped : n)));
+    } catch (err) {
+      console.error(err);
+      alert("Gagal mengubah status news.");
+      fetchNews();
+    }
+  };
+
+  // --- STATS ---
   const stats = [
     {
       label: "Published",
@@ -123,200 +290,39 @@ export default function NewsPage() {
     setSearchTerm(e.target.value);
   };
 
-  const handleToggleMute = async (id: number) => {
-    const item = newsList.find((n) => n.id === id);
-    if (!item) return;
-
-    const newStatus = item.status === "Muted" ? "Published" : "Muted";
-
-    try {
-      const res = await fetch(`${NEWS_ENDPOINT}/${id}`, {
-        method: "PATCH",
-        headers: getAuthHeaders(),
-        body: JSON.stringify({ status: newStatus }),
-      });
-
-      if (!res.ok) {
-        const text = await res.text();
-        console.error("Update status failed", res.status, text);
-        throw new Error("Failed to update status");
-      }
-
-      const updated = await res.json();
-      const mapped = mapApiToNews(updated);
-
-      setNewsList((prev) =>
-        prev.map((n) => (n.id === mapped.id ? mapped : n))
-      );
-    } catch (err) {
-      console.error(err);
-      alert("Gagal mengubah status news.");
-    }
-  };
-
   const formatDate = (dateString: string) => {
     if (!dateString) return "-";
     const date = new Date(dateString);
     if (isNaN(date.getTime())) return dateString;
-
-    return new Intl.DateTimeFormat("en-GB", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    }).format(date);
+    return new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric" }).format(date);
   };
 
   const filteredData = useMemo(() => {
     let data = [...newsList];
-
     const getYearFromString = (dateString: string) => {
       const d = new Date(dateString);
-      if (!isNaN(d.getTime())) {
-        return String(d.getFullYear());
-      }
-      const parts = dateString.trim().split(" ");
-      return parts[parts.length - 1];
+      if (!isNaN(d.getTime())) return String(d.getFullYear());
+      return dateString.substring(0, 4); 
     };
 
-    if (selectedCategory !== "All") {
-      data = data.filter((row) => row.category === selectedCategory);
-    }
-    if (selectedDate !== "All Year") {
-      data = data.filter(
-        (row) => getYearFromString(row.date) === selectedDate
-      );
-    }
-
+    if (selectedCategory !== "All") data = data.filter((row) => row.category === selectedCategory);
+    if (selectedDate !== "All Year") data = data.filter((row) => getYearFromString(row.date) === selectedDate);
     if (searchTerm) {
       const lowerCaseQuery = searchTerm.toLowerCase();
-      data = data.filter(
-        (row) =>
+      data = data.filter((row) =>
           row.title.toLowerCase().includes(lowerCaseQuery) ||
           row.publisher.toLowerCase().includes(lowerCaseQuery)
       );
     }
 
-    if (selectedSort === "A-Z") {
-      data.sort((a, b) => a.title.localeCompare(b.title));
-    } else if (selectedSort === "Z-A") {
-      data.sort((a, b) => b.title.localeCompare(a.title));
-    } else if (selectedSort === "Latest") {
-      data.sort(
-        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-      );
-    }
+    if (selectedSort === "A-Z") data.sort((a, b) => a.title.localeCompare(b.title));
+    else if (selectedSort === "Z-A") data.sort((a, b) => b.title.localeCompare(a.title));
+    else if (selectedSort === "Latest") data.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-    if (selectedStatus !== "All Status") {
-      data = data.filter((row) => row.status === selectedStatus);
-    }
+    if (selectedStatus !== "All Status") data = data.filter((row) => row.status === selectedStatus);
 
     return data;
-  }, [
-    newsList,
-    selectedDate,
-    selectedCategory,
-    searchTerm,
-    selectedSort,
-    selectedStatus,
-  ]);
-
-  const handleSaveNews = async (formData: any) => {
-    const publisherName = getPublisherName();
-
-    const payload = {
-      title: formData.title,
-      kategori: formData.type ?? formData.category,
-      year: formData.date,
-      description: formData.content ?? formData.description ?? "",
-      publisher: publisherName,
-      location: formData.location,
-      newsLink: formData.newsLink,
-      docGuide: formData.docGuide,
-      coverUrl: formData.coverUrl,
-    };
-
-    try {
-      if (editData) {
-        const res = await fetch(`${NEWS_ENDPOINT}/${editData.id}`, {
-          method: "PATCH",
-          headers: getAuthHeaders(),
-          body: JSON.stringify(payload),
-        });
-
-        if (!res.ok) {
-          const text = await res.text();
-          console.error("Update news failed", res.status, text);
-          throw new Error("Failed to update news");
-        }
-
-        const updated = await res.json();
-        const mapped = mapApiToNews(updated);
-
-        setNewsList((prev) =>
-          prev.map((n) => (n.id === mapped.id ? mapped : n))
-        );
-      } else {
-        const res = await fetch(NEWS_ENDPOINT, {
-          method: "POST",
-          headers: getAuthHeaders(),
-          body: JSON.stringify({
-            ...payload,
-            status: "Review",
-          }),
-        });
-
-        if (!res.ok) {
-          const text = await res.text();
-          console.error("Create news failed", res.status, text);
-          throw new Error("Failed to create news");
-        }
-
-        const created = await res.json();
-        const mapped = mapApiToNews(created);
-
-        setNewsList((prev) => [mapped, ...prev]);
-      }
-
-      setIsFormOpen(false);
-      setEditData(null);
-    } catch (err) {
-      console.error(err);
-      alert(
-        editData
-          ? "Gagal menyimpan perubahan news."
-          : "Gagal membuat news baru."
-      );
-    }
-  };
-
-  const handleDelete = async (id: number) => {
-    if (!window.confirm("Are you sure you want to delete this news?")) {
-      return;
-    }
-
-    try {
-      const res = await fetch(`${NEWS_ENDPOINT}/${id}`, {
-        method: "DELETE",
-        headers: getAuthHeaders(),
-      });
-
-      if (!res.ok) {
-        const text = await res.text();
-        console.error("Delete news failed", res.status, text);
-        throw new Error("Failed to delete news");
-      }
-
-      setNewsList((prev) => prev.filter((item) => item.id !== id));
-    } catch (err) {
-      console.error(err);
-      alert("Gagal menghapus news.");
-    }
-  };
-
-  const handleEditClick = (news: any) => {
-    setEditData(news);
-    setIsFormOpen(true);
-  };
+  }, [newsList, selectedDate, selectedCategory, searchTerm, selectedSort, selectedStatus]);
 
   return (
     <div className="flex relative min-h-screen">
@@ -341,9 +347,7 @@ export default function NewsPage() {
           >
             <Menu size={24} />
           </button>
-          <h1 className="text-2xl md:text-3xl font-bold text-orange-600">
-            News
-          </h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-orange-600">News</h1>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -366,12 +370,7 @@ export default function NewsPage() {
               viewBox="0 0 24 24"
               xmlns="http://www.w3.org/2000/svg"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              ></path>
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
             </svg>
             <input
               type="text"
@@ -391,14 +390,7 @@ export default function NewsPage() {
             />
             <DropdownFilter
               label="Category"
-              options={[
-                "All",
-                "News",
-                "Training",
-                "Workshops",
-                "Certifications",
-                "Articles",
-              ]}
+              options={["All", "News", "Training", "Workshops", "Certifications", "Articles"]}
               currentFilter={selectedCategory}
               onSelect={setSelectedCategory}
             />
@@ -410,14 +402,7 @@ export default function NewsPage() {
             />
             <DropdownFilter
               label="Status"
-              options={[
-                "All Status",
-                "Published",
-                "Waiting",
-                "Review",
-                "Muted",
-                "Denied",
-              ]}
+              options={["All Status", "Published", "Waiting", "Review", "Muted", "Denied"]}
               currentFilter={selectedStatus}
               onSelect={setSelectedStatus}
             />
@@ -448,28 +433,17 @@ export default function NewsPage() {
               <tbody>
                 {filteredData.map((row, index) => {
                   const isLastRow = index === filteredData.length - 1;
-                  const borderClass = isLastRow
-                    ? ""
-                    : "border-b border-gray-200";
+                  const borderClass = isLastRow ? "" : "border-b border-gray-200";
 
                   return (
                     <tr key={index}>
-                      <td className={`py-3 px-2 ${borderClass} text-center`}>
-                        {row.title}
-                      </td>
-                      <td className={`py-3 px-2 ${borderClass} text-center`}>
-                        {row.category}
-                      </td>
-                      <td className={`py-3 px-2 ${borderClass} text-center`}>
-                        {formatDate(row.date)}
-                      </td>
-                      <td className={`py-3 px-2 ${borderClass} text-center`}>
-                        {row.publisher}
-                      </td>
+                      <td className={`py-3 px-2 ${borderClass} text-center`}>{row.title}</td>
+                      <td className={`py-3 px-2 ${borderClass} text-center`}>{row.category}</td>
+                      <td className={`py-3 px-2 ${borderClass} text-center`}>{formatDate(row.date)}</td>
+                      <td className={`py-3 px-2 ${borderClass} text-center`}>{row.publisher}</td>
                       <td className={`py-3 px-2 ${borderClass} text-center`}>
                         <TableStatus status={row.status} />
                       </td>
-
                       <td className={`py-3 px-2 ${borderClass} text-center`}>
                         <TableAction
                           status={row.status}
@@ -483,9 +457,7 @@ export default function NewsPage() {
                 })}
                 {filteredData.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="py-8 text-center text-gray-500">
-                      No matching data found.
-                    </td>
+                    <td colSpan={6} className="py-8 text-center text-gray-500">No matching data found.</td>
                   </tr>
                 )}
               </tbody>

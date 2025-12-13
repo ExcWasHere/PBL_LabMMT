@@ -1,11 +1,14 @@
 import Sidebar from "~/components/Dashboard/student/sidebar";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { Menu, Plus } from "lucide-react";
 import DropdownFilter from "~/common/dropdown-filter";
 import ProjectForm, { type ProjectData } from "~/common/project-form";
 import TableAction from "~/common/table-action";
 import TableStatus from "~/common/table-status";
+
 const API_BASE_URL = "http://localhost:3000";
+const PROJECT_ENDPOINT = `${API_BASE_URL}/project`;
+const UPLOAD_ENDPOINT = `${API_BASE_URL}/upload`;
 
 const mapApiToProject = (p: any) => ({
   id: p.id as string,
@@ -22,6 +25,14 @@ const mapApiToProject = (p: any) => ({
   demoLink: p.demoLink ?? "",
   mediaUrls: Array.isArray(p.mediaUrls) ? p.mediaUrls : [],
 });
+
+const getAuthHeaders = (json = true) => {
+  const token = localStorage.getItem("access_token");
+  const headers: HeadersInit = {};
+  if (json) headers["Content-Type"] = "application/json";
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+  return headers;
+};
 
 export default function ProjectPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -62,31 +73,86 @@ export default function ProjectPage() {
   const [projects, setProjects] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const fetchProjects = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`${API_BASE_URL}/project`, {
+        headers: getAuthHeaders(true),
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to fetch projects");
+      }
+
+      const data = await res.json();
+      const mapped = (Array.isArray(data) ? data : []).map(mapApiToProject);
+      setProjects(mapped);
+    } catch (err) {
+      console.error(err);
+      setError("Gagal memuat data project.");
+      setProjects([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
-    const fetchProjects = async () => {
-      setIsLoading(true);
-      setError(null);
+    fetchProjects();
+  }, [fetchProjects]);
+
+  const uploadFiles = async (files: File[]) => {
+    const token = localStorage.getItem("access_token");
+    
+    const uploadPromises = files.map(async (file) => {
+      const formData = new FormData();
+      formData.append("files", file); 
+
       try {
-        const res = await fetch(`${API_BASE_URL}/project`);
+        const res = await fetch(UPLOAD_ENDPOINT, {
+          method: "POST",
+          headers: {
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: formData,
+        });
 
         if (!res.ok) {
-          throw new Error("Failed to fetch projects");
+          const errorText = await res.text();
+          throw new Error(errorText || `Upload failed: ${res.statusText}`);
         }
-
-        const data = await res.json();
-        const mapped = (Array.isArray(data) ? data : []).map(mapApiToProject);
-        setProjects(mapped);
+        
+        return await res.json();
       } catch (err) {
-        console.error(err);
-        setError("Gagal memuat data project.");
-        setProjects([]);
-      } finally {
-        setIsLoading(false);
+        console.error("Upload error details:", err);
+        throw err;
       }
-    };
+    });
 
-    fetchProjects();
-  }, []);
+    return await Promise.all(uploadPromises);
+  };
+
+  const extractUrlFromResponse = (raw: any): string | null => {
+    if (!raw) return null;
+    
+    if (Array.isArray(raw)) {
+        if (raw.length === 0) return null;
+        raw = raw[0];
+    }
+
+    if (typeof raw === "string") return raw;
+
+    const possibleUrl = 
+      raw?.url || 
+      raw?.path || 
+      raw?.data || 
+      raw?.file || 
+      raw?.filename || 
+      raw?.name;
+
+    return possibleUrl || null;
+  };
 
   const stats = [
     {
@@ -116,28 +182,23 @@ export default function ProjectPage() {
   };
 
   const handleToggleMute = async (id: string) => {
-    const project = projects.find((p) => p.id === id);
-    if (!project) return;
-
-    const newStatus = project.status === "Muted" ? "Published" : "Muted";
-
+    const p = projects.find((x) => x.id === id);
+    if (!p) return;
+    const newStatus = p.status === "Muted" ? "Published" : "Muted";
     try {
-      const res = await fetch(`${API_BASE_URL}/project/${id}`, {
+      const res = await fetch(`${PROJECT_ENDPOINT}/${id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: getAuthHeaders(true),
         body: JSON.stringify({ status: newStatus }),
       });
-
-      if (!res.ok) {
-        throw new Error("Failed to update status");
-      }
-
+      if (!res.ok) throw new Error("Toggle failed");
       setProjects((prev) =>
-        prev.map((p) => (p.id === id ? { ...p, status: newStatus } : p))
+        prev.map((x) => (x.id === id ? { ...x, status: newStatus } : x))
       );
     } catch (err) {
       console.error(err);
       alert("Gagal mengubah status project.");
+      await fetchProjects();
     }
   };
 
@@ -209,52 +270,61 @@ export default function ProjectPage() {
     selectedStatus,
   ]);
 
-  const handleSaveProject = async (formData: ProjectData) => {
-    const token = localStorage.getItem("token");
-
-    const headers: HeadersInit = {
-      "Content-Type": "application/json",
-    };
-
-    if (token) {
-      headers.Authorization = `Bearer ${token}`;
-    }
-
-    const payload = {
+  const handleSaveProject = async (
+    formData: ProjectData & { mediaFiles?: File[] }
+  ) => {
+    const payload: any = {
       title: formData.title,
       kategori: formData.type,
       year: formData.date,
       description: formData.description,
+      tech: formData.tech ?? "",
+      teamMembers: formData.teamMembers ?? [],
+      githubLink: formData.githubLink ?? "",
+      demoLink: formData.demoLink ?? "",
       publisher: publisherName,
     };
-
+    setIsLoading(true);
     try {
-      if (editData) {
-        const res = await fetch(`${API_BASE_URL}/project/${editData.id}`, {
-          method: "PATCH",
-          headers,
-          body: JSON.stringify({
-            ...payload,
-            status: "Review",
-            stars: 0,
-          }),
-        });
+      if (formData.thumbnailFile) {
+        const thumbnailResponses = await uploadFiles([formData.thumbnailFile]);
+        const raw = thumbnailResponses?.[0];
+        
+        console.log("DEBUG THUMBNAIL RESPONSE:", JSON.stringify(raw, null, 2));
 
-        if (!res.ok) {
-          const text = await res.text();
-          console.error("Update project failed", res.status, text);
-          throw new Error("Failed to update project");
+        const url = extractUrlFromResponse(raw);
+
+        if (!url) {
+           throw new Error("Upload berhasil, tapi tidak ditemukan URL/filename di respon server. Cek Console.");
         }
 
-        const updated = await res.json();
-        const mapped = mapApiToProject(updated);
+        payload.thumbnailUrl = url;
+      }
 
-        setProjects((prev) =>
-          prev.map((p) => (p.id === mapped.id ? mapped : p))
-        );
+      if (formData.mediaFiles && formData.mediaFiles.length > 0) {
+        const mediaResponses = await uploadFiles(formData.mediaFiles);
+        console.log("DEBUG MEDIA RESPONSE:", JSON.stringify(mediaResponses, null, 2));
+
+        const urls = mediaResponses
+          .map((raw) => extractUrlFromResponse(raw))
+          .filter(Boolean);
+
+        if (urls.length > 0) payload.mediaUrls = urls;
+      }
+      
+      const headers = getAuthHeaders(true);
+      if (editData) {
+        const statusToSend =
+          (formData as any).status ?? editData.status ?? "Review";
+        
+        const res = await fetch(`${PROJECT_ENDPOINT}/${editData.id}`, {
+          method: "PATCH",
+          headers,
+          body: JSON.stringify({ ...payload, status: statusToSend }),
+        });
+        if (!res.ok) throw new Error("Failed to update project");
       } else {
-        // CREATE → status harus "Review" + stars 0
-        const res = await fetch(`${API_BASE_URL}/project`, {
+        const res = await fetch(PROJECT_ENDPOINT, {
           method: "POST",
           headers,
           body: JSON.stringify({
@@ -263,48 +333,34 @@ export default function ProjectPage() {
             stars: 0,
           }),
         });
-
-        if (!res.ok) {
-          const text = await res.text();
-          console.error("Create project failed", res.status, text);
-          throw new Error("Failed to create project");
-        }
-
-        const created = await res.json();
-        const mapped = mapApiToProject(created);
-
-        setProjects((prev) => [mapped, ...prev]);
+        if (!res.ok) throw new Error("Failed to create project");
       }
+      
+      await fetchProjects();
       setIsFormOpen(false);
       setEditData(null);
     } catch (err) {
       console.error(err);
-      alert(
-        editData
-          ? "Gagal menyimpan perubahan project."
-          : "Gagal membuat project baru."
-      );
+      alert(`Gagal menyimpan project: ${err instanceof Error ? err.message : "Unknown error"}`);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm("Are you sure you want to delete this project?")) {
+    if (!window.confirm("Are you sure you want to delete this project?"))
       return;
-    }
-
     try {
-      const res = await fetch(`${API_BASE_URL}/project/${id}`, {
+      const res = await fetch(`${PROJECT_ENDPOINT}/${id}`, {
         method: "DELETE",
+        headers: getAuthHeaders(true),
       });
-
-      if (!res.ok) {
-        throw new Error("Failed to delete project");
-      }
-
+      if (!res.ok) throw new Error("Delete failed");
       setProjects((prev) => prev.filter((p) => p.id !== id));
     } catch (err) {
       console.error(err);
       alert("Gagal menghapus project.");
+      await fetchProjects();
     }
   };
 

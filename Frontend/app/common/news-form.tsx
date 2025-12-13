@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { X, Eye, Download, ExternalLink } from "lucide-react";
 import MediaUploader from "./media-uploader";
 
@@ -18,8 +18,9 @@ interface NewsData {
 
 interface NewsFormProps {
   onClose: () => void;
-  onSubmit: (newsData: NewsData) => void;
+  onSubmit: (newsData: NewsData) => void | Promise<void>;
   initialData?: NewsData;
+  readOnly?: boolean;
 }
 
 const normalizeDateInput = (value: string) => {
@@ -52,10 +53,15 @@ export default function NewsForm({
   onClose,
   onSubmit,
   initialData,
+  readOnly = false,
 }: NewsFormProps) {
   const isEditMode = !!initialData;
-  const [showPreview, setShowPreview] = useState(false);
-  const formTitle = isEditMode ? "Edit Post" : "Add New Post";
+  const [showPreview, setShowPreview] = useState(readOnly);
+  const formTitle = readOnly
+    ? "Review Submission"
+    : isEditMode
+    ? "Edit Post"
+    : "Add New Post";
 
   const defaultFormData: NewsData = {
     title: "",
@@ -89,6 +95,26 @@ export default function NewsForm({
     }
   }, [initialData]);
 
+  const hasChanges = useMemo(() => {
+    if (!isEditMode || !initialData) return true;
+
+    if (formData.coverFile || formData.docFile) return true;
+
+    if (formData.title !== (initialData.title || "")) return true;
+    if (formData.category !== (initialData.category || "News")) return true;
+    if (normalizeDateInput(formData.date) !== normalizeDateInput(initialData.date)) return true;
+    if (formData.publisher !== (initialData.publisher || "")) return true;
+    if (formData.location !== (initialData.location || "")) return true;
+    if (formData.content !== (initialData.content || "")) return true;
+    if (formData.newsLink !== (initialData.newsLink || "")) return true;
+    
+    if (formData.coverUrl !== (initialData.coverUrl || "")) return true;
+    if (formData.docGuide !== (initialData.docGuide || "")) return true;
+
+    return false;
+  }, [formData, initialData, isEditMode]);
+
+
   const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
@@ -98,7 +124,7 @@ export default function NewsForm({
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (
       !formData.title ||
       !formData.category ||
@@ -108,7 +134,15 @@ export default function NewsForm({
       alert("Please fill in required fields");
       return;
     }
-    onSubmit(formData);
+
+    if (isEditMode) {
+      const confirmSave = window.confirm(
+        "This change will return the post status to ‘Review’ for re-examination. Are you sure you want to proceed?"
+      );
+      if (!confirmSave) return; 
+    }
+
+    await onSubmit(formData);
     onClose();
   };
 
@@ -135,7 +169,6 @@ export default function NewsForm({
   return (
     <div className="fixed inset-0 bg-white z-50 overflow-y-auto font-sans">
       <div className="w-full h-full p-8">
-        {/* HEADER SECTION */}
         <div className="flex items-center justify-between mb-8">
           <h2 className="text-3xl font-bold text-orange-600">{formTitle}</h2>
           <button
@@ -146,20 +179,19 @@ export default function NewsForm({
           </button>
         </div>
 
-        {/* MAIN CONTENT AREA */}
         <div className="max-w-6xl mx-auto space-y-6 pb-24">
           {showPreview ? (
-            /* PREVIEW MODE */
             <div className="animate-in fade-in zoom-in-95 duration-300">
-              <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-2 rounded-lg mb-8 flex items-center gap-2 text-sm">
-                <Eye size={16} />
-                <span>
-                  You are viewing a preview. Links and downloads are disabled in
-                  this mode.
-                </span>
-              </div>
+              {!readOnly && (
+                <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-2 rounded-lg mb-8 flex items-center gap-2 text-sm">
+                  <Eye size={16} />
+                  <span>
+                    You are viewing a preview. Links and downloads are disabled in
+                    this mode.
+                  </span>
+                </div>
+              )}
 
-              {/* News Specific Preview Layout */}
               <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100">
                 <div className="relative">
                   <img
@@ -199,7 +231,6 @@ export default function NewsForm({
                       )}
                     </div>
 
-                    {/* Action Buttons in Preview */}
                     <div className="flex flex-wrap justify-center gap-4 mt-12 border-t border-gray-100 pt-8">
                       {formData.docGuide ? (
                         <button className="flex items-center gap-2 bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700 transition shadow-sm opacity-80 cursor-not-allowed">
@@ -222,9 +253,7 @@ export default function NewsForm({
               </div>
             </div>
           ) : (
-            /* EDIT MODE - Matches Project Form Field Styles */
             <div className="space-y-6 bg-white p-8 rounded-xl shadow-sm">
-              {/* Title Field */}
               <div>
                 <label className="block text-base font-medium text-gray-700 mb-2">
                   Title *
@@ -239,7 +268,6 @@ export default function NewsForm({
                 />
               </div>
 
-              {/* Category & Date Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="relative">
                   <label className="block text-base font-medium text-gray-700 mb-2">
@@ -257,15 +285,6 @@ export default function NewsForm({
                     <option value="Certifications">Certifications</option>
                     <option value="Articles">Articles</option>
                   </select>
-                  <div className="pointer-events-none absolute inset-y-0 right-0 top-7 flex items-center px-2 text-gray-700">
-                    <svg
-                      className="fill-current h-4 w-4"
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 20 20"
-                    >
-                      <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
-                    </svg>
-                  </div>
                 </div>
 
                 <div>
@@ -283,7 +302,6 @@ export default function NewsForm({
                 </div>
               </div>
 
-              {/* Publisher & Location Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-base font-medium text-gray-700 mb-2">
@@ -295,7 +313,6 @@ export default function NewsForm({
                     value={formData.publisher}
                     onChange={handleChange}
                     className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                    placeholder="e.g., Aulia Resty Azizah"
                   />
                 </div>
 
@@ -309,12 +326,11 @@ export default function NewsForm({
                     value={formData.location}
                     onChange={handleChange}
                     className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                    placeholder="e.g., Online, Malang, Sipil Building"
+                    placeholder="Malang, Polinema"
                   />
                 </div>
               </div>
 
-              {/* Content Field */}
               <div>
                 <label className="block text-base font-medium text-gray-700 mb-2">
                   Content *
@@ -325,11 +341,10 @@ export default function NewsForm({
                   onChange={handleChange}
                   rows={10}
                   className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none leading-relaxed"
-                  placeholder="Enter the full post content here..."
+                  placeholder="Enter your description here"
                 />
               </div>
 
-              {/* Link Field */}
               <div>
                 <label className="block text-base font-medium text-gray-700 mb-2">
                   External Link (Optional)
@@ -344,9 +359,7 @@ export default function NewsForm({
                 />
               </div>
 
-              {/* Uploads Section - Styled like Project Form's Image/Video upload */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Cover Image Upload */}
                 <div>
                   <MediaUploader
                     label="Cover Image (Header)"
@@ -373,11 +386,9 @@ export default function NewsForm({
                   />
                 </div>
 
-                {/* Document Upload */}
                 <div>
                   <MediaUploader
                     label="Reference Document"
-                    description="PDF, DOCX, TXT (Max 10MB)"
                     accept=".pdf,.doc,.docx"
                     maxFiles={1}
                     allowMultiple={false}
@@ -409,23 +420,24 @@ export default function NewsForm({
           )}
         </div>
 
-        {/* FOOTER SECTION */}
         <div className="max-w-6xl mx-auto flex justify-end gap-4 mt-8 sticky bottom-0 bg-white py-4 border-t border-gray-200">
           <button
             onClick={onClose}
             className="px-8 py-3 text-base border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition"
           >
-            Cancel
+            {readOnly ? "Close Preview" : "Cancel"}
           </button>
 
-          {!showPreview ? (
+          {!readOnly && !showPreview && (
             <button
               onClick={() => setShowPreview(true)}
               className="px-6 py-2.5 bg-gray-800 text-white rounded-lg hover:bg-gray-900 font-medium transition flex items-center gap-2"
             >
               <Eye size={18} /> Preview
             </button>
-          ) : (
+          )}
+
+          {!readOnly && showPreview && (
             <button
               onClick={() => setShowPreview(false)}
               className="px-6 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium transition flex items-center gap-2"
@@ -434,12 +446,19 @@ export default function NewsForm({
             </button>
           )}
 
-          <button
-            onClick={handleSubmit}
-            className="px-8 py-2.5 bg-orange-600 text-white rounded-lg hover:bg-orange-700 font-medium transition shadow-sm"
-          >
-            {isEditMode ? "Save Changes" : "Publish"}
-          </button>
+          {!readOnly && (
+            <button
+              onClick={handleSubmit}
+              disabled={isEditMode && !hasChanges}
+              className={`px-8 py-2.5 rounded-lg font-medium transition shadow-sm ${
+                isEditMode && !hasChanges
+                  ? "bg-gray-400 text-white cursor-not-allowed opacity-70"
+                  : "bg-orange-600 text-white hover:bg-orange-700"
+              }`}
+            >
+              {isEditMode ? "Save Changes" : "Submit"}
+            </button>
+          )}
         </div>
       </div>
     </div>

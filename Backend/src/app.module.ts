@@ -17,9 +17,11 @@ import { MemberModule } from './member/member.module';
 import { StatsModule } from './stats/stats.module';
 import { ActivityModule } from './activity/activity.module';
 import { UploadModule } from './upload/upload.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     ConfigModule.forRoot({ isGlobal: true }),
     TypeOrmModule.forRoot({
       type: 'postgres',

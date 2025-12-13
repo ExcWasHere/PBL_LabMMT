@@ -13,6 +13,10 @@ async function bootstrap() {
     credentials: true,
   });
 
+  app.useStaticAssets(path.join(process.cwd(), 'uploads'), {
+    prefix: '/uploads',
+  });
+
   const uploadsRoot = path.join(process.cwd(), 'uploads');
   if (!fs.existsSync(uploadsRoot)) {
     fs.mkdirSync(uploadsRoot, { recursive: true });

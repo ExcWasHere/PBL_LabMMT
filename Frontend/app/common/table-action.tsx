@@ -16,7 +16,7 @@ export default function TableActions({
   const isReview = status === "Review";
   const isMuted = status === "Muted";
   const isWaiting = status === "Waiting";
-  const isDenied = status === "Denied"; 
+  const isDenied = status === "Rejected"; 
 
   const isMuteDisabled = isReview || isWaiting || isDenied;
 

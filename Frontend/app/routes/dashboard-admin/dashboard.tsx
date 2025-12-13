@@ -4,12 +4,12 @@ import ProtectedRoute from "~/components/Auth/protected-route";
 
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: "MMT | Dashboard-Viewer" },
+    { title: "MMT | Dashboard-Admin" },
     { name: "Masuk", content: "Welcome to Lab MMT JTI!" },
   ];
 }
 
-export default function Viewer() {
+export default function Admin() {
   return (
     <>
     <ProtectedRoute>

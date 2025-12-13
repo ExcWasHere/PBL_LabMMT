@@ -10,10 +10,12 @@ import {
   Delete,
   Req,
   ForbiddenException,
+  UseGuards,
 } from '@nestjs/common';
 import { ProjectService } from './project.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
 @Controller('project')
 export class ProjectController {
@@ -24,22 +26,26 @@ export class ProjectController {
     return this.projectService.findAll();
   }
 
+  @Get('pending')
+  async findPending() {
+    return this.projectService.findPending();
+  }
+
   @Get(':id')
   async findOne(@Param('id') id: string) {
     return this.projectService.findOne(id);
   }
+  @UseGuards(JwtAuthGuard)
   @Post()
-  async create(@Body() createProjectDto: CreateProjectDto, @Req() req: any) {
+  createProject(@Req() req, @Body() createProjectDto: CreateProjectDto) {
     const user = req.user;
     console.log('POST /project user =', user);
     const rawRole = user?.role;
     const role = typeof rawRole === 'string' ? rawRole.toLowerCase() : '';
-
     const allowedRoles = ['admin', 'dosen', 'mahasiswa'];
     if (role && !allowedRoles.includes(role)) {
       throw new ForbiddenException('Kamu tidak boleh membuat project');
     }
-
     return this.projectService.create(createProjectDto);
   }
 
@@ -54,9 +60,7 @@ export class ProjectController {
 
     const rawRole = user?.role;
     const role = typeof rawRole === 'string' ? rawRole.toLowerCase() : '';
-
     const allowedRoles = ['admin', 'dosen', 'mahasiswa'];
-
     if (role && !allowedRoles.includes(role)) {
       throw new ForbiddenException('Kamu tidak boleh mengupdate project');
     }

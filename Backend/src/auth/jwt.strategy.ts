@@ -3,6 +3,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
+
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
@@ -13,10 +14,17 @@ import { UsersService } from '../user/user.service';
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
     configService: ConfigService,
-    private usersService: UsersService,
+    private readonly usersService: UsersService,
   ) {
     super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      jwtFromRequest: ExtractJwt.fromExtractors([
+        ExtractJwt.fromAuthHeaderAsBearerToken(),
+        (req) => {
+          if (!req) return null;
+          return req.cookies?.token || null;
+        },
+      ]),
+      ignoreExpiration: false,
       secretOrKey:
         configService.get<string>('JWT_SECRET') || 'fallback_dev_secret',
     });
@@ -24,16 +32,17 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
   async validate(payload: any) {
     const userId = payload.sub;
+
     const user = await this.usersService.findById(userId);
     if (!user) {
       return null;
     }
 
     const { password, ...rest } = user as any;
-    const jwtRole = payload.role;
+
     return {
       ...rest,
-      role: jwtRole ?? rest.role,
+      role: payload.role ?? rest.role,
     };
   }
 }

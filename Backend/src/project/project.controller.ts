@@ -1,5 +1,7 @@
+/* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
+
 import {
   Controller,
   Get,
@@ -35,20 +37,24 @@ export class ProjectController {
   async findOne(@Param('id') id: string) {
     return this.projectService.findOne(id);
   }
+
   @UseGuards(JwtAuthGuard)
   @Post()
-  createProject(@Req() req, @Body() createProjectDto: CreateProjectDto) {
+  async createProject(
+    @Req() req: any,
+    @Body() createProjectDto: CreateProjectDto,
+  ) {
     const user = req.user;
     console.log('POST /project user =', user);
-    const rawRole = user?.role;
-    const role = typeof rawRole === 'string' ? rawRole.toLowerCase() : '';
+    const role = typeof user?.role === 'string' ? user.role.toLowerCase() : '';
     const allowedRoles = ['admin', 'dosen', 'mahasiswa'];
-    if (role && !allowedRoles.includes(role)) {
+    if (!allowedRoles.includes(role)) {
       throw new ForbiddenException('Kamu tidak boleh membuat project');
     }
     return this.projectService.create(createProjectDto);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Patch(':id')
   async update(
     @Param('id') id: string,
@@ -57,28 +63,23 @@ export class ProjectController {
   ) {
     const user = req.user;
     console.log('PATCH /project user =', user);
-
-    const rawRole = user?.role;
-    const role = typeof rawRole === 'string' ? rawRole.toLowerCase() : '';
+    const role = typeof user?.role === 'string' ? user.role.toLowerCase() : '';
     const allowedRoles = ['admin', 'dosen', 'mahasiswa'];
-    if (role && !allowedRoles.includes(role)) {
+    if (!allowedRoles.includes(role)) {
       throw new ForbiddenException('Kamu tidak boleh mengupdate project');
     }
-
     return this.projectService.update(id, updateProjectDto);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Delete(':id')
   async remove(@Param('id') id: string, @Req() req: any) {
     const user = req.user;
     console.log('DELETE /project user =', user);
-
-    const rawRole = user?.role;
-    const role = typeof rawRole === 'string' ? rawRole.toLowerCase() : '';
-    if (role && role !== 'admin') {
+    const role = typeof user?.role === 'string' ? user.role.toLowerCase() : '';
+    if (role !== 'admin') {
       throw new ForbiddenException('Kamu tidak boleh menghapus project');
     }
-
     return this.projectService.remove(id);
   }
 }

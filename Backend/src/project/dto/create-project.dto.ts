@@ -5,7 +5,6 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
-  IsUrl,
   MaxLength,
 } from 'class-validator';
 
@@ -40,11 +39,11 @@ export class CreateProjectDto {
   @IsOptional()
   tech?: string;
 
-  @IsUrl()
+  @IsString()
   @IsOptional()
   githubLink?: string;
 
-  @IsUrl()
+  @IsString()
   @IsOptional()
   demoLink?: string;
 

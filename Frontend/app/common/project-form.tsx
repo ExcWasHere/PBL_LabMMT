@@ -93,7 +93,6 @@ export default function ProjectForm({
     }
 
     onSubmit(formData);
-    onClose();
   };
 
   const getTodayString = () => {

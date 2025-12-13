@@ -16,6 +16,7 @@ import { PhotoModule } from './photo/photo.module';
 import { MemberModule } from './member/member.module';
 import { StatsModule } from './stats/stats.module';
 import { ActivityModule } from './activity/activity.module';
+import { UploadModule } from './upload/upload.module';
 
 @Module({
   imports: [
@@ -45,6 +46,7 @@ import { ActivityModule } from './activity/activity.module';
     MemberModule,
     StatsModule,
     ActivityModule,
+    UploadModule,
   ],
   controllers: [AppController, AnalyticsController],
   providers: [AppService, AnalyticsService, AnalyticsGateway],

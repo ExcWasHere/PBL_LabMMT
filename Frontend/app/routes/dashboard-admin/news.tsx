@@ -4,12 +4,12 @@ import NewsPage from "~/components/Dashboard/admin/news.js";
 
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: "MMT | Dashboard-News" },
+    { title: "MMT | Dashboard-Admin" },
     { name: "Masuk", content: "Welcome to Lab MMT JTI!" },
   ];
 }
 
-export default function Viewer() {
+export default function Admin() {
   return (
     <>
     <ProtectedRoute>

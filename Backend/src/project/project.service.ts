@@ -28,6 +28,13 @@ export class ProjectService {
     });
   }
 
+  async findPending() {
+    return this.projectRepo.find({
+      where: [{ status: 'Waiting' }, { status: 'Review' }],
+      order: { createdAt: 'DESC' },
+    });
+  }
+
   async findOne(id: string) {
     const project = await this.projectRepo.findOne({ where: { id } });
     if (!project) {

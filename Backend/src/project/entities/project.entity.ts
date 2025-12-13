@@ -28,8 +28,8 @@ export class Project {
 
   @Column({
     type: 'enum',
-    enum: ['Published', 'Review', 'Waiting', 'Muted'],
-    default: 'Waiting',
+    enum: ['Published', 'Review', 'Waiting', 'Muted', 'Rejected'],
+    default: 'Review',
   })
   status: string;
 

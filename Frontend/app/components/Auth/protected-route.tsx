@@ -36,7 +36,7 @@ export default function ProtectedRoute({
           console.error("Auth failed:", errorData);
           localStorage.removeItem("access_token");
           localStorage.removeItem("role");
-          navigate("/masuk?unauthorized=1", { replace: true });
+          navigate("/sign-in?unauthorized=1", { replace: true });
           return;
         }
 

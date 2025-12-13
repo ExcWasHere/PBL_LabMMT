@@ -12,7 +12,7 @@ export default function Header() {
     <div className="relative h-[calc(100vh-4rem)] md:h-screen w-full mx-auto overflow-hidden">
       <div className="absolute inset-0">
         <img
-          src="/home/kondisiLab.jpg"
+          src="/home/galleryPage.jpg"
           className="absolute inset-0 object-cover w-full h-full"
           style={{
             objectPosition: "center center",

@@ -1,21 +1,21 @@
 import Sidebar from "~/components/Dashboard/admin/sidebar";
 import { useState, useMemo, useEffect } from "react";
-import { Menu, FileText, CreditCard, Check, X } from "lucide-react";
+// 1. Import Trash2 icon
+import { Menu, FileText, Check, X, Trash2 } from "lucide-react";
 import { member_dummy, registration_dummy } from "./dataDummy";
 import DropdownFilter from "~/common/dropdown-filter";
 
 export default function MemberPage() {
-  
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-    useEffect(() => {
-      const handleResize = () => {
-        if (window.innerWidth >= 1024) setIsSidebarOpen(true);
-        else setIsSidebarOpen(false);
-      };
-      handleResize();
-      window.addEventListener("resize", handleResize);
-      return () => window.removeEventListener("resize", handleResize);
-    }, []);
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) setIsSidebarOpen(true);
+      else setIsSidebarOpen(false);
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const [selectedYear, setSelectedYear] = useState("All Year");
   const [selectedField, setselectedField] = useState("All");
@@ -23,6 +23,15 @@ export default function MemberPage() {
   const [searchTerm, setSearchTerm] = useState("");
 
   const [memberList, setMemberList] = useState(member_dummy);
+
+  const handleDeleteMember = (identityNum: string) => {
+    if (window.confirm("Are you sure you want to delete this member?")) {
+      const updatedList = memberList.filter(
+        (member) => member.identityNum !== identityNum
+      );
+      setMemberList(updatedList);
+    }
+  };
 
   const stats = [
     {
@@ -84,7 +93,7 @@ export default function MemberPage() {
   }, [memberList, selectedYear, selectedField, searchTerm, selectedSort]);
 
   const [memberPending, setMemberPending] = useState(registration_dummy);
-  const pendingCounter = [{value: memberPending.length}]
+  const pendingCounter = [{ value: memberPending.length }];
 
   const [showPending, setShowPending] = useState(false);
 
@@ -93,7 +102,9 @@ export default function MemberPage() {
       {isSidebarOpen && <Sidebar />}
 
       <div
-        className={`w-full p-8 transition-all duration-300 ease-in-out ${isSidebarOpen ? "ml-64" : "ml-0"}`}
+        className={`w-full p-8 transition-all duration-300 ease-in-out ${
+          isSidebarOpen ? "ml-64" : "ml-0"
+        }`}
       >
         <div className="flex items-center mb-6">
           <button
@@ -175,12 +186,15 @@ export default function MemberPage() {
                 <th className="py-3">Field</th>
                 <th className="py-3">Start Date</th>
                 <th className="py-3">Position</th>
+                <th className="py-3">Action</th>
               </tr>
             </thead>
             <tbody>
               {filteredData.map((row, index) => {
                 const isLastRow = index === filteredData.length - 1;
-                const borderClass = isLastRow ? "" : "border-b border-gray-200";
+                const borderClass = isLastRow
+                  ? ""
+                  : "border-b border-gray-200";
 
                 return (
                   <tr key={index}>
@@ -197,16 +211,32 @@ export default function MemberPage() {
                       {row.startDate}
                     </td>
                     <td
-                      className={`py-3 ${borderClass} font-medium text-center ${getStatusColorClass(row.position)}`}
+                      className={`py-3 ${borderClass} font-medium text-center ${getStatusColorClass(
+                        row.position
+                      )}`}
                     >
                       {row.position}
+                    </td>
+                    {/* 4. Menambahkan Tombol Action (Trash Icon) */}
+                    <td className={`py-3 ${borderClass} text-center`}>
+                      <button
+                        onClick={() => handleDeleteMember(row.identityNum)}
+                        className="p-2 text-red-500 hover:bg-red-50 rounded-full transition"
+                        title="Delete Member"
+                      >
+                        <Trash2 size={18} />
+                      </button>
                     </td>
                   </tr>
                 );
               })}
               {filteredData.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="py-8 text-center text-gray-500">
+                  {/* Update colspan agar sesuai jumlah kolom (6) */}
+                  <td
+                    colSpan={6}
+                    className="py-8 text-center text-gray-500"
+                  >
                     No matching data found.
                   </td>
                 </tr>
@@ -225,11 +255,13 @@ export default function MemberPage() {
                 Registrations
               </h3>
               <span className="bg-orange-500 text-white px-2 py-1 rounded-full text-xs">
-              {pendingCounter.map(pc => pc.value)} New
+                {pendingCounter.map((pc) => pc.value)} New
               </span>
             </div>
             <svg
-              className={`w-5 h-5 transform transition-transform ${showPending ? "rotate-0" : "rotate-180"}`}
+              className={`w-5 h-5 transform transition-transform ${
+                showPending ? "rotate-0" : "rotate-180"
+              }`}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -279,7 +311,6 @@ export default function MemberPage() {
                           >
                             <FileText size={18} />
                           </a>
-
                         </div>
                       </td>
                       <td className="py-3 text-center">

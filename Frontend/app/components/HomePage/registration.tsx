@@ -24,18 +24,17 @@ export function Register() {
           </motion.div>
         </div>
 
-        {/* RIGHT IMAGES */}
         <div className="relative w-full h-[220px] sm:h-[260px] md:h-[340px]">
           <img
-            src="/galeri/eventB.jpg"
+            src="/regist/register1.jpg"
             className="w-40 sm:w-52 md:w-64 rounded-xl shadow-lg object-cover -rotate-4 absolute -top-4 sm:-top-6 left-4 sm:left-10"
           />
           <img
-            src="/galeri/eventA.jpg"
+            src="/regist/register2.jpg"
             className="w-40 sm:w-52 md:w-64 rounded-xl shadow-lg object-cover rotate-3 absolute top-10 sm:top-14 left-24 sm:left-32"
           />
           <img
-            src="/galeri/eventC.jpg"
+            src="/regist/register3.jpg"
             className="w-40 sm:w-52 md:w-64 rounded-xl shadow-lg object-cover -rotate-2 absolute bottom-0 left-10 sm:left-16 z-0"
           />
         </div>

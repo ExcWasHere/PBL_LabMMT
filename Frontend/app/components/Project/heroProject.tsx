@@ -12,7 +12,7 @@ export default function header() {
       <div className="absolute inset-0">
         {/* Banner */}
         <img
-          src="/home/kondisiLab.jpg"
+          src="/home/projectPage.jpg"
           className="absolute inset-0 object-cover w-full h-full"
           style={{
             objectPosition: "center center",

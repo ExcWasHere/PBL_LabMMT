@@ -41,25 +41,21 @@ export default function IndexHero() {
   return (
     <div className="relative min-h-[70vh] md:min-h-screen w-full mx-auto overflow-hidden">
       <div className="absolute inset-0">
-        {/* Banner */}
         <img
-          src="/home/kondisiLab.jpg"
+          src="/home/LabCondition.jpg"
           className="absolute inset-0 object-cover w-full h-full"
           style={{ objectPosition: "center center", filter: "brightness(45%)" }}
           alt="bannerLab"
         />
 
-        {/* Soft Gradient */}
         <div className="h-full w-full absolute inset-0 bg-linear-to-t from-orange-500/30 via-transparent to-transparent" />
 
-        {/* Content */}
         <div className="absolute inset-0 flex flex-col justify-center items-center text-center px-4 sm:px-6 lg:px-10">
           <div
             className={`transition-all duration-700 ease-out ${
               isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
             } max-w-4xl mx-auto`}
           >
-            {/* TAGS */}
             <div className="flex flex-wrap justify-center gap-2 sm:gap-3 mb-4 sm:mb-6">
               {[
                 { label: "Game Dev", icon: <Gamepad2 size={14} /> },
@@ -92,7 +88,6 @@ export default function IndexHero() {
         </div>
       </div>
 
-      {/* Floating Animation */}
       <style>{`
         @keyframes floating {
           0% { transform: translateY(0); }

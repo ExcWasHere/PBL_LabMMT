@@ -34,9 +34,9 @@ export default function AuthPages() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const slides = [
-    { src: "/images/photo-1.jpg", alt: "Foto 1" },
-    { src: "/images/photo-2.jpg", alt: "Foto 2" },
-    { src: "/images/photo-3.jpg", alt: "Foto 3" },
+    { src: "/regist/register1.jpg", alt: "Foto 1" },
+    { src: "/regist/register2.jpg", alt: "Foto 2" },
+    { src: "/regist/register3.jpg", alt: "Foto 3" },
   ];
   const [activeIndex, setActiveIndex] = useState(0);
   const autoPlayRef = useRef<number | null>(null);

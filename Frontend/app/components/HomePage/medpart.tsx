@@ -44,7 +44,6 @@ export function MediaPartner() {
           />
         </div>
 
-        {/* CAROUSEL */}
         <div className="overflow-hidden">
           <div
             className="flex gap-8 sm:gap-12 transition-transform duration-500 ease-out"

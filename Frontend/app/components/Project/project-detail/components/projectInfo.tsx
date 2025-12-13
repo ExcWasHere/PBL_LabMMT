@@ -98,7 +98,6 @@ export function ProjectInfo({ title = "Project A", description = "Lorem ipsum do
                         </a>
                       ))
                     ) : (
-                      // Fallback jika user lupa ganti format data lama (hanya string url)
                       <a
                         href={detail.value as string}
                         target="_blank"

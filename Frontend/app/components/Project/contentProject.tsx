@@ -1,8 +1,119 @@
-import { Search, Funnel } from "lucide-react";
-import { useState } from "react";
+"use client";
+
+import { Search, Funnel, ChevronDown, Check } from "lucide-react";
+import { useState, useRef, useEffect, useLayoutEffect } from "react";
+import type { ElementType } from "react";
+import { createPortal } from "react-dom";
 import Card from "../../common/card";
 import { Link } from "react-router-dom";
 import { projects } from "~/components/Project/dataProjects";
+
+interface CustomDropdownProps {
+  value: string;
+  onChange: (value: string) => void;
+  options: { value: string; label: string }[];
+  placeholder: string;
+  icon?: ElementType;
+}
+
+function CustomDropdown({ value, onChange, options, placeholder, icon: Icon }: CustomDropdownProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const [menuStyle, setMenuStyle] = useState({});
+
+  useEffect(() => {
+    const handleScroll = () => isOpen && setIsOpen(false);
+    window.addEventListener("scroll", handleScroll, true);
+    return () => window.removeEventListener("scroll", handleScroll, true);
+  }, [isOpen]);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (buttonRef.current && !buttonRef.current.contains(event.target as Node)) {
+        const menuElement = document.getElementById(`dropdown-menu-${placeholder}`);
+        if (menuElement && !menuElement.contains(event.target as Node)) {
+          setIsOpen(false);
+        }
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [placeholder]);
+
+  useLayoutEffect(() => {
+    if (isOpen && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setMenuStyle({
+        top: rect.bottom + 8,
+        left: rect.left,
+        minWidth: rect.width,
+      });
+    }
+  }, [isOpen]);
+
+  const selectedLabel = options.find((opt) => opt.value === value)?.label || placeholder;
+
+  return (
+    <>
+      <button
+        ref={buttonRef}
+        onClick={() => setIsOpen(!isOpen)}
+        className={`
+          relative flex items-center justify-between w-full text-left px-4 h-12 whitespace-nowrap
+          bg-[#FAF5F0] hover:bg-[#F4EBE4] transition-colors rounded-xl
+          text-gray-700 font-medium text-sm sm:text-base
+          ${isOpen ? 'bg-[#F4EBE4] ring-1 ring-orange-200/50' : ''}
+        `}
+      >
+    
+        <div className="flex items-center gap-2 overflow-hidden">
+          {Icon && <Icon size={18} className="text-gray-500 shrink-0" />}
+          <span className={`truncate ${value ? "text-gray-900" : "text-gray-600"}`}>
+            {selectedLabel}
+          </span>
+        </div>
+        <ChevronDown
+          size={18}
+          className={`ml-2 text-gray-400 shrink-0 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+        />
+      </button>
+
+      {isOpen && createPortal(
+        <div
+          id={`dropdown-menu-${placeholder}`}
+          className="fixed z-[9999] bg-white rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.15)] border border-gray-100 overflow-hidden animate-in fade-in zoom-in-95 duration-100 origin-top"
+          style={{
+            ...menuStyle,
+            width: "max-content",
+            maxWidth: "90vw"
+          }}
+        >
+          <div className="py-2 max-h-60 overflow-y-auto">
+            <div
+              onClick={() => { onChange(""); setIsOpen(false); }}
+              className={`px-4 py-2.5 text-sm cursor-pointer transition-colors flex items-center justify-between ${value === "" ? "bg-orange-50 text-orange-600 font-medium" : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"}`}
+            >
+              <span>All {placeholder}</span>
+              {value === "" && <Check size={16} className="text-orange-500" />}
+            </div>
+
+            {options.map((opt) => (
+              <div
+                key={opt.value}
+                onClick={() => { onChange(opt.value); setIsOpen(false); }}
+                className={`px-4 py-2.5 text-sm cursor-pointer transition-colors flex items-center justify-between ${value === opt.value ? "bg-orange-50 text-orange-600 font-medium" : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"}`}
+              >
+                <span>{opt.label}</span>
+                {value === opt.value && <Check size={16} className="text-orange-500" />}
+              </div>
+            ))}
+          </div>
+        </div>,
+        document.body
+      )}
+    </>
+  );
+}
 
 export function ContentProject() {
   const [category, setCategory] = useState("");
@@ -10,25 +121,40 @@ export function ContentProject() {
   const [year, setYear] = useState("");
   const [sort, setSort] = useState("");
   const [search, setSearch] = useState("");
-
   const [visible, setVisible] = useState(6);
 
+  const categoryOptions = [
+    { value: "ui/ux", label: "UI/UX" },
+    { value: "game", label: "Game Dev" },
+    { value: "ar/vr", label: "AR/VR" },
+  ];
+  const techOptions = [
+    { value: "React", label: "React" },
+    { value: "Tailwind", label: "Tailwind" },
+    { value: "Unity", label: "Unity" },
+    { value: "Figma", label: "Figma" },
+  ];
+  const yearOptions = [
+    { value: "2023", label: "2023" },
+    { value: "2024", label: "2024" },
+    { value: "2025", label: "2025" },
+  ];
+  const sortOptions = [
+    { value: "popular", label: "Popular" },
+    { value: "oldest", label: "Oldest" },
+    { value: "latest", label: "Latest" },
+    { value: "a-z", label: "A - Z" },
+    { value: "z-a", label: "Z - A" },
+  ];
+
   const filteredProject = projects
-    .filter((item) =>
-      search ? item.title.toLowerCase().includes(search.toLowerCase()) : true
-    )
-    .filter((item) =>
-      category ? item.info.toLowerCase() === category.toLowerCase() : true
-    )
+    .filter((item) => search ? item.title.toLowerCase().includes(search.toLowerCase()) : true)
+    .filter((item) => category ? item.info.toLowerCase() === category.toLowerCase() : true)
     .filter((item) => (tags ? item.tags.includes(tags) : true))
     .filter((item) => (year ? item.date.includes(year) : true))
     .sort((a, b) => {
-      if (sort === "latest") {
-        return new Date(b.date).getTime() - new Date(a.date).getTime();
-      }
-      if (sort === "oldest") {
-        return new Date(a.date).getTime() - new Date(b.date).getTime();
-      }
+      if (sort === "latest") return new Date(b.date).getTime() - new Date(a.date).getTime();
+      if (sort === "oldest") return new Date(a.date).getTime() - new Date(b.date).getTime();
       if (sort === "a-z") return a.title.localeCompare(b.title);
       if (sort === "z-a") return b.title.localeCompare(a.title);
       return 0;
@@ -39,100 +165,75 @@ export function ContentProject() {
   return (
     <>
       <div className="bg-white min-h-screen">
-        <main className="py-10">
+        <main className="py-6 sm:py-10">
           <section id="intro">
             <div className="max-w-6xl mx-auto px-4 sm:px-6">
-              <div className="flex flex-col md:flex-row flex-wrap gap-4 items-stretch md:items-center justify-between mb-8">
-                <div className="flex items-center bg-[#f5ece5] rounded-lg px-3 py-2 w-full md:flex-1 shadow-sm">
-                  <Search className="stroke-black shrink-0" size={20} />
+
+              <div className="flex flex-col md:flex-row flex-wrap gap-4 items-stretch md:items-center justify-between mb-8 z-20 relative">
+                
+           
+                <div className="flex items-center bg-[#FAF5F0] rounded-xl px-4 h-12 w-full md:flex-1 border border-transparent focus-within:border-orange-200 transition-all">
+                  <Search className="stroke-gray-400 shrink-0" size={20} />
                   <input
                     type="text"
                     placeholder="Search"
-                    className="bg-transparent flex-1 ml-2 focus:outline-none text-gray-700 placeholder-black min-w-0"
+                    className="bg-transparent flex-1 ml-3 focus:outline-none text-gray-800 placeholder-gray-400 min-w-0 h-full"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                   />
                 </div>
 
-                <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
-                  <div className="flex items-center bg-[#f5ece5] rounded-lg px-3 py-2 w-full sm:w-auto shadow-sm">
-                    <select
-                      className="bg-transparent flex-1 focus:outline-none text-black placeholder-black cursor-pointer w-full sm:w-32"
-                      value={category}
-                      onChange={(e) => setCategory(e.target.value)}
-                    >
-                      <option value="">Category</option>
-                      <option value="ui/ux">UI/UX</option>
-                      <option value="game">Game</option>
-                      <option value="ar/vr">AR/VR</option>
-                    </select>
+                <div className="block md:hidden w-full">
+                  <div className="flex flex-row gap-3 overflow-x-auto -mx-4 px-4 pb-2 no-scrollbar">
+                    <div className="min-w-[140px] flex-shrink-0">
+                      <CustomDropdown placeholder="Category" options={categoryOptions} value={category} onChange={setCategory} />
+                    </div>
+                    <div className="min-w-[130px] flex-shrink-0">
+                      <CustomDropdown placeholder="Tech" options={techOptions} value={tags} onChange={setTags} />
+                    </div>
+                    <div className="min-w-[120px] flex-shrink-0">
+                      <CustomDropdown placeholder="Year" options={yearOptions} value={year} onChange={setYear} />
+                    </div>
+                    <div className="min-w-[140px] flex-shrink-0">
+                      <CustomDropdown placeholder="Sort By" icon={Funnel} options={sortOptions} value={sort} onChange={setSort} />
+                    </div>
                   </div>
+                </div>
 
-                  <div className="flex items-center bg-[#f5ece5] rounded-lg px-3 py-2 w-full sm:w-auto shadow-sm">
-                    <select
-                      className="bg-transparent flex-1 focus:outline-none text-black placeholder-black cursor-pointer w-full sm:w-28"
-                      value={tags}
-                      onChange={(e) => setTags(e.target.value)}
-                    >
-                      <option value="">All Tech</option>
-                      <option value="React">React</option>
-                      <option value="Tailwind">Tailwind</option>
-                      <option value="Unity">Unity</option>
-                      <option value="Figma">Figma</option>
-                    </select>
+                <div className="hidden md:flex flex-row gap-4 w-auto">
+                  <div className="w-36">
+                    <CustomDropdown placeholder="Category" options={categoryOptions} value={category} onChange={setCategory} />
                   </div>
-
-                  <div className="flex items-center bg-[#f5ece5] rounded-lg px-3 py-2 w-full sm:w-auto shadow-sm">
-                    <select
-                      className="bg-transparent flex-1 focus:outline-none text-black placeholder-black cursor-pointer w-full sm:w-24"
-                      value={year}
-                      onChange={(e) => setYear(e.target.value)}
-                    >
-                      <option value="">All Years</option>
-                      <option value="2023">2023</option>
-                      <option value="2024">2024</option>
-                      <option value="2025">2025</option>
-                    </select>
+                  <div className="w-32">
+                    <CustomDropdown placeholder="Tech" options={techOptions} value={tags} onChange={setTags} />
                   </div>
-
-                  <div className="flex items-center bg-[#f5ece5] rounded-lg px-3 py-2 w-full sm:w-auto shadow-sm">
-                    {!sort && (
-                      <Funnel size={18} className="stroke-black shrink-0" />
-                    )}
-                    <select
-                      className="bg-transparent flex-1 ml-1 text-sm focus:outline-none text-black placeholder-black cursor-pointer w-full sm:w-28"
-                      value={sort}
-                      onChange={(e) => setSort(e.target.value)}
-                    >
-                      <option value="">Sort by</option>
-                      <option value="popular">Popular</option>
-                      <option value="oldest">Oldest</option>
-                      <option value="latest">Latest</option>
-                      <option value="a-z">A - Z</option>
-                      <option value="z-a">Z - A</option>
-                    </select>
+                  <div className="w-28">
+                    <CustomDropdown placeholder="Year" options={yearOptions} value={year} onChange={setYear} />
+                  </div>
+                  <div className="w-36">
+                    <CustomDropdown placeholder="Sort By" icon={Funnel} options={sortOptions} value={sort} onChange={setSort} />
                   </div>
                 </div>
               </div>
 
-              <div className="bg-white py-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-                  {showingProjects.map((e, i) =>
-                    e.title === "Project A" ? (
-                      <Link
-                        to="/project-detail"
-                        key={i}
-                        className="block h-full"
+              <div className="bg-white py-4 z-0 relative">
+                {filteredProject.length === 0 ? (
+                  <div className="text-center py-20 text-gray-500">
+                    <p>No projects found.</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+                    {showingProjects.map((e, i) => (
+                      <Link 
+                        key={i} 
+                        to="/project-detail" 
+                        className="block h-full hover:no-underline"
                       >
                         <Card {...e} />
                       </Link>
-                    ) : (
-                      <div key={i} className="h-full">
-                        <Card {...e} />
-                      </div>
-                    )
-                  )}
-                </div>
+                    ))}
+                  </div>
+                )}
 
                 {visible < filteredProject.length && (
                   <div className="flex justify-center mt-10">
@@ -149,6 +250,16 @@ export function ContentProject() {
           </section>
         </main>
       </div>
+
+      <style>{`
+        .no-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+        .no-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+      `}</style>
     </>
   );
 }

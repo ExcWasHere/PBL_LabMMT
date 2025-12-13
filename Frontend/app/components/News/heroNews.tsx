@@ -6,7 +6,7 @@ export default function IndexHero() {
       <div className="absolute inset-0">
         {/* Banner */}
         <img
-          src="/home/kondisiLab.jpg"
+          src="/home/newsPage.jpg"
           className="absolute inset-0 object-cover w-full h-full"
           style={{
             objectPosition: "center center",

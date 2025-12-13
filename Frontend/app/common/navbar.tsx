@@ -7,7 +7,7 @@ interface HeaderProps {}
 const Navbar: React.FC<HeaderProps> = () => {
   const [isScrolled, setIsScrolled] = useState<boolean>(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
-  const [activeItem, setActiveItem] = useState<string>("Beranda");
+  const [activeItem, setActiveItem] = useState<string>("Home");
   const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
   const currentPage = useLocation();
 
@@ -59,7 +59,7 @@ const Navbar: React.FC<HeaderProps> = () => {
         <li key={item} className="relative group">
           <a
             href={`${
-              item === "Beranda"
+              item === "Home"
                 ? "/"
                 : `/${item.toLowerCase().replace(/\s+/g, "-")}`
             }`}
@@ -87,7 +87,7 @@ const Navbar: React.FC<HeaderProps> = () => {
         <li key={item} className="px-4">
           <a
             href={
-              item === "Beranda"
+              item === "Home"
                 ? "/"
                 : `/${item.toLowerCase().replace(/\s+/g, "-")}`
             }

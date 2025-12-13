@@ -19,6 +19,15 @@ export class NewsController {
   create(@Body() createNewsDto: CreateNewsDto) {
     return this.newsService.create(createNewsDto);
   }
+  @Get('public')
+  findPublished() {
+    return this.newsService.findPublished();
+  }
+
+  @Get('slug/:slug')
+  findBySlug(@Param('slug') slug: string) {
+    return this.newsService.findBySlug(slug);
+  }
 
   @Get()
   findAll() {

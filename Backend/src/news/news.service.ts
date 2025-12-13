@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThanOrEqual } from 'typeorm';
@@ -5,6 +7,7 @@ import { CreateNewsDto } from './dto/create-news.dto';
 import { UpdateNewsDto } from './dto/update-news.dto';
 import { News } from './entities/news.entity';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import slugify from 'slugify';
 
 @Injectable()
 export class NewsService {
@@ -15,8 +18,22 @@ export class NewsService {
   ) {}
 
   create(dto: CreateNewsDto) {
-    const news = this.newsRepo.create(dto);
+    const news = this.newsRepo.create({
+      ...dto,
+      slug: slugify(dto.title, { lower: true, strict: true }),
+    });
     return this.newsRepo.save(news);
+  }
+
+  findPublished() {
+    return this.newsRepo.find({
+      where: { status: 'Published' },
+      order: { createdAt: 'DESC' },
+    });
+  }
+
+  findBySlug(slug: string) {
+    return this.newsRepo.findOne({ where: { slug } });
   }
 
   findAll() {
@@ -49,7 +66,7 @@ export class NewsService {
     const pendingNews = await this.newsRepo.find({
       where: {
         status: 'Waiting',
-        year: LessThanOrEqual(today), 
+        year: LessThanOrEqual(today),
       },
     });
 
@@ -60,7 +77,7 @@ export class NewsService {
         this.logger.log(`Auto-published news: ${news.title}`);
       }
     } else {
-        this.logger.debug('No scheduled news found.');
+      this.logger.debug('No scheduled news found.');
     }
   }
 }

@@ -25,8 +25,8 @@ export class News {
 
   @Column({
     type: 'enum',
-    enum: ['Published', 'Review', 'Waiting', 'Muted'], 
-    default: 'Review', 
+    enum: ['Published', 'Review', 'Waiting', 'Muted', 'Rejected'],
+    default: 'Review',
   })
   status: string;
 
@@ -36,11 +36,11 @@ export class News {
   @Column({ type: 'varchar', length: 500, nullable: true })
   imageUrl: string;
 
-  // @Column({ type: 'varchar', length: 500, nullable: true })
-  // docGuide: string;
+  @Column({ type: 'varchar', length: 500, nullable: true })
+  docGuide: string;
 
-  // @Column({ name: 'newsLink', type: 'varchar', length: 500, nullable: true })
-  // newsLink: string;
+  @Column({ name: 'newsLink', type: 'varchar', length: 500, nullable: true })
+  newsLink: string;
 
   @CreateDateColumn()
   createdAt: Date;

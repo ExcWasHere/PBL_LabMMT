@@ -11,6 +11,29 @@ const API_BASE_URL = "http://localhost:3000";
 const PROJECT_ENDPOINT = `${API_BASE_URL}/project`;
 const UPLOAD_ENDPOINT = `${API_BASE_URL}/upload`;
 
+const normalizeUrl = (val: any): string => {
+  if (!val) return "";
+  if (typeof val === "object") {
+    return val.url || val.path || "";
+  }
+  if (typeof val === "string") {
+    try {
+      const parsed = JSON.parse(val);
+      return parsed.url || parsed.path || val;
+    } catch {
+      return val.replace(/["{}]/g, "").trim();
+    }
+  }
+
+  return "";
+};
+
+const withBaseUrl = (url?: string) => {
+  if (!url) return "";
+  if (url.startsWith("http")) return url;
+  return `${API_BASE_URL}/${url.replace(/^\/+/, "")}`;
+};
+
 const mapApiToProject = (p: any) => ({
   id: String(p.id),
   title: p.title ?? p.name ?? "-",

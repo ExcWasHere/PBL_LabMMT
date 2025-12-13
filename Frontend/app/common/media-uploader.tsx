@@ -11,7 +11,11 @@ interface MediaUploaderProps {
   allowMultiple?: boolean;
 }
 
-type PreviewItem = { url: string; type: string };
+type PreviewItem = {
+  url: string;
+  type: "image" | "video" | "file";
+  isBlob: boolean;
+};
 
 export default function MediaUploader({
   label = "Upload Media",
@@ -28,9 +32,10 @@ export default function MediaUploader({
   const [isDragging, setIsDragging] = useState(false);
 
   useEffect(() => {
-    const nonBlob = initialMedia.filter((url) => !url.startsWith("blob:"));
-    setExistingUrls(nonBlob);
-  }, [initialMedia]);
+    if (newFiles.length === 0) {
+      setExistingUrls(initialMedia);
+    }
+  }, [initialMedia, newFiles.length]);
 
   useEffect(() => {
     return () => {
@@ -40,18 +45,41 @@ export default function MediaUploader({
     };
   }, [newPreviewUrls]);
 
+  const getFileType = (url: string, file?: File): "image" | "video" | "file" => {
+    if (file) {
+      if (file.type.startsWith("image/")) return "image";
+      if (file.type.startsWith("video/")) return "video";
+      return "file"; 
+    }
+    const lowerUrl = url.toLowerCase();
+    if (lowerUrl.match(/\.(mp4|webm|ogg|mov)$/)) return "video";
+    if (lowerUrl.match(/\.(pdf|doc|docx|xls|xlsx|zip|rar)$/)) return "file";
+    
+    if (accept?.includes(".pdf") && !lowerUrl.match(/\.(jpg|jpeg|png|gif|webp)$/)) {
+        return "file";
+    }
+    return "image";
+  };
+
   const buildPreviews = (): PreviewItem[] => {
-    const existing: PreviewItem[] = existingUrls.map((url) => {
-      const isVideo = url.match(/\.(mp4|webm|ogg|mov)$/i);
-      return {
+    if (!allowMultiple && newPreviewUrls.length > 0) {
+      return newPreviewUrls.map((url, idx) => ({
         url,
-        type: isVideo ? "video/mp4" : "image/jpeg",
-      };
-    });
+        type: getFileType(url, newFiles[idx]),
+        isBlob: true,
+      }));
+    }
+
+    const existing: PreviewItem[] = existingUrls.map((url) => ({
+      url,
+      type: getFileType(url),
+      isBlob: url.startsWith("blob:"),
+    }));
 
     const news: PreviewItem[] = newPreviewUrls.map((url, idx) => ({
       url,
-      type: newFiles[idx]?.type || "image/jpeg",
+      type: getFileType(url, newFiles[idx]),
+      isBlob: true,
     }));
 
     return [...existing, ...news];
@@ -63,55 +91,58 @@ export default function MediaUploader({
     if (!fileList) return;
 
     const incoming = Array.from(fileList);
-    const currentCount = existingUrls.length + newFiles.length;
-    if (currentCount + incoming.length > maxFiles) {
-      alert(`Maksimal ${maxFiles} file`);
-      return;
-    }
-
-    const incomingUrls = incoming.map((file) => URL.createObjectURL(file));
-
-    let updatedFiles: File[];
-    let updatedPreviewUrls: string[];
+    const totalCurrent = existingUrls.length + newFiles.length;
 
     if (allowMultiple) {
-      updatedFiles = [...newFiles, ...incoming];
-      updatedPreviewUrls = [...newPreviewUrls, ...incomingUrls];
+      if (totalCurrent + incoming.length > maxFiles) {
+        alert(`Maksimal ${maxFiles} file`);
+        return;
+      }
+      const incomingUrls = incoming.map((file) => URL.createObjectURL(file));
+      
+      setNewFiles([...newFiles, ...incoming]);
+      setNewPreviewUrls([...newPreviewUrls, ...incomingUrls]);
+      onMediaChange([...newFiles, ...incoming]);
     } else {
-      newPreviewUrls.forEach((url) => {
-        if (url.startsWith("blob:")) URL.revokeObjectURL(url);
-      });
+      const incomingUrls = incoming.map((file) => URL.createObjectURL(file));
+      
+      newPreviewUrls.forEach((url) => URL.revokeObjectURL(url));
 
-      updatedFiles = incoming.slice(0, 1);
-      updatedPreviewUrls = incomingUrls.slice(0, 1);
       setExistingUrls([]);
+      setNewFiles(incoming.slice(0, 1));
+      setNewPreviewUrls(incomingUrls.slice(0, 1));
+      onMediaChange(incoming.slice(0, 1));
     }
-
-    setNewFiles(updatedFiles);
-    setNewPreviewUrls(updatedPreviewUrls);
-    onMediaChange(updatedFiles);
   };
 
-  const handleRemove = (index: number) => {
-    if (index < existingUrls.length) {
+  const handleRemove = (index: number) => {    
+    let isRemovingExisting = false;
+    
+    if (!allowMultiple && newFiles.length > 0) {
+        isRemovingExisting = false;
+    } else {
+        isRemovingExisting = index < existingUrls.length;
+    }
+
+    if (isRemovingExisting) {
       const newExisting = existingUrls.filter((_, i) => i !== index);
       setExistingUrls(newExisting);
-      onMediaChange(newFiles);
+      onMediaChange(newFiles); 
       return;
     }
 
-    const newIndex = index - existingUrls.length;
-    const urlToRemove = newPreviewUrls[newIndex];
+    const relativeIndex = isRemovingExisting ? (index - existingUrls.length) : index;
+    
+    if (relativeIndex < 0 || relativeIndex >= newFiles.length) return;
 
-    if (urlToRemove && urlToRemove.startsWith("blob:")) {
-      URL.revokeObjectURL(urlToRemove);
-    }
+    const urlToRemove = newPreviewUrls[relativeIndex];
+    if (urlToRemove) URL.revokeObjectURL(urlToRemove);
 
-    const updatedPreviewUrls = newPreviewUrls.filter((_, i) => i !== newIndex);
-    const updatedFiles = newFiles.filter((_, i) => i !== newIndex);
+    const updatedFiles = newFiles.filter((_, i) => i !== relativeIndex);
+    const updatedUrls = newPreviewUrls.filter((_, i) => i !== relativeIndex);
 
-    setNewPreviewUrls(updatedPreviewUrls);
     setNewFiles(updatedFiles);
+    setNewPreviewUrls(updatedUrls);
     onMediaChange(updatedFiles);
   };
 
@@ -135,7 +166,7 @@ export default function MediaUploader({
           setIsDragging(false);
           handleFiles(e.dataTransfer.files);
         }}
-        className={`flex flex-col items-center justify-center w-full h-40 border-2 border-dashed rounded-lg cursor-pointer transition relative overflow-hidden
+        className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer transition relative overflow-hidden
           ${
             isDragging
               ? "border-orange-500 bg-orange-50"
@@ -145,35 +176,39 @@ export default function MediaUploader({
         <div className="flex flex-col items-center pt-5 pb-6">
           <UploadCloud className="w-8 h-8 text-gray-400 mb-2" />
           <p className="text-sm text-gray-500 text-center px-4">
-            <span className="font-semibold">Click to upload</span> or drag and drop
+            <span className="font-semibold">Click to upload</span> or drag & drop
           </p>
           <p className="text-xs text-gray-400 mt-1">
-            {description || "Image, Video (Max 50MB)"}
+            {description || "Image, Video, or Document"}
           </p>
         </div>
+      
         <input
           type="file"
           className="hidden"
           multiple={allowMultiple}
           accept={accept}
-          onChange={(e) => handleFiles(e.target.files)}
+          onChange={(e) => {
+            handleFiles(e.target.files);
+            e.target.value = ""; 
+          }}
         />
       </label>
 
       {previews.length > 0 && (
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 mt-4">
+        <div className="grid grid-cols-4 sm:grid-cols-5 gap-3 mt-4">
           {previews.map((item, idx) => (
             <div
               key={idx}
               className="relative group aspect-square rounded-lg overflow-hidden border border-gray-200 bg-gray-100"
             >
-              {item.type.startsWith("image") ? (
+              {item.type === "image" ? (
                 <img
                   src={item.url}
                   alt="preview"
                   className="w-full h-full object-cover"
                 />
-              ) : item.type.startsWith("video") ? (
+              ) : item.type === "video" ? (
                 <div className="w-full h-full flex items-center justify-center bg-gray-900 relative">
                   <video
                     src={item.url}
@@ -182,10 +217,10 @@ export default function MediaUploader({
                   <FileVideo className="absolute text-white w-8 h-8" />
                 </div>
               ) : (
-                <div className="w-full h-full flex flex-col items-center justify-center p-2 text-center">
-                  <FileText className="text-gray-500 w-8 h-8 mb-1" />
-                  <span className="text-xs text-gray-500 break-all">
-                    File {idx + 1}
+                <div className="w-full h-full flex flex-col items-center justify-center p-2 text-center bg-white">
+                  <FileText className="text-orange-500 w-8 h-8 mb-1" />
+                  <span className="text-[10px] text-gray-500 leading-tight break-all px-1">
+                    {item.url.split('/').pop()?.substring(0, 15) || "File"}
                   </span>
                 </div>
               )}
@@ -195,7 +230,7 @@ export default function MediaUploader({
                 onClick={() => handleRemove(idx)}
                 className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition shadow-sm z-10"
               >
-                <X size={14} />
+                <X size={12} />
               </button>
             </div>
           ))}

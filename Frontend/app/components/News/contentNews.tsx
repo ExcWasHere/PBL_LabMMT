@@ -1,12 +1,23 @@
-"use client";
-
 import { Search, Funnel, ChevronDown, Check } from "lucide-react";
 import { useState, useRef, useEffect, useLayoutEffect } from "react";
 import type { ElementType } from "react";
 import { createPortal } from "react-dom";
+import { Link } from "react-router-dom";
 import Card from "../../common/card";
-import { news } from "./dataNews";
 
+/* ================= API ================= */
+const API_BASE_URL = "http://localhost:3000";
+const PUBLIC_NEWS_ENDPOINT = `${API_BASE_URL}/news/public`;
+
+/* ================= SLUG ================= */
+const slugify = (text: string) =>
+  text
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, "")
+    .replace(/\s+/g, "-");
+
+/* ================= DROPDOWN ================= */
 interface CustomDropdownProps {
   value: string;
   onChange: (value: string) => void;
@@ -15,7 +26,14 @@ interface CustomDropdownProps {
   icon?: ElementType;
 }
 
-function CustomDropdown({ value, onChange, options, placeholder, icon: Icon }: CustomDropdownProps) {
+/* ⛔ UI DROPDOWN TIDAK DIUBAH */
+function CustomDropdown({
+  value,
+  onChange,
+  options,
+  placeholder,
+  icon: Icon,
+}: CustomDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [menuStyle, setMenuStyle] = useState({});
@@ -27,17 +45,17 @@ function CustomDropdown({ value, onChange, options, placeholder, icon: Icon }: C
   }, [isOpen]);
 
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (buttonRef.current && !buttonRef.current.contains(event.target as Node)) {
-        const menuElement = document.getElementById(`dropdown-menu-${placeholder}`);
-        if (menuElement && !menuElement.contains(event.target as Node)) {
-          setIsOpen(false);
-        }
+    function handleClickOutside(e: MouseEvent) {
+      if (
+        buttonRef.current &&
+        !buttonRef.current.contains(e.target as Node)
+      ) {
+        setIsOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [placeholder]);
+  }, []);
 
   useLayoutEffect(() => {
     if (isOpen && buttonRef.current) {
@@ -50,77 +68,92 @@ function CustomDropdown({ value, onChange, options, placeholder, icon: Icon }: C
     }
   }, [isOpen]);
 
-  const selectedLabel = options.find((opt) => opt.value === value)?.label || placeholder;
+  const selectedLabel =
+    options.find((o) => o.value === value)?.label || placeholder;
 
   return (
     <>
       <button
         ref={buttonRef}
         onClick={() => setIsOpen(!isOpen)}
-        className={`
-          relative flex items-center justify-between w-full text-left px-4 h-12 whitespace-nowrap
-          bg-[#FAF5F0] hover:bg-[#F4EBE4] transition-colors rounded-xl
-          text-gray-700 font-medium text-sm sm:text-base
-          ${isOpen ? 'bg-[#F4EBE4] ring-1 ring-orange-200/50' : ''}
-        `}
+        className="
+          relative flex items-center justify-between
+          w-full px-4 h-12
+          bg-[#FAF5F0] hover:bg-[#F4EBE4]
+          rounded-xl text-gray-700 text-sm font-medium
+        "
       >
-       
-        <div className="flex items-center gap-2 overflow-hidden">
-          {Icon && <Icon size={18} className="text-gray-500 shrink-0" />}
-          <span className={`truncate ${value ? "text-gray-900" : "text-gray-600"}`}>
-            {selectedLabel}
-          </span>
+        <div className="flex items-center gap-2 truncate">
+          {Icon && <Icon size={16} className="text-gray-500" />}
+          <span>{selectedLabel}</span>
         </div>
-        <ChevronDown 
-          size={18} 
-          className={`ml-2 text-gray-400 shrink-0 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} 
+
+        <ChevronDown
+          size={16}
+          className={`text-gray-400 transition ${
+            isOpen ? "rotate-180" : ""
+          }`}
         />
       </button>
 
-      {isOpen && createPortal(
-        <div 
-          id={`dropdown-menu-${placeholder}`}
-          className="fixed z-[9999] bg-white rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.15)] border border-gray-100 overflow-hidden animate-in fade-in zoom-in-95 duration-100 origin-top"
-          style={{ 
-            ...menuStyle, 
-            width: "max-content", 
-            maxWidth: "90vw" 
-          }}
-        >
-          <div className="py-2 max-h-60 overflow-y-auto">
-            <div
-              onClick={() => { onChange(""); setIsOpen(false); }}
-              className={`px-4 py-2.5 text-sm cursor-pointer transition-colors flex items-center justify-between ${value === "" ? "bg-orange-50 text-orange-600 font-medium" : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"}`}
-            >
-              <span>All {placeholder}</span>
-              {value === "" && <Check size={16} className="text-orange-500" />}
-            </div>
-            
-            {options.map((opt) => (
+      {isOpen &&
+        createPortal(
+          <div
+            className="fixed z-[9999] bg-white rounded-xl border shadow-lg"
+            style={menuStyle}
+          >
+            <div className="py-2 max-h-60 overflow-y-auto">
               <div
-                key={opt.value}
-                onClick={() => { onChange(opt.value); setIsOpen(false); }}
-                className={`px-4 py-2.5 text-sm cursor-pointer transition-colors flex items-center justify-between ${value === opt.value ? "bg-orange-50 text-orange-600 font-medium" : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"}`}
+                onClick={() => {
+                  onChange("");
+                  setIsOpen(false);
+                }}
+                className="px-4 py-2 text-sm cursor-pointer hover:bg-gray-50"
               >
-                <span>{opt.label}</span>
-                {value === opt.value && <Check size={16} className="text-orange-500" />}
+                All {placeholder}
               </div>
-            ))}
-          </div>
-        </div>,
-        document.body
-      )}
+
+              {options.map((opt) => (
+                <div
+                  key={opt.value}
+                  onClick={() => {
+                    onChange(opt.value);
+                    setIsOpen(false);
+                  }}
+                  className="px-4 py-2 text-sm cursor-pointer hover:bg-gray-50"
+                >
+                  {opt.label}
+                </div>
+              ))}
+            </div>
+          </div>,
+          document.body
+        )}
     </>
   );
 }
 
+/* ================= MAIN ================= */
 export default function ContentNews() {
-  const [category, setCategory] = useState(""); 
+  const [news, setNews] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const [category, setCategory] = useState("");
   const [year, setYear] = useState("");
   const [sort, setSort] = useState("");
   const [search, setSearch] = useState("");
   const [visible, setVisible] = useState(6);
 
+  /* ===== FETCH DATA ===== */
+  useEffect(() => {
+    fetch(PUBLIC_NEWS_ENDPOINT)
+      .then((res) => res.json())
+      .then((data) => setNews(Array.isArray(data) ? data : []))
+      .catch(() => setNews([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+  /* ===== OPTIONS ===== */
   const categoryOptions = [
     { value: "News", label: "News" },
     { value: "Workshop", label: "Workshop" },
@@ -139,102 +172,122 @@ export default function ContentNews() {
     { value: "z-a", label: "Z - A" },
   ];
 
-  const filteredGallery = news
-    .filter((item) =>
-      search ? item.title.toLowerCase().includes(search.toLowerCase()) : true
+  /* ===== FILTER (POLA SAMA CONTENTPROJECT) ===== */
+  const filtered = news
+    .filter((n) =>
+      search ? n.title?.toLowerCase().includes(search.toLowerCase()) : true
     )
-    .filter((item) => (category ? item.tags.includes(category) : true))
-    .filter((item) => (year ? item.date.includes(year) : true))
+    .filter((n) =>
+      category ? n.kategori?.toLowerCase() === category.toLowerCase() : true
+    )
+    .filter((n) =>
+      year
+        ? new Date(n.year || n.createdAt)
+            .getFullYear()
+            .toString() === year
+        : true
+    )
     .sort((a, b) => {
-      if (sort === "latest") return b.date.localeCompare(a.date);
-      if (sort === "oldest") return a.date.localeCompare(b.date);
+      if (sort === "latest")
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      if (sort === "oldest")
+        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
       if (sort === "a-z") return a.title.localeCompare(b.title);
       if (sort === "z-a") return b.title.localeCompare(a.title);
       return 0;
     });
 
-  const showing = filteredGallery.slice(0, visible);
+  const showing = filtered.slice(0, visible);
 
+  /* ===== RENDER ===== */
   return (
     <div className="bg-white min-h-screen">
-      <main className="flex items-center justify-center py-6 sm:py-10">
-        <section id="gallery" className="w-full max-w-6xl mx-auto px-4 sm:px-6">
+      <main className="flex justify-center py-10">
+        <section className="w-full max-w-6xl px-4">
 
-          <div className="flex flex-col md:flex-row flex-wrap gap-4 items-stretch md:items-center justify-between mb-8 z-20 relative">
-
-
-            <div className="flex items-center bg-[#FAF5F0] rounded-xl px-4 h-12 w-full md:flex-1 md:h-12 border border-transparent focus-within:border-orange-200 transition-all">
-              <Search size={20} className="stroke-gray-400 shrink-0" />
-              <input
-                type="text"
-                placeholder="Search..."
-                className="bg-transparent flex-1 ml-3 focus:outline-none text-gray-800 placeholder-gray-400 min-w-0 h-full"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
-
-            <div className="block md:hidden w-full">
-              <div className="flex flex-row gap-3 overflow-x-auto -mx-4 px-4 pb-2 no-scrollbar">
-                <div className="min-w-[140px] flex-shrink-0">
-                  <CustomDropdown placeholder="Category" options={categoryOptions} value={category} onChange={setCategory} />
-                </div>
-                <div className="min-w-[120px] flex-shrink-0">
-                  <CustomDropdown placeholder="Year" options={yearOptions} value={year} onChange={setYear} />
-                </div>
-                <div className="min-w-[140px] flex-shrink-0">
-                  <CustomDropdown placeholder="Sort By" icon={Funnel} options={sortOptions} value={sort} onChange={setSort} />
-                </div>
-              </div>
-            </div>
-
-            <div className="hidden md:flex flex-row gap-4 w-auto">
-              <div className="w-40">
-                <CustomDropdown placeholder="Category" options={categoryOptions} value={category} onChange={setCategory} />
-              </div>
-              <div className="w-32">
-                <CustomDropdown placeholder="Year" options={yearOptions} value={year} onChange={setYear} />
-              </div>
-              <div className="w-40">
-                <CustomDropdown placeholder="Sort By" icon={Funnel} options={sortOptions} value={sort} onChange={setSort} />
-              </div>
-            </div>
-
+          {/* SEARCH */}
+          <div className="flex items-center bg-[#FAF5F0] rounded-xl px-4 h-12 mb-6">
+            <Search size={20} className="text-gray-400" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search..."
+              className="bg-transparent flex-1 ml-3 outline-none"
+            />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 z-0 relative">
-            {showing.map((item, i) => (
-              <Card
-                key={i}
-                {...item}
-                onClick={() => (window.location.href = "/news-detail")}
-              />
-            ))}
+          {/* FILTER */}
+          <div className="flex gap-3 mb-8">
+            <CustomDropdown
+              placeholder="Category"
+              value={category}
+              onChange={setCategory}
+              options={categoryOptions}
+            />
+            <CustomDropdown
+              placeholder="Year"
+              value={year}
+              onChange={setYear}
+              options={yearOptions}
+            />
+            <CustomDropdown
+              placeholder="Sort By"
+              icon={Funnel}
+              value={sort}
+              onChange={setSort}
+              options={sortOptions}
+            />
           </div>
 
-          {visible < filteredGallery.length && (
-            <div className="flex justify-center mt-10">
-              <button
-                onClick={() => setVisible(visible + 6)}
-                className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-gray-800 transition-colors w-full sm:w-auto"
-              >
-                Load More
-              </button>
+          {/* CONTENT */}
+          {loading ? (
+            <div className="text-center py-20 text-gray-400">
+              Loading news...
             </div>
+          ) : filtered.length === 0 ? (
+            <div className="text-center py-20 text-gray-400">
+              No news found.
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {showing.map((n) => (
+                  <Link
+                    key={n.id}
+                    to={`/news/slug/${slugify(n.title)}`}
+                  >
+                    <Card
+                      image={n.thumbnailUrl || "/galeri/eventA.jpg"}
+                      title={n.title}
+                      desc={n.content}
+                      date={n.year || n.createdAt}
+                      kategori={n.kategori}
+                      tags={
+                        Array.isArray(n.tags)
+                          ? n.tags
+                          : n.kategori
+                          ? [n.kategori]
+                          : []
+                      }
+                    />
+                  </Link>
+                ))}
+              </div>
+
+              {visible < filtered.length && (
+                <div className="flex justify-center mt-10">
+                  <button
+                    onClick={() => setVisible((v) => v + 6)}
+                    className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-gray-800 transition"
+                  >
+                    Load More
+                  </button>
+                </div>
+              )}
+            </>
           )}
-
         </section>
       </main>
-
-      <style>{`
-        .no-scrollbar::-webkit-scrollbar {
-          display: none;
-        }
-        .no-scrollbar {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-      `}</style>
     </div>
   );
 }

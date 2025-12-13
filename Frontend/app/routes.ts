@@ -8,7 +8,7 @@ export default [
     route("preview-project/:id", "routes/preview-project.tsx"),
     route("gallery", "routes/gallery.tsx"),
     route("news", "routes/news.tsx"),
-    route("news-detail", "routes/news-detail.tsx"),
+    route("news/slug/:slug", "routes/news-detail.tsx"),
     route("sign-in", "routes/masuk.tsx"),
     route("profil", "routes/profil.tsx"),
     route("dashboard-viewer", "routes/dashboard-viewer/dashboard.tsx"),

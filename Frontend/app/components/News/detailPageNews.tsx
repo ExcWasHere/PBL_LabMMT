@@ -1,61 +1,145 @@
-import React from "react";
+import { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
+
+const API_BASE_URL = "http://localhost:3000";
 
 export default function BeritaDetail() {
+  const { slug } = useParams<{ slug: string }>();
+  const navigate = useNavigate();
+
+  const [news, setNews] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    if (!slug) return;
+
+    setLoading(true);
+    setError(false);
+
+    fetch(`${API_BASE_URL}/news/slug/${slug}`)
+      .then((res) => {
+        if (!res.ok) throw new Error("Not found");
+        return res.json();
+      })
+      .then((data) => setNews(data))
+      .catch(() => setError(true))
+      .finally(() => setLoading(false));
+  }, [slug]);
+
+  /* ================= STATES ================= */
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-gray-400">
+        Loading news...
+      </div>
+    );
+  }
+
+  if (error || !news) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center text-gray-500">
+        <h2 className="text-2xl font-semibold mb-2">
+          Berita tidak ditemukan
+        </h2>
+        <p>Link mungkin salah atau berita sudah dihapus.</p>
+      </div>
+    );
+  }
+
+  /* ================= RENDER ================= */
+
   return (
     <div className="bg-white text-gray-800 min-h-screen relative">
-      
-      <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-black/5 to-transparent pointer-events-none"></div>
 
-      <div className="pt-28 pb-12 px-6 md:py-20 md:px-20">
-        <div className="max-w-7xl mx-auto">
-          
-          <img
-            src="/galeri/eventC.jpg"
-            alt="Header"
-            className="w-full rounded-xl shadow-lg object-cover aspect-video md:aspect-auto" 
-          />
+      {/* BACK BUTTON */}
+      <button
+        onClick={() => navigate(-1)}
+        className="
+          absolute top-8 left-6 md:left-10
+          z-10 flex items-center gap-2
+          bg-gradient-to-r from-orange-500 to-orange-600
+          text-white
+          px-5 py-2.5 rounded-full
+          shadow-lg hover:shadow-xl hover:scale-105
+          transition-all duration-300
+          font-medium
+        "
+      >
+        <ArrowLeft size={18} />
+        <span className="text-sm">Back</span>
+      </button>
 
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-center mt-8 md:mt-10 leading-tight text-gray-900">
-            Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem
-          </h1>
+      <div className="pt-28 pb-16 px-6 md:px-20 max-w-7xl mx-auto">
 
-          <p className="text-center text-gray-600 mt-3 text-sm">
-            Posted in April 17, 2025 —{" "}
-            <span className="font-semibold text-orange-600">Aulia Resty Azizah</span>
-          </p>
+        {/* HEADER IMAGE */}
+        <img
+          src={news.imageUrl || "/placeholder.png"}
+          alt={news.title}
+          className="w-full rounded-xl shadow-lg object-cover aspect-video"
+        />
 
-          <article className="mt-8 md:mt-10 text-gray-700 leading-relaxed text-base md:text-lg text-justify md:text-left">
-            <p>
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-            </p>
-            <p className="mt-4">
-              Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.
-            </p>
-          </article>
+        {/* TITLE */}
+        <h1 className="text-4xl md:text-5xl font-extrabold text-center mt-10">
+          {news.title}
+        </h1>
 
-          <div className="flex flex-col sm:flex-row flex-wrap justify-center gap-4 mt-10">
-            <a
-              href="#"
-              className="flex items-center justify-center gap-3 bg-orange-500 text-white px-6 py-3 rounded-lg text-sm font-medium hover:bg-orange-600 transition w-full sm:w-auto active:scale-95"
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zM14 3.5L19.5 9H14V3.5z" />
-              </svg>
-              Panduan
-            </a>
+        {/* META */}
+        <p className="text-center text-gray-600 mt-4 text-sm">
+          Posted on{" "}
+          {new Date(news.createdAt).toLocaleDateString("id-ID", {
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+          })}{" "}
+          —{" "}
+          <span className="font-semibold text-orange-600">
+            {news.publisher || "Admin"}
+          </span>
+        </p>
 
-            <a
-              href="#"
-              className="flex items-center justify-center gap-3 bg-white border border-orange-500 text-orange-500 px-6 py-3 rounded-lg text-sm font-medium hover:bg-orange-50 transition w-full sm:w-auto active:scale-95"
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M14 7h2a5 5 0 010 10h-2v-2h2a3 3 0 000-6h-2V7zm-4 10H8a5 5 0 010-10h2v2H8a3 3 0 000 6h2v2zm-3-6h10v2H7v-2z"/>
-              </svg>
-              Link Project
-            </a>
+        {/* CATEGORY */}
+        {news.kategori && (
+          <div className="flex justify-center mt-4">
+            <span className="bg-orange-100 text-orange-600 text-sm px-4 py-1 rounded-full">
+              {news.kategori}
+            </span>
           </div>
+        )}
 
-        </div>
+        {/* CONTENT */}
+        <article className="mt-12 text-gray-700 leading-relaxed text-lg whitespace-pre-line">
+          {news.content || "Tidak ada konten."}
+        </article>
+
+        {/* ACTION BUTTON */}
+        {(news.docGuide || news.newsLink) && (
+          <div className="flex justify-center flex-wrap gap-4 mt-14">
+            {news.docGuide && (
+              <a
+                href={news.docGuide}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-orange-500 text-white px-6 py-3 rounded-lg hover:bg-orange-600 transition"
+              >
+                Panduan
+              </a>
+            )}
+
+            {news.newsLink && (
+              <a
+                href={news.newsLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="border border-orange-500 text-orange-500 px-6 py-3 rounded-lg hover:bg-orange-50 transition"
+              >
+                Link Project
+              </a>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

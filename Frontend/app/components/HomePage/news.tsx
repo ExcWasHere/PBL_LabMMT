@@ -3,10 +3,10 @@ import Card from "../../common/card";
 import { news } from "~/components/News/dataNews";
 
 export function HomeBerita() {
-   const homeNews = news.slice(0, 3);
+  const homeNews = news.slice(0, 3);
 
   return (
-    <section className="bg-white text-left py-16 sm:py-20 lg:py-24 px-4 sm:px-6 lg:px-20">
+    <section className="bg-white text-left py-12 sm:py-20 lg:py-24 px-4 sm:px-6 lg:px-20">
       <div className="max-w-7xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -17,6 +17,7 @@ export function HomeBerita() {
         >
           <h2>News</h2>
         </motion.div>
+        
         <div className="mt-3 sm:mt-4 mb-8 sm:mb-10 overflow-hidden">
           <motion.div
             initial={{ width: 0 }}
@@ -27,7 +28,7 @@ export function HomeBerita() {
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 mb-10 sm:mb-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 sm:gap-6 md:gap-8 mb-8 sm:mb-12">
           {homeNews.map((item, idx) => (
             <motion.div
               key={idx}
@@ -36,8 +37,10 @@ export function HomeBerita() {
               transition={{ duration: 0.35, delay: idx * 0.08 }}
               viewport={{ once: true }}
             >
-              <Card {...item} 
-              onClick={() => (window.location.href = "/news-detail")}/>
+              <Card 
+                {...item} 
+                onClick={() => (window.location.href = "/news-detail")}
+              />
             </motion.div>
           ))}
         </div>
@@ -47,14 +50,13 @@ export function HomeBerita() {
           whileInView={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.25 }}
           viewport={{ once: true }}
+          className="w-full sm:w-auto flex justify-center"
         >
-          <div className="text-center">
-            <a href="/news">
-              <button className="bg-orange-500 text-white px-8 py-3 rounded-lg hover:bg-orange-600 duration-300 hover:scale-105">
-                See All
-              </button>
-            </a>
-          </div>
+          <a href="/news" className="block w-full sm:w-auto">
+            <button className="w-full sm:w-auto bg-orange-500 text-white px-8 py-3 rounded-lg hover:bg-orange-600 duration-300 hover:scale-105 font-medium">
+              See All
+            </button>
+          </a>
         </motion.div>
       </div>
     </section>

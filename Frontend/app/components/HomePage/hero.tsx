@@ -39,7 +39,7 @@ export default function IndexHero() {
   }, []);
 
   return (
-    <div className="relative min-h-[70vh] md:min-h-screen w-full mx-auto overflow-hidden">
+    <div className="relative min-h-[100dvh] w-full mx-auto overflow-hidden">
       <div className="absolute inset-0">
         <img
           src="/home/LabCondition.jpg"
@@ -48,7 +48,7 @@ export default function IndexHero() {
           alt="bannerLab"
         />
 
-        <div className="h-full w-full absolute inset-0 bg-linear-to-t from-orange-500/30 via-transparent to-transparent" />
+        <div className="h-full w-full absolute inset-0 bg-gradient-to-t from-orange-500/30 via-transparent to-transparent" />
 
         <div className="absolute inset-0 flex flex-col justify-center items-center text-center px-4 sm:px-6 lg:px-10">
           <div
@@ -75,12 +75,12 @@ export default function IndexHero() {
 
             <h1 className="text-white text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-bold mb-4 sm:mb-6 leading-tight drop-shadow-md">
               Welcome To Lab{" "}
-              <span className="text-orange-500">
+              <span className="text-orange-500 block sm:inline">
                 Multimedia Mobile Tech
               </span>
             </h1>
 
-            <p className="text-white text-sm sm:text-base md:text-lg max-w-2xl mx-auto drop-shadow-sm">
+            <p className="text-white text-sm sm:text-base md:text-lg max-w-2xl mx-auto drop-shadow-sm px-2">
               A place for students and lecturers to collaborate in creating
               innovative multimedia works that change the digital world.
             </p>

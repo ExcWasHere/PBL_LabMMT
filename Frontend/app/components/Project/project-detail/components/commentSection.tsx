@@ -88,7 +88,6 @@ export function CommentSection({
         </div>
       </div>
 
-      {/* List Comments */}
       <h3 className="text-xl font-bold flex items-center gap-2 mb-6">
         Reviews{" "}
         <span className="bg-gray-200 text-gray-700 text-xs px-2 py-0.5 rounded-full">
@@ -122,17 +121,15 @@ export function CommentSection({
                 </div>
                 <p className="text-gray-700 mb-3">{comment.text}</p>
                 
-                {/* --- ACTION BUTTONS (LIKE & REPLY) --- */}
                 <div className="flex items-center gap-4">
                   <button 
                     onClick={() => onLike(comment.id)}
                     className={`flex items-center gap-1 text-sm transition-colors ${
                       comment.isLike 
-                        ? "text-orange-500 font-bold"   // Style jika SUDAH like
-                        : "text-gray-400 hover:text-orange-500" // Style jika BELUM like
+                        ? "text-orange-500 font-bold"   
+                        : "text-gray-400 hover:text-orange-500" 
                     }`}
                   >
-                    {/* Opsional: Tambahkan fill={comment.isLiked ? "currentColor" : "none"} agar ikonnya penuh warna */}
                     <ThumbsUp 
                         size={16} 
                         fill={comment.isLike ? "currentColor" : "none"} 
@@ -142,12 +139,11 @@ export function CommentSection({
                   
                   <button 
                     onClick={() => {
-                        // Toggle Reply Form
                         if (activeReplyId === comment.id) {
                             setActiveReplyId(null);
                         } else {
                             setActiveReplyId(comment.id);
-                            setReplyTextContent(""); // Reset text saat buka baru
+                            setReplyTextContent("");
                         }
                     }}
                     className={`flex items-center gap-1 text-sm transition-colors ${activeReplyId === comment.id ? "text-orange-500 font-medium" : "text-gray-400 hover:text-orange-500"}`}
@@ -156,7 +152,6 @@ export function CommentSection({
                   </button>
                 </div>
 
-                {/* --- FORM REPLY INPUT (Muncul jika tombol reply diklik) --- */}
                 {activeReplyId === comment.id && (
                     <div className="mt-4 animate-in fade-in slide-in-from-top-2 duration-200">
                         <div className="flex gap-3">
@@ -191,7 +186,6 @@ export function CommentSection({
               </div>
             </div>
 
-            {/* --- LIST REPLIES (Recursive / Nested) --- */}
             {comment.replies && comment.replies.length > 0 && (
               <div className="mt-4 pl-4 flex flex-col gap-4 relative">
                 {comment.replies.map((reply) => (

@@ -7,6 +7,7 @@ import { HomeBerita } from "~/components/HomePage/news";
 import { HomeMember} from "~/components/HomePage/members";
 import { Register } from "~/components/HomePage/registration";
 import { MediaPartner} from "~/components/HomePage/medpart";
+import { LatestNewsSection} from "~/components/HomePage/banner";
 import Footer from "~/common/footer";
 
 export function meta({}: Route.MetaArgs) {
@@ -22,6 +23,7 @@ export default function Home() {
       <Navbar />
       <IndexHero />
       <ProfileSingkat />
+      <LatestNewsSection />
       <HomeProject />
       <HomeBerita />
       <HomeMember />

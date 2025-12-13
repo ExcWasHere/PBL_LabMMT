@@ -28,17 +28,15 @@ export function HomeMember() {
     { id: "8", image: "/member/person1.jpg", name: "Dewi Rahayu, S.Kom., M.Tech", role: "Data Analyst", tags: ["Analytics", "Data Science"], socials: { linkedin: "https://www.linkedin.com/in", email: "dewi@gmail.com", website: "https://website.com" } },
   ];
 
-  // Responsive slider state
   const [index, setIndex] = useState(0);
-  const [itemsPerView, setItemsPerView] = useState(1);
+  const [itemsPerView, setItemsPerView] = useState(2); 
 
   useEffect(() => {
     const updateItemsPerView = () => {
       if (typeof window === "undefined") return;
       const w = window.innerWidth;
-      if (w < 768) setItemsPerView(1);       // mobile
-      else if (w < 1024) setItemsPerView(2); // tablet
-      else setItemsPerView(3);               // desktop
+      if (w < 1024) setItemsPerView(2); 
+      else setItemsPerView(3); 
     };
 
     updateItemsPerView();
@@ -54,18 +52,21 @@ export function HomeMember() {
   const safeIndex = Math.min(index, maxIndex);
   const shiftPercent = 100 / itemsPerView;
 
-  // ganti fungsi getMemberPath di HomeMember dengan ini:
-const getMemberPath = (m: { id?: string; slug?: string } | undefined) => {
-  if (!m) return "/members";
-  // prefer slug (kamu memilih pakai slug route)
-  if (m.slug) return `/members/slug/${encodeURIComponent(String(m.slug))}`;
-  // fallback: kalau tidak ada slug, gunakan id (jika nanti kamu punya id)
-  return `/members/${encodeURIComponent(String(m.id ?? ""))}`;
-};
+  const getMemberPath = (m: { id?: string; slug?: string } | undefined) => {
+    if (!m) return "/members";
+    if (m.slug) return `/members/slug/${encodeURIComponent(String(m.slug))}`;
+    return `/members/${encodeURIComponent(String(m.id ?? ""))}`;
+  };
+
+  const swipeConfidenceThreshold = 10000;
+  const swipePower = (offset: number, velocity: number) => {
+    return Math.abs(offset) * velocity;
+  };
 
   return (
-    <section className="bg-white text-left py-16 sm:py-20 lg:py-24 px-4 sm:px-6 lg:px-20 scroll-mt-20">
+    <section className="bg-white text-left py-12 sm:py-20 lg:py-24 px-4 sm:px-6 lg:px-20 scroll-mt-20">
       <div className="max-w-7xl mx-auto">
+        
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -75,6 +76,7 @@ const getMemberPath = (m: { id?: string; slug?: string } | undefined) => {
         >
           <h2>Team Member</h2>
         </motion.div>
+        
         <div className="mt-3 sm:mt-4 mb-8 overflow-hidden">
           <motion.div
             initial={{ width: 0 }}
@@ -85,49 +87,67 @@ const getMemberPath = (m: { id?: string; slug?: string } | undefined) => {
           />
         </div>
 
-        {/* Leader */}
         <div className="flex justify-center mb-10 sm:mb-14">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             whileInView={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.4 }}
             viewport={{ once: true }}
-            className="w-full max-w-xs sm:max-w-sm"
+            className="w-full max-w-[300px] sm:max-w-sm"
           >
             <Link to={getMemberPath(leader)} className="block">
-              <MemberCard {...leader} isLeader />
+              <div className="[&_h3]:text-lg [&_h3]:leading-tight [&_p]:text-sm">
+                <MemberCard {...leader} isLeader />
+              </div>
             </Link>
           </motion.div>
         </div>
 
-        {/* Slider */}
-        <div className="overflow-hidden w-full">
+        <div className="overflow-hidden w-full touch-pan-y">
           <motion.div
             animate={{ x: `-${safeIndex * shiftPercent}%` }}
             transition={{ duration: 0.5, ease: "easeInOut" }}
-            className="flex gap-4 sm:gap-5"
+            drag="x" 
+            dragConstraints={{ left: 0, right: 0 }} 
+            dragElastic={0.2} 
+            onDragEnd={(e, { offset, velocity }) => {
+              const swipe = swipePower(offset.x, velocity.x);
+
+              if (swipe < -swipeConfidenceThreshold) {
+                if (index < maxIndex) setIndex(index + 1);
+              } else if (swipe > swipeConfidenceThreshold) {
+                if (index > 0) setIndex(index - 1);
+              }
+            }}
+            className="flex gap-3 sm:gap-5 cursor-grab active:cursor-grabbing"
           >
             {teamMembers.map((member) => (
               <div
                 key={member.id}
-                className="basis-full sm:basis-1/2 lg:basis-1/3 shrink-0"
+                className="basis-1/2 lg:basis-1/3 shrink-0 min-w-0"
               >
-                <Link to={getMemberPath(member)} className="block">
-                  <MemberCard {...member} />
+                <Link to={getMemberPath(member)} className="block h-full" draggable="false">
+                  <div className="aspect-[3/4] sm:aspect-auto w-full relative overflow-hidden rounded-xl [&>div]:h-full [&>div]:w-full [&_img]:object-center [&_img]:object-cover 
+                    [&_h3]:text-sm [&_h3]:leading-tight [&_h3]:sm:text-xl 
+                    [&_p]:text-[10px] [&_p]:sm:text-base
+                    [&_.font-bold]:text-sm [&_.font-bold]:sm:text-xl">
+                    <MemberCard {...member} />
+                  </div>
                 </Link>
               </div>
             ))}
           </motion.div>
         </div>
 
-        {/* Dots */}
-        <div className="flex justify-center gap-2 mt-6">
+         <div className="flex justify-center gap-2 mt-8 sm:mt-10 flex-wrap">
           {Array.from({ length: maxIndex + 1 }).map((_, dotIndex) => (
             <button
               key={dotIndex}
               onClick={() => setIndex(dotIndex)}
-              className={`h-2.5 rounded-full transition-all ${
-                safeIndex === dotIndex ? "bg-orange-500 w-6" : "bg-gray-300 w-2.5"
+              className={`h-2.5 rounded-full transition-all duration-300 ${
+                safeIndex === dotIndex 
+                  ? "bg-orange-500 w-8 sm:w-6" 
+                  : "bg-gray-300 w-2.5 hover:bg-gray-400"
               }`}
               aria-label={`Slide ${dotIndex + 1}`}
             />

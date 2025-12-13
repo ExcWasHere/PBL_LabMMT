@@ -30,7 +30,6 @@ export function Detail1() {
     : [];
 
   const recommendations = projects.filter((p: any) => {
-      // Jangan tampilkan project yang sedang dibuka (Project A)
       if (p.title === "Project A") return false;
 
       const otherProjectTechs = typeof p.tags === "string"
@@ -52,24 +51,22 @@ export function Detail1() {
           <ProjectInfo details={projectDetails} reviewCount={userReviewsCount} />
         </div>
 
-        {/* TEAM */}
         <hr className="my-12 border-gray-200" />
         <TeamSection members={dummy_team_member} />
 
-        {/* RECOMMENDATIONS */}
         <hr className="my-12 border-gray-200" />
         <section>
           <h2 className="text-2xl font-semibold mb-6">Other Projects</h2>
-          <div className="grid md:grid-cols-3 gap-8">
+          
+          <div className="flex gap-4 overflow-x-auto pb-4 snap-x md:grid md:grid-cols-3 md:gap-8 md:overflow-visible md:pb-0 scrollbar-hide">
             {recommendations.map((project, i) => (
-              <div key={i}>
+              <div key={i} className="min-w-[85%] snap-center md:min-w-0">
                  <Card {...project} />
               </div>
             ))}
           </div>
         </section>
 
-        {/* COMMENTS */}
         <hr className="my-12 border-gray-200" />
         <CommentSection
           comments={comments}

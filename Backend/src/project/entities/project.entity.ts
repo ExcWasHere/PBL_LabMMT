@@ -59,4 +59,7 @@ export class Project {
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @Column({ type: 'varchar', length: 255, unique: true })
+  slug: string;
 }

@@ -3,107 +3,10 @@
 import { Funnel, Search } from "lucide-react";
 import { useState } from "react";
 import Card from "../../common/card";
+import { news } from "./dataNews";
 
 export default function ContentNews() {
-  const galleries = [
-    {
-      image: "/galeri/eventA.jpg",
-      date: "10 Nov 2024",
-      title: "NEWS A",
-      desc: "Kegiatan pelatihan AR/VR bersama anggota lab MMT.",
-      tags: ["News", "Resty"],
-      info: "Malang",
-    },
-    {
-      image: "/galeri/eventB.jpg",
-      date: "10 Nov 2024",
-      title: "NEWS B",
-      desc: "Menampilkan hasil karya mahasiswa berbasis Unity.",
-      tags: ["Workshop", "Wahyu"],
-      info: "Darjo",
-    },
-    {
-      image: "/galeri/eventC.jpg",
-      date: "10 Nov 2024",
-      title: "NEWS C",
-      desc: "Kegiatan kunjungan industri ke perusahaan teknologi.",
-      tags: ["News", "Fidel"],
-      info: "Blitar",
-    },
-    {
-      image: "/galeri/eventA.jpg",
-      date: "10 Nov 2024",
-      title: "NEWS A",
-      desc: "Kegiatan pelatihan AR/VR bersama anggota lab MMT.",
-      tags: ["Workshop", "Excel"],
-      info: "Malang",
-    },
-    {
-      image: "/galeri/eventB.jpg",
-      date: "10 Nov 2024",
-      title: "NEWS B",
-      desc: "Menampilkan hasil karya mahasiswa berbasis Unity.",
-      tags: ["News", "Rizki"],
-      info: "Darjo",
-    },
-    {
-      image: "/galeri/eventC.jpg",
-      date: "10 Nov 2024",
-      title: "NEWS C",
-      desc: "Kegiatan kunjungan industri ke perusahaan teknologi.",
-      tags: ["Workshop", "Siti"],
-      info: "Blitar",
-    },
-    {
-      image: "/galeri/eventA.jpg",
-      date: "10 Nov 2024",
-      title: "NEWS A",
-      desc: "Kegiatan pelatihan AR/VR bersama anggota lab MMT.",
-      tags: ["News", "Marquez"],
-      info: "Malang",
-    },
-    {
-      image: "/galeri/eventB.jpg",
-      date: "10 Nov 2024",
-      title: "NEWS B",
-      desc: "Menampilkan hasil karya mahasiswa berbasis Unity.",
-      tags: ["Workshop", "Lando"],
-      info: "Darjo",
-    },
-    {
-      image: "/galeri/eventC.jpg",
-      date: "10 Nov 2024",
-      title: "NEWS C",
-      desc: "Kegiatan kunjungan industri ke perusahaan teknologi.",
-      tags: ["News", "Aulia"],
-      info: "Blitar",
-    },
-    {
-      image: "/galeri/eventA.jpg",
-      date: "10 Nov 2024",
-      title: "NEWS A",
-      desc: "Kegiatan pelatihan AR/VR bersama anggota lab MMT.",
-      tags: ["News", "Aulia Resty Azizah"],
-      info: "Malang",
-    },
-    {
-      image: "/galeri/eventB.jpg",
-      date: "10 Nov 2024",
-      title: "NEWS B",
-      desc: "Menampilkan hasil karya mahasiswa berbasis Unity.",
-      tags: ["Workshop", "Nama Penulis"],
-      info: "Darjo",
-    },
-    {
-      image: "/galeri/eventC.jpg",
-      date: "10 Nov 2024",
-      title: "NEWS C",
-      desc: "Kegiatan kunjungan industri ke perusahaan teknologi.",
-      tags: ["Workshop", "Nama Penulis"],
-      info: "Blitar",
-    },
-  ];
-
+  
   const [tags, setCategory] = useState("");
   const [year, setYear] = useState("");
   const [sort, setSort] = useState("");
@@ -111,7 +14,7 @@ export default function ContentNews() {
 
   const [visible, setVisible] = useState(6);
 
-  const filteredGallery = galleries
+  const filteredGallery = news
     .filter((item) =>
       search ? item.title.toLowerCase().includes(search.toLowerCase()) : true
     )

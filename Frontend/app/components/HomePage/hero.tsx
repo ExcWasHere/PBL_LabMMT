@@ -78,15 +78,15 @@ export default function IndexHero() {
             </div>
 
             <h1 className="text-white text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-bold mb-4 sm:mb-6 leading-tight drop-shadow-md">
-              Selamat Datang di Lab{" "}
-              <span className="text-orange-400">
+              Welcome To Lab{" "}
+              <span className="text-orange-500">
                 Multimedia Mobile Tech
               </span>
             </h1>
 
             <p className="text-white text-sm sm:text-base md:text-lg max-w-2xl mx-auto drop-shadow-sm">
-              Tempat kolaborasi mahasiswa dan dosen dalam menciptakan karya
-              multimedia inovatif yang mengubah dunia digital.
+              A place for students and lecturers to collaborate in creating
+              innovative multimedia works that change the digital world.
             </p>
           </div>
         </div>

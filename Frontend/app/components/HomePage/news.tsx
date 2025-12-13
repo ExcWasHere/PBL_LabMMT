@@ -1,33 +1,9 @@
 import { motion } from "framer-motion";
 import Card from "../../common/card";
+import { news } from "~/components/News/dataNews";
 
 export function HomeBerita() {
-  const news = [
-    {
-      image: "/galeri/eventA.jpg",
-      date: "10 Nov 2024",
-      title: "NEWS A",
-      desc: "Kegiatan pelatihan AR/VR bersama anggota lab MMT.",
-      tags: ["Foto", "Animasi"],
-      info: "Malang",
-    },
-    {
-      image: "/galeri/eventB.jpg",
-      date: "10 Nov 2024",
-      title: "NEWS B",
-      desc: "Menampilkan hasil karya mahasiswa berbasis Unity.",
-      tags: ["Foto", "Animasi"],
-      info: "Darjo",
-    },
-    {
-      image: "/galeri/eventC.jpg",
-      date: "10 Nov 2024",
-      title: "NEWS C",
-      desc: "Kegiatan kunjungan industri ke perusahaan teknologi.",
-      tags: ["Foto", "Animasi"],
-      info: "Blitar",
-    },
-  ];
+   const homeNews = news.slice(0, 3);
 
   return (
     <section className="bg-white text-left py-16 sm:py-20 lg:py-24 px-4 sm:px-6 lg:px-20">
@@ -52,7 +28,7 @@ export function HomeBerita() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 mb-10 sm:mb-12">
-          {news.map((item, idx) => (
+          {homeNews.map((item, idx) => (
             <motion.div
               key={idx}
               initial={{ opacity: 0, scale: 0.96 }}
@@ -60,7 +36,8 @@ export function HomeBerita() {
               transition={{ duration: 0.35, delay: idx * 0.08 }}
               viewport={{ once: true }}
             >
-              <Card {...item} />
+              <Card {...item} 
+              onClick={() => (window.location.href = "/news-detail")}/>
             </motion.div>
           ))}
         </div>

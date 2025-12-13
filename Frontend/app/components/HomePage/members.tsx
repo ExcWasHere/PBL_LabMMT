@@ -2,7 +2,6 @@ import { motion } from "framer-motion";
 import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import MemberCard from "../../common/memberCard";
-import type { PanInfo } from "framer-motion";
 
 export function HomeMember() {
   const leader = {
@@ -33,18 +32,13 @@ export function HomeMember() {
   const [index, setIndex] = useState(0);
   const [itemsPerView, setItemsPerView] = useState(1);
 
-  const swipeConfidenceThreshold = 10000;
-  const swipePower = (offset: number, velocity: number): number => {
-    return Math.abs(offset) * velocity;
-  };
-
   useEffect(() => {
     const updateItemsPerView = () => {
       if (typeof window === "undefined") return;
       const w = window.innerWidth;
-      if (w < 768) setItemsPerView(2);
-      else if (w < 1280) setItemsPerView(3);
-      else setItemsPerView(4);
+      if (w < 768) setItemsPerView(1);       // mobile
+      else if (w < 1024) setItemsPerView(2); // tablet
+      else setItemsPerView(3);               // desktop
     };
 
     updateItemsPerView();
@@ -70,7 +64,7 @@ const getMemberPath = (m: { id?: string; slug?: string } | undefined) => {
 };
 
   return (
-    <section className="bg-white text-left py-16 sm:py-20 lg:py-24 px-4 sm:px-6 lg:py-20 scroll-mt-20">
+    <section className="bg-white text-left py-16 sm:py-20 lg:py-24 px-4 sm:px-6 lg:px-20 scroll-mt-20">
       <div className="max-w-7xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -109,13 +103,9 @@ const getMemberPath = (m: { id?: string; slug?: string } | undefined) => {
         {/* Slider */}
         <div className="overflow-hidden w-full">
           <motion.div
-            drag="x"
-            dragConstraints={{ left: -1, right: 1 }}
-            style={{ cursor: "grab" }}
-            whileTap={{ cursor: "grabbing" }}
             animate={{ x: `-${safeIndex * shiftPercent}%` }}
             transition={{ duration: 0.5, ease: "easeInOut" }}
-            className="flex gap-4 sm:gap-5 items-stretch"
+            className="flex gap-4 sm:gap-5"
           >
             {teamMembers.map((member) => (
               <div

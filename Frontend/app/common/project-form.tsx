@@ -29,6 +29,18 @@ interface ProjectFormProps {
   initialData?: Partial<ProjectData>;
 }
 
+// HELPER FUNCTION - Format date consistently
+const formatDateForDisplay = (dateString: string) => {
+  if (!dateString) return "";
+  const date = new Date(dateString);
+  if (Number.isNaN(date.getTime())) return dateString;
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(date);
+};
+
 export default function ProjectForm({
   onClose,
   onSubmit,
@@ -105,21 +117,11 @@ export default function ProjectForm({
 
   const minDate = getTodayString();
 
-  const formatDate = (dateString: string) => {
-    if (!dateString) return "";
-    const date = new Date(dateString);
-    if (Number.isNaN(date.getTime())) return dateString;
-    return new Intl.DateTimeFormat("en-GB", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    }).format(date);
-  };
-
+  // FIXED: Use consistent date formatting
   const getPreviewProps = () => ({
     details: [
       { label: "Type", value: formData.type },
-      { label: "Date", value: formatDate(formData.date) },
+      { label: "Date", value: formatDateForDisplay(formData.date) }, // FIXED HERE
       { label: "Tech", value: formData.tech },
       {
         label: "Link",
@@ -135,9 +137,11 @@ export default function ProjectForm({
       role: m.role,
       img: m.imageUrl || `https://i.pravatar.cc/150?u=${m.name}`,
     })),
-    images:
-      formData.mediaUrls.length > 0
-        ? formData.mediaUrls
+    // FIXED: Ensure images always exist
+    images: formData.mediaUrls.length > 0
+      ? formData.mediaUrls
+      : formData.thumbnailUrl 
+        ? [formData.thumbnailUrl]
         : ["https://placehold.co/600x400?text=No+Media+Uploaded"],
   });
 
@@ -166,6 +170,7 @@ export default function ProjectForm({
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-10 mb-12">
                 <div>
+                  {/* FIXED: Pass images properly */}
                   <ImageCarousel images={previewData.images} />
                 </div>
                 <div>

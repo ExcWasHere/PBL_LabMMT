@@ -50,9 +50,9 @@ export default function NewsPage() {
           status: item.status,
           description: item.content,
           image: item.imageUrl,
-          // docGuide: item.docGuide,
+          docGuide: item.docGuide,
           location: item.location || "",
-          // newsLink: item.newsLink,
+          newsLink: item.newsLink,
         }));
 
         setNewsList(mappedData);
@@ -120,8 +120,6 @@ export default function NewsPage() {
     return newsList.filter(item => item.status === 'Review');
   }, [newsList]);
 
-
-
   const formatDate = (dateString: string) => {
     if (!dateString) return "-";
     const date = new Date(dateString);
@@ -137,8 +135,7 @@ export default function NewsPage() {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),
-      });
-
+      })
       if (response.ok) {
         setNewsList((prev) =>
           prev.map((news) =>
@@ -226,8 +223,8 @@ export default function NewsPage() {
       status: "Review", 
       content: formData.content,
       imageUrl: formData.coverUrl,
-      // docGuide: formData.docGuide,
-      // newsLink: formData.newsLink,
+      docGuide: formData.docGuide,
+      newsLink: formData.newsLink,
     };
 
     try {

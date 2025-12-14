@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { Project } from './entities/project.entity';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
+import slugify from 'slugify';
 
 @Injectable()
 export class ProjectService {
@@ -13,8 +14,14 @@ export class ProjectService {
   ) {}
 
   async create(dto: CreateProjectDto) {
+    const slug = slugify(dto.title, {
+      lower: true,
+      strict: true,
+    });
+
     const project = this.projectRepo.create({
       ...dto,
+      slug,
       status: dto.status ?? 'Waiting',
       stars: 0,
     });

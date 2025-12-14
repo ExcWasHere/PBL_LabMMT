@@ -96,7 +96,7 @@ export class MemberController {
     return this.memberService.approve(id, body.field);
   }
 
-  @Patch('reject/:id')
+  @Patch(':id/reject')
   async reject(@Param('id') id: string) {
     const ok = await this.memberService.reject(id);
     if (!ok) throw new NotFoundException('Member not found or cannot reject');

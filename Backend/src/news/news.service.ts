@@ -56,7 +56,7 @@ export class NewsService {
     return { message: 'News deleted' };
   }
 
-  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  @Cron(CronExpression.EVERY_MINUTE)
   async handleScheduledNews() {
     this.logger.debug('Checking for scheduled news to publish...');
 

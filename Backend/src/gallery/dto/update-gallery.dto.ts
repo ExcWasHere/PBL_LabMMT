@@ -5,4 +5,5 @@ export class UpdateGalleryDto {
   date?: string;
   thumbnailUrl?: string;
   status?: string;
+  publisher?: string;
 }

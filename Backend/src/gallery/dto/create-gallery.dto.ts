@@ -4,4 +4,5 @@ export class CreateGalleryDto {
   location?: string;
   date?: string;
   thumbnailUrl?: string;
+  publisher?: string;
 }

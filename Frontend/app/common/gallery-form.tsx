@@ -1,15 +1,38 @@
-import { useState, useEffect, useMemo } from "react"; 
+import { useState, useEffect, useMemo } from "react";
 import { X, Check, ChevronLeft, ChevronRight, Eye } from "lucide-react";
 import MediaUploader from "./media-uploader";
 import ThumbnailUploader from "./thumbnail-uploader";
 
 const MEDIA_TYPES = ["Photo", "Video", "Animation"];
 
+// Helper untuk mengambil nama user dari localStorage
+const getDefaultPublisher = () => {
+  try {
+    const raw = localStorage.getItem("user") || localStorage.getItem("auth");
+    if (!raw) return ""; // Kosongkan jika tidak ada login, atau set default "Admin"
+    const parsed = JSON.parse(raw);
+    
+    // Cek berbagai kemungkinan struktur data user
+    if (parsed.name) return parsed.name;
+    if (parsed.fullname) return parsed.fullname;
+    if (parsed.username) return parsed.username;
+    
+    // Jika nested object
+    if (parsed.user?.name) return parsed.user.name;
+    if (parsed.user?.fullname) return parsed.user.fullname;
+    
+    return "User"; 
+  } catch {
+    return "";
+  }
+};
+
 interface GalleryData {
   title: string;
   description: string;
   location: string;
   date: string;
+  publisher: string; // ✅ Field Baru
   mediaTypes: string[];
   mediaFiles: string[];
   mediaFilesRaw?: File[];
@@ -37,13 +60,16 @@ export default function GalleryForm({
     description: "",
     location: "",
     date: "",
+    publisher: getDefaultPublisher(), // ✅ Auto-fill nama user
     mediaTypes: [],
     mediaFiles: [],
     thumbnailUrl: "",
   };
 
   const [formData, setFormData] = useState<GalleryData>(
-    initialData || defaultFormData
+    initialData 
+      ? { ...initialData, publisher: initialData.publisher || getDefaultPublisher() } 
+      : defaultFormData
   );
 
   const [showPreviewPopup, setShowPreviewPopup] = useState(false);
@@ -51,7 +77,11 @@ export default function GalleryForm({
 
   useEffect(() => {
     if (initialData) {
-      setFormData(initialData);
+      setFormData({
+        ...initialData,
+        // Pastikan publisher terisi jika edit data lama
+        publisher: initialData.publisher || getDefaultPublisher() 
+      });
     }
   }, [initialData]);
 
@@ -59,6 +89,7 @@ export default function GalleryForm({
     if (!isEditMode || !initialData) return true;
 
     if (formData.title !== initialData.title) return true;
+    if (formData.publisher !== (initialData.publisher || getDefaultPublisher())) return true; // ✅ Cek perubahan publisher
     if (formData.description !== initialData.description) return true;
     if (formData.location !== initialData.location) return true;
     if (formData.date !== initialData.date) return true;
@@ -67,8 +98,8 @@ export default function GalleryForm({
     const initialTypes = [...initialData.mediaTypes].sort().join(",");
     if (currentTypes !== initialTypes) return true;
 
-    if (formData.thumbnailFile) return true; 
-    if (formData.mediaFilesRaw && formData.mediaFilesRaw.length > 0) return true; 
+    if (formData.thumbnailFile) return true;
+    if (formData.mediaFilesRaw && formData.mediaFilesRaw.length > 0) return true;
 
     const currentUrls = [...formData.mediaFiles].sort().join(",");
     const initialUrls = [...initialData.mediaFiles].sort().join(",");
@@ -111,6 +142,7 @@ export default function GalleryForm({
       !formData.description ||
       !formData.location ||
       !formData.date ||
+      !formData.publisher || // ✅ Validasi Publisher wajib isi
       formData.mediaTypes.length === 0
     ) {
       alert(
@@ -120,10 +152,10 @@ export default function GalleryForm({
     }
 
     if (isEditMode) {
-        const confirmSave = window.confirm(
-            "Perubahan ini akan mengubah status postingan menjadi 'Review' untuk diperiksa ulang oleh admin. Lanjutkan?"
-        );
-        if (!confirmSave) return; 
+      const confirmSave = window.confirm(
+        "Perubahan ini akan mengubah status postingan menjadi 'Review' untuk diperiksa ulang oleh admin. Lanjutkan?"
+      );
+      if (!confirmSave) return;
     }
 
     onSubmit(formData);
@@ -180,18 +212,37 @@ export default function GalleryForm({
 
         {/* --- FORM AREA --- */}
         <div className="max-w-6xl mx-auto space-y-6 bg-white p-8 rounded-xl shadow-sm pb-24">
-          <div>
-            <label className="block text-base font-medium text-gray-700 mb-2">
-              Title *
-            </label>
-            <input
-              type="text"
-              name="title"
-              value={formData.title}
-              onChange={handleChange}
-              className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-              placeholder="Enter gallery title"
-            />
+          
+          {/* BARIS 1: TITLE & PUBLISHER */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-base font-medium text-gray-700 mb-2">
+                Title *
+              </label>
+              <input
+                type="text"
+                name="title"
+                value={formData.title}
+                onChange={handleChange}
+                className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                placeholder="Enter gallery title"
+              />
+            </div>
+
+            {/* ✅ INPUT FIELD BARU: PUBLISHER */}
+            <div>
+              <label className="block text-base font-medium text-gray-700 mb-2">
+                Publisher *
+              </label>
+              <input
+                type="text"
+                name="publisher"
+                value={formData.publisher}
+                onChange={handleChange}
+                className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 bg-gray-50"
+                placeholder="Name of publisher"
+              />
+            </div>
           </div>
 
           <div>
@@ -208,6 +259,7 @@ export default function GalleryForm({
             />
           </div>
 
+          {/* BARIS 2: LOCATION & DATE */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-base font-medium text-gray-700 mb-2">
@@ -304,7 +356,6 @@ export default function GalleryForm({
                   mediaFilesRaw: [...(prev.mediaFilesRaw || []), ...newFiles],
                 }));
               }}
-
               onRemove={(itemRemoved) => {
                 setFormData((prev) => {
                   const updatedMediaFiles = prev.mediaFiles.filter(
@@ -332,19 +383,22 @@ export default function GalleryForm({
           <button
             onClick={openPreview}
             disabled={formData.mediaFiles.length === 0}
-            className={`px-6 py-3 bg-gray-800 text-white rounded-lg font-medium transition flex items-center gap-2 ${formData.mediaFiles.length === 0 ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-900"}`}
+            className={`px-6 py-3 bg-gray-800 text-white rounded-lg font-medium transition flex items-center gap-2 ${
+              formData.mediaFiles.length === 0
+                ? "opacity-50 cursor-not-allowed"
+                : "hover:bg-gray-900"
+            }`}
           >
             <Eye size={18} /> Preview
           </button>
 
-          {/* BUTTON SAVE CHANGES YANG DIMODIFIKASI */}
           <button
             onClick={handleSubmit}
-            disabled={isEditMode && !hasChanges} 
+            disabled={isEditMode && !hasChanges}
             className={`px-8 py-3 text-base rounded-lg transition ${
               isEditMode && !hasChanges
-                ? "bg-gray-300 text-gray-500 cursor-not-allowed" 
-                : "bg-orange-600 text-white hover:bg-orange-700" 
+                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                : "bg-orange-600 text-white hover:bg-orange-700"
             }`}
           >
             {submitButtonLabel}

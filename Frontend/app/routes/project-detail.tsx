@@ -1,4 +1,4 @@
-import Navbar from "~/common/navbar";
+
 import ProjectDetail from "~/components/Project/project-detail/project-detail";
 
 export function meta() {
@@ -11,7 +11,7 @@ export function meta() {
 export default function Proyek() {
     return (
     <>
-    <Navbar />
+    
     <ProjectDetail />
     </>
   );

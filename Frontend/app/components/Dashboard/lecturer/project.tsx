@@ -295,7 +295,7 @@ export default function ProjectPage() {
         const url = extractUrlFromResponse(raw);
 
         if (!url) {
-           throw new Error("Upload berhasil, tapi tidak ditemukan URL/filename di respon server. Cek Console.");
+            throw new Error("Upload berhasil, tapi tidak ditemukan URL/filename di respon server. Cek Console.");
         }
 
         payload.thumbnailUrl = url;
@@ -313,10 +313,13 @@ export default function ProjectPage() {
       }
       
       const headers = getAuthHeaders(true);
+      
+      // --- LOGIC PERUBAHAN DI SINI ---
+      // Force status to "Review" whenever a Lecturer edits or creates a project
+      const statusToSend = "Review"; 
+      // -------------------------------
+
       if (editData) {
-        const statusToSend =
-          (formData as any).status ?? editData.status ?? "Review";
-        
         const res = await fetch(`${PROJECT_ENDPOINT}/${editData.id}`, {
           method: "PATCH",
           headers,
@@ -329,7 +332,7 @@ export default function ProjectPage() {
           headers,
           body: JSON.stringify({
             ...payload,
-            status: "Review",
+            status: statusToSend,
             stars: 0,
           }),
         });

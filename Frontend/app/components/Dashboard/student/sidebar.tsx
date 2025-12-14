@@ -66,10 +66,10 @@ const Sidebar: FC<SidebarProps> = ({ onClose }) => {
   ];
 
   const menuBottom: MenuItem[] = [
-    { name: "Beranda", route: "/", icon: <Home size={18} /> },
+    { name: "Home", route: "/", icon: <Home size={18} /> },
     {
-      name: "Keluar",
-      route: "/masuk",
+      name: "Logout",
+      route: "/sign-in",
       icon: <LogOut size={18} />,
       danger: true,
     },

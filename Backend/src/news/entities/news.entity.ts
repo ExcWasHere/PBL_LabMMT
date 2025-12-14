@@ -20,6 +20,9 @@ export class News {
   @Column({ type: 'varchar', length: 100 })
   kategori: string;
 
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  location: string;
+
   @Column({ type: 'date' })
   year: Date;
 

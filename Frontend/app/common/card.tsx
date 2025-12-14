@@ -5,6 +5,7 @@ interface CardProps {
   title: string;
   desc: string;
   tags: string[];
+  location?: string;
 }
 
 export default function Card({
@@ -14,6 +15,7 @@ export default function Card({
   title,
   desc,
   tags,
+  location,
 }: CardProps) {
   return (
     <div
@@ -53,6 +55,12 @@ export default function Card({
           <span className="bg-orange-500 text-white text-xs px-2 py-1 rounded">
             {kategori}
           </span>
+
+          {location && (
+            <span className="bg-orange-500 text-white text-xs px-2 py-1 rounded">
+              {location}
+            </span>
+          )}
         </div>
       </div>
 

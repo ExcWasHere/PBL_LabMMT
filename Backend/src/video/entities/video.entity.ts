@@ -4,36 +4,33 @@ import {
   PrimaryGeneratedColumn,
   CreateDateColumn,
   UpdateDateColumn,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
+import { Gallery } from 'src/gallery/gallery.entity';
 
 @Entity('videos')
 export class Video {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'varchar', length: 255 })
+  @Column({ length: 255 })
   title: string;
 
-  @Column({ type: 'varchar', length: 500 })
+  @Column({ name: 'videoUrl', type: 'varchar', length: 500 })
   videoUrl: string;
 
-  @Column({ type: 'varchar', length: 500, nullable: true })
-  thumbnailUrl: string;
+  @Column({ name: 'gallery_id', type: 'uuid', nullable: true })
+  galleryId: string;
+
+  @ManyToOne(() => Gallery, (gallery) => gallery.videos, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'gallery_id' })
+  gallery: Gallery;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
   publisher: string;
-
-  @Column({ type: 'int', default: 0 })
-  views: number;
-
-  @Column({ type: 'int', nullable: true })
-  duration: number;
-
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  location: string;
-
-  // @Column({ type: 'varchar', length: 100, nullable: true })
-  // category: string;
 
   @Column({ type: 'date', nullable: true })
   date: Date;

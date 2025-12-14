@@ -11,49 +11,44 @@ import TableAction from "~/common/table-action";
 import TableStatus from "~/common/table-status";
 
 const API_BASE_URL = "http://localhost:3000";
-const PHOTO_ENDPOINT = `${API_BASE_URL}/photo`;
-const VIDEO_ENDPOINT = `${API_BASE_URL}/video`;
-const PHOTO_UPLOAD = `${PHOTO_ENDPOINT}/upload`;
-const VIDEO_UPLOAD = `${VIDEO_ENDPOINT}/upload`;
+const GALLERY_ENDPOINT = `${API_BASE_URL}/gallery`;
+const PHOTO_UPLOAD = `${API_BASE_URL}/photo/upload`;
+const VIDEO_UPLOAD = `${API_BASE_URL}/video/upload`;
 
-const normalizePhoto = (p: any) => ({
-  id: p.id,
-  type: "photo" as const,
-  title: p.title ?? "-",
-  publisher: p.publisher ?? "-",
-  status: p.status ?? "Review",
-  category: p.category ?? "-",
-  date: p.date ?? p.createdAt ?? "",
-  isAnimation:
-    (p.photoUrl && String(p.photoUrl).toLowerCase().endsWith(".gif")) ||
-    (p.media_url && String(p.media_url).toLowerCase().endsWith(".gif")),
-  raw: p,
-});
-
-const normalizeVideo = (v: any) => ({
-  id: v.id,
-  type: "video" as const,
-  title: v.title ?? "-",
-  publisher: v.publisher ?? "-",
-  status: v.status ?? "Review",
-  category: "-", 
-  date: v.date ?? v.createdAt ?? "",
-  isAnimation: false,
-  raw: v,
-});
-
-const STATUS_PRIORITY: Record<string, number> = {
-  Rejected: -1,
-  Muted: 0,
-  Waiting: 1,
-  Review: 2,
-  Published: 3,
+const getAuthHeaders = () => {
+  const token = localStorage.getItem("token");
+  const headers: HeadersInit = { "Content-Type": "application/json" };
+  if (token) headers.Authorization = `Bearer ${token}`;
+  return headers;
 };
 
-const pickBetterStatus = (cur?: string, inc?: string) => {
-  if (!cur) return inc;
-  if (!inc) return cur;
-  return (STATUS_PRIORITY[inc] ?? 0) > (STATUS_PRIORITY[cur] ?? 0) ? inc : cur;
+const getAuthHeaderForFormData = (): HeadersInit | undefined => {
+  const token = localStorage.getItem("token");
+  if (!token) return undefined;
+  return { Authorization: `Bearer ${token}` };
+};
+
+const getPublisherName = () => {
+  try {
+    const raw = localStorage.getItem("user");
+    if (!raw) return "Admin";
+    const parsed = JSON.parse(raw);
+    return parsed.name ?? parsed.fullname ?? parsed.username ?? "Admin";
+  } catch { return "Admin"; }
+};
+
+const uploadFile = async (file: File, type: "photo" | "video") => {
+  const fd = new FormData();
+  fd.append("file", file);
+  const url = type === "video" ? VIDEO_UPLOAD : PHOTO_UPLOAD;
+  const res = await fetch(url, {
+    method: "POST",
+    body: fd,
+    headers: getAuthHeaderForFormData(),
+  });
+  if (!res.ok) throw new Error("Upload failed");
+  const j = await res.json();
+  return j.url ?? j.data?.url ?? null;
 };
 
 export default function GalleryPage() {
@@ -87,94 +82,52 @@ export default function GalleryPage() {
   const [previewFiles, setPreviewFiles] = useState<string[]>([]);
   const [previewIndex, setPreviewIndex] = useState(0);
 
-  const getAuthHeaders = () => {
-    const token = localStorage.getItem("token");
-    const headers: HeadersInit = { "Content-Type": "application/json" };
-    if (token) headers.Authorization = `Bearer ${token}`;
-    return headers;
-  };
-
-  const getAuthHeaderForFormData = (): HeadersInit | undefined => {
-    const token = localStorage.getItem("token");
-    if (!token) return undefined;
-    return { Authorization: `Bearer ${token}` };
-  };
-
-  const getPublisherName = () => {
-    try {
-      const raw = localStorage.getItem("user");
-      if (!raw) return "Admin";
-      const parsed = JSON.parse(raw);
-      return parsed.name ?? parsed.fullname ?? parsed.username ?? "Admin";
-    } catch { return "Admin"; }
-  };
-
-  const makeGroupKey = (raw: any) => {
-    if (!raw) return "unknown";
-    const gid = raw.gallery_id ?? raw.groupId ?? raw.galleryId ?? null;
-    if (gid) return `gid:${String(gid)}`;
-    return `${String(raw.title ?? raw.name ?? "").trim()}|${String(raw.publisher ?? "").trim()}`;
-  };
-
   const fetchGallery = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [r1, r2] = await Promise.all([
-        fetch(PHOTO_ENDPOINT, { headers: getAuthHeaders() }),
-        fetch(VIDEO_ENDPOINT, { headers: getAuthHeaders() }),
-      ]);
+      const res = await fetch(GALLERY_ENDPOINT, { headers: getAuthHeaders() });
+      if (!res.ok) throw new Error("Gagal mengambil data dari server");
+      const data = await res.json();
 
-      if (!r1.ok || !r2.ok) throw new Error("Gagal mengambil data dari server");
+      console.log("🔍 Gallery API Response:", data); // DEBUG
 
-      const [photosJson, videosJson] = await Promise.all([r1.json(), r2.json()]);
-      const photos = Array.isArray(photosJson) ? photosJson.map(normalizePhoto) : [];
-      const videos = Array.isArray(videosJson) ? videosJson.map(normalizeVideo) : [];
+      const normalized = (Array.isArray(data) ? data : []).map((g: any) => {
+        // Handle berbagai kemungkinan struktur data
+        const photos = g.photos ?? g.Photos ?? [];
+        const videos = g.videos ?? g.Videos ?? [];
+        
+        console.log("📸 Gallery item:", { 
+          id: g.id, 
+          title: g.title, 
+          photos, 
+          videos,
+          raw: g 
+        }); // DEBUG
 
-      const all = [...photos, ...videos];
-      const grouped = new Map<string, any>();
-
-      all.forEach((item) => {
-        const key = makeGroupKey(item.raw);
-        const existing = grouped.get(key);
-        if (!existing) {
-          grouped.set(key, {
-            groupKey: key,
-            title: item.title ?? "-",
-            photo: item.type === "photo" ? 1 : 0,
-            video: item.type === "video" ? 1 : 0,
-            animation: item.isAnimation ? 1 : 0,
-            date: item.date,
-            publisher: item.publisher ?? "-",
-            status: item.status ?? "Review",
-            members: [{ id: item.id, type: item.type, raw: item.raw }],
-          });
-        } else {
-          if (item.type === "photo") existing.photo++;
-          if (item.type === "video") existing.video++;
-          if (item.isAnimation) existing.animation++;
-          
-          try {
-            const oldD = new Date(existing.date ?? 0);
-            const newD = new Date(item.date ?? 0);
-            if (!isNaN(newD.getTime()) && newD > oldD) existing.date = item.date;
-          } catch {}
-
-          existing.status = pickBetterStatus(existing.status, item.status) ?? existing.status;
-          existing.members.push({ id: item.id, type: item.type, raw: item.raw });
-        }
+        return {
+          id: g.id,
+          title: g.title ?? "-",
+          date: g.date ?? g.createdAt ?? "",
+          publisher: g.publisher ?? getPublisherName(),
+          status: g.status ?? "Review",
+          photo: photos.length,
+          video: videos.length,
+          animation: [
+            ...photos,
+            ...videos,
+          ].filter((m: any) =>
+            String(m.photoUrl || m.videoUrl || m.url || "").toLowerCase().endsWith(".gif")
+          ).length,
+          raw: g,
+        };
       });
 
-      const aggregated = Array.from(grouped.values()).sort(
-        (a, b) => new Date(b.date ?? 0).getTime() - new Date(a.date ?? 0).getTime()
-      );
+      console.log("✅ Normalized data:", normalized); // DEBUG
 
-      const pendingItems = aggregated.filter(item => item.status === "Waiting" || item.status === "Review");
-      
-      setPending(pendingItems);
-      setGalleryList(aggregated);
-
+      setGalleryList(normalized);
+      setPending(normalized.filter((i: any) => ["Review", "Waiting"].includes(i.status)));
     } catch (err) {
-      console.error("Fetch error:", err);
+      console.error("❌ Fetch error:", err);
     } finally {
       setIsLoading(false);
     }
@@ -184,18 +137,13 @@ export default function GalleryPage() {
     fetchGallery();
   }, [fetchGallery]);
 
-
-  const updateMemberStatus = async (item: any, newStatus: string) => {
+  const updateStatus = async (id: string, newStatus: string) => {
     try {
-      const members = item.members ?? [];
-      for (const m of members) {
-        const endpoint = m.type === "video" ? VIDEO_ENDPOINT : PHOTO_ENDPOINT;
-        await fetch(`${endpoint}/${m.id}`, {
-          method: "PATCH",
-          headers: getAuthHeaders(),
-          body: JSON.stringify({ status: newStatus }),
-        });
-      }
+      await fetch(`${GALLERY_ENDPOINT}/${id}`, {
+        method: "PATCH",
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ status: newStatus }),
+      });
       await fetchGallery();
     } catch (error) {
       console.error("Update status failed", error);
@@ -220,202 +168,177 @@ export default function GalleryPage() {
     }
 
     if (window.confirm(message)) {
-      updateMemberStatus(item, newStatus);
+      updateStatus(item.id, newStatus);
     }
   };
 
   const handleReject = (item: any) => {
     if (window.confirm(`Reject submission "${item.title}"? Status will be set to Rejected.`)) {
-      updateMemberStatus(item, "Rejected");
+      updateStatus(item.id, "Rejected");
     }
   };
 
-  const handleToggleMute = (groupKey: string) => {
-    const group = galleryList.find((g) => g.groupKey === groupKey);
-    if (!group) return;
-
-    const newStatus = group.status === "Muted" ? "Published" : "Muted";
-    updateMemberStatus(group, newStatus);
+  const handleToggleMute = (id: string, currentStatus: string) => {
+    const newStatus = currentStatus === "Muted" ? "Published" : "Muted";
+    updateStatus(id, newStatus);
   };
 
-  const handleDeleteMain = async (groupKey: string) => {
-    const group = galleryList.find((g) => g.groupKey === groupKey);
-    if (!group) return;
+  const handleDeleteMain = async (id: string) => {
     if (!window.confirm("Are you sure you want to delete this gallery permanently?")) return;
 
     try {
-      const members = group.members ?? [];
-      for (const m of members) {
-        const endpoint = m.type === "video" ? VIDEO_ENDPOINT : PHOTO_ENDPOINT;
-        await fetch(`${endpoint}/${m.id}`, { method: "DELETE", headers: getAuthHeaders() });
-      }
+      await fetch(`${GALLERY_ENDPOINT}/${id}`, { 
+        method: "DELETE", 
+        headers: getAuthHeaders() 
+      });
       fetchGallery();
     } catch (err) {
       alert("Gagal menghapus gallery.");
     }
   };
 
-  const uploadFile = async (file: File, type: "photo" | "video") => {
-    const fd = new FormData();
-    fd.append("file", file);
-    const url = type === "video" ? VIDEO_UPLOAD : PHOTO_UPLOAD;
-    const res = await fetch(url, {
-      method: "POST",
-      body: fd,
-      headers: getAuthHeaderForFormData(),
-    });
-    if (!res.ok) throw new Error("Upload failed");
-    const j = await res.json();
-    return j.url ?? j.data?.url ?? null;
-  };
-
   const handleSaveGallery = async (formData: any) => {
-  const publisher = getPublisherName();
-  let finalCoverUrl = "";
+    const publisher = getPublisherName();
+    let thumbnailUrl = "";
 
-  if (formData.thumbnailFile) {
-    try {
-      finalCoverUrl = await uploadFile(formData.thumbnailFile, "photo");
-    } catch (e) {
-      alert("Gagal upload thumbnail");
-      return;
+    if (formData.thumbnailFile) {
+      try {
+        thumbnailUrl = await uploadFile(formData.thumbnailFile, "photo");
+      } catch (e) {
+        alert("Gagal upload thumbnail");
+        return;
+      }
     }
-  }
 
-  if (editData && editData.groupKey) {
-    const group = galleryList.find((g) => g.groupKey === editData.groupKey);
-    if (!group) return;
-
-    const coverUrlForUpdate = finalCoverUrl || editData.thumbnailUrl;
-
-    const desiredUrls = new Set(formData.mediaFiles);
-
-    for (const m of group.members) {
-      const endpoint = m.type === "video" ? VIDEO_ENDPOINT : PHOTO_ENDPOINT;
-
-      const currentUrl = m.type === "video"
-        ? (m.raw.videoUrl || m.raw.url)
-        : (m.raw.photoUrl || m.raw.url);
-
-      if (currentUrl && !desiredUrls.has(currentUrl)) {
-        await fetch(`${endpoint}/${m.id}`, {
-          method: "DELETE",
-          headers: getAuthHeaders(),
-        });
-      } else {
-        const payload: any = {
+    if (editData && editData.id) {
+      // UPDATE existing gallery
+      await fetch(`${GALLERY_ENDPOINT}/${editData.id}`, {
+        method: "PATCH",
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
           title: formData.title,
           description: formData.description,
           location: formData.location,
           date: formData.date,
           publisher,
-          status: "Review", 
-          cover_url: coverUrlForUpdate || undefined,
-        };
+          thumbnailUrl: thumbnailUrl || editData.raw?.thumbnailUrl,
+          status: "Review",
+        }),
+      });
 
-        Object.keys(payload).forEach(
-          (k) => payload[k] === undefined && delete payload[k]
-        );
+      // Handle new media files if any
+      const newFiles: File[] = formData.mediaFilesRaw ?? [];
+      if (newFiles.length > 0) {
+        for (const file of newFiles) {
+          const isVideo = file.type.startsWith("video/");
+          const uploadedUrl = await uploadFile(file, isVideo ? "video" : "photo");
 
-        await fetch(`${endpoint}/${m.id}`, {
-          method: "PATCH",
-          headers: getAuthHeaders(),
-          body: JSON.stringify(payload),
-        });
+          await fetch(`${API_BASE_URL}/${isVideo ? "video" : "photo"}`, {
+            method: "POST",
+            headers: getAuthHeaders(),
+            body: JSON.stringify({
+              title: formData.title, // ✅ TAMBAHKAN INI
+              description: formData.description,
+              location: formData.location,
+              date: formData.date,
+              publisher,
+              status: "Review",
+              galleryId: editData.id,
+              ...(isVideo ? { videoUrl: uploadedUrl } : { photoUrl: uploadedUrl }),
+            }),
+          });
+        }
       }
-    }
-
-    const newFiles: File[] = formData.mediaFilesRaw ?? [];
-    if (newFiles.length > 0) {
-      for (const file of newFiles) {
-        const isVideo = file.type.startsWith("video/");
-        const uploadedUrl = await uploadFile(file, isVideo ? "video" : "photo");
-        const endpoint = isVideo ? VIDEO_ENDPOINT : PHOTO_ENDPOINT;
-
-        const payload: any = {
-          title: formData.title,
-          description: formData.description,
-          location: formData.location,
-          date: formData.date,
-          publisher,
-          status: "Review", 
-          cover_url: coverUrlForUpdate || uploadedUrl,
-        };
-
-        if (isVideo) payload.videoUrl = uploadedUrl;
-        else payload.photoUrl = uploadedUrl;
-
-        await fetch(endpoint, {
-          method: "POST",
-          headers: getAuthHeaders(),
-          body: JSON.stringify(payload),
-        });
+    } else {
+      // CREATE new gallery
+      const files: File[] = formData.mediaFilesRaw ?? [];
+      if (!files || files.length === 0) {
+        alert("Please attach media.");
+        return;
       }
-    }
 
-  } else {
-    const files: File[] = formData.mediaFilesRaw ?? [];
-    if (!files || files.length === 0) {
-      alert("Please attach media.");
-      return;
-    }
-
-    for (const file of files) {
-      const isVideo = file.type.startsWith("video/");
-      const uploadedUrl = await uploadFile(file, isVideo ? "video" : "photo");
-      const endpoint = isVideo ? VIDEO_ENDPOINT : PHOTO_ENDPOINT;
-
-      const payload: any = {
-        title: formData.title,
-        description: formData.description,
-        location: formData.location,
-        date: formData.date,
-        publisher,
-        status: "Review",
-        cover_url: finalCoverUrl || uploadedUrl,
-      };
-
-      if (isVideo) payload.videoUrl = uploadedUrl;
-      else payload.photoUrl = uploadedUrl;
-
-      await fetch(endpoint, {
+      const res = await fetch(GALLERY_ENDPOINT, {
         method: "POST",
         headers: getAuthHeaders(),
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          title: formData.title,
+          description: formData.description,
+          location: formData.location,
+          date: formData.date,
+          publisher,
+          thumbnailUrl,
+          status: "Review",
+        }),
       });
+
+      if (!res.ok) throw new Error("Failed to create gallery");
+      const gallery = await res.json();
+
+      for (const file of files) {
+        const isVideo = file.type.startsWith("video/");
+        const uploadedUrl = await uploadFile(file, isVideo ? "video" : "photo");
+
+        await fetch(`${API_BASE_URL}/${isVideo ? "video" : "photo"}`, {
+          method: "POST",
+          headers: getAuthHeaders(),
+          body: JSON.stringify({
+            title: formData.title,           // ✅ TAMBAHKAN INI
+            description: formData.description,
+            location: formData.location,
+            date: formData.date,
+            publisher,
+            status: "Review",
+            galleryId: gallery.id,
+            ...(isVideo ? { videoUrl: uploadedUrl } : { photoUrl: uploadedUrl }),
+          }),
+        });
+      }
     }
-  }
 
-  fetchGallery();
-  setIsFormOpen(false);
-  setEditData(null);
-};
+    fetchGallery();
+    setIsFormOpen(false);
+    setEditData(null);
+  };
 
-  const handleEditClick = (groupKey: string) => {
-    const group = galleryList.find((g) => g.groupKey === groupKey);
-    if (!group) return;
+  const handleEditClick = (id: string) => {
+    const gallery = galleryList.find((g) => g.id === id);
+    if (!gallery) return;
 
-    const rep = group.members[0]?.raw;
     const initial = {
-      groupKey,
-      title: group.title,
-      description: rep?.description ?? "",
-      date: group.date,
-      location: rep?.location ?? "",
+      id: gallery.id,
+      title: gallery.title,
+      description: gallery.raw?.description ?? "",
+      date: gallery.date,
+      location: gallery.raw?.location ?? "",
       mediaTypes: [],
-      mediaFiles: group.members.map((m: any) => m.raw.photoUrl || m.raw.videoUrl),
-      thumbnailUrl: rep?.cover_url ?? rep?.coverUrl ?? rep?.thumbnailUrl ?? "",
+      mediaFiles: [
+        ...(gallery.raw?.photos?.map((p: any) => p.photoUrl) ?? []),
+        ...(gallery.raw?.videos?.map((v: any) => v.videoUrl) ?? []),
+      ],
+      thumbnailUrl: gallery.raw?.thumbnailUrl ?? "",
+      raw: gallery.raw,
     };
     setEditData(initial);
     setIsFormOpen(true);
   };
 
   const handlePreview = (item: any) => {
-    const files = item.members.map((m: any) => 
-       m.raw.photoUrl || m.raw.videoUrl || m.raw.url
-    ).filter((url: any) => url);
+    console.log("🖼️ Preview item:", item); // DEBUG
+    
+    const photos = item.raw?.photos ?? item.raw?.Photos ?? [];
+    const videos = item.raw?.videos ?? item.raw?.Videos ?? [];
+    
+    const files = [
+      ...photos.map((p: any) => p.photoUrl || p.url),
+      ...videos.map((v: any) => v.videoUrl || v.url),
+    ].filter((url: any) => url);
 
-    if (files.length === 0) { alert("No files"); return; }
+    console.log("📁 Preview files:", files); // DEBUG
+
+    if (files.length === 0) { 
+      alert("No files to preview"); 
+      return; 
+    }
 
     setPreviewFiles(files);
     setPreviewIndex(0);
@@ -523,8 +446,8 @@ export default function GalleryPage() {
                     {filteredData.length === 0 ? (
                         <tr><td colSpan={8} className="py-8 text-center text-gray-500">No data found.</td></tr>
                     ) : (
-                        filteredData.map((row, index) => (
-                            <tr key={index} className="border-b border-gray-200">
+                        filteredData.map((row) => (
+                            <tr key={row.id} className="border-b border-gray-200">
                                 <td className="py-3 text-center">{row.title}</td>
                                 <td className="py-3 text-center">{row.photo}</td>
                                 <td className="py-3 text-center">{row.video}</td>
@@ -535,9 +458,9 @@ export default function GalleryPage() {
                                 <td className="py-3 text-center">
                                     <TableAction
                                         status={row.status}
-                                        onToggleMute={() => handleToggleMute(row.groupKey)}
-                                        onEdit={() => handleEditClick(row.groupKey)}
-                                        onDelete={() => handleDeleteMain(row.groupKey)}
+                                        onToggleMute={() => handleToggleMute(row.id, row.status)}
+                                        onEdit={() => handleEditClick(row.id)}
+                                        onDelete={() => handleDeleteMain(row.id)}
                                     />
                                 </td>
                             </tr>
@@ -580,7 +503,7 @@ export default function GalleryPage() {
                                 <tr><td colSpan={8} className="py-6 text-center text-gray-500">No pending submissions.</td></tr>
                             ) : (
                                 pending.map((item) => (
-                                    <tr key={item.groupKey} className="border-b border-gray-200">
+                                    <tr key={item.id} className="border-b border-gray-200">
                                         <td className="py-3 text-center">{item.title}</td>
                                         <td className="py-3 text-center">{item.photo}</td>
                                         <td className="py-3 text-center">{item.video}</td>

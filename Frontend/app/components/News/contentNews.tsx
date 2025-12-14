@@ -262,6 +262,7 @@ export default function ContentNews() {
                       desc={n.content}
                       date={n.year || n.createdAt}
                       kategori={n.kategori}
+                      location={n.location}
                       tags={
                         Array.isArray(n.tags)
                           ? n.tags

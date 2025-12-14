@@ -1,9 +1,10 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThanOrEqual } from 'typeorm';
 import { Video } from './entities/video.entity';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { CreateVideoDto } from './dto/create-video.dto';
+import { DeepPartial } from 'typeorm';
 import { UpdateVideoDto } from './dto/update-video.dto';
 
 @Injectable()
@@ -14,11 +15,25 @@ export class VideoService {
     private readonly videoRepo: Repository<Video>,
   ) {}
 
-  create(dto: CreateVideoDto) {
+  async createVideo(payload: {
+    title: string;
+    videoUrl: string;
+    galleryId?: string;
+    publisher?: string; // ✅ Tambahkan
+    date?: string;
+    status?: string; // ✅ Tambahkan
+    description?: string;
+  }) {
     const video = this.videoRepo.create({
-    ...dto,
-    thumbnailUrl: dto.cover_url, 
-  });
+      title: payload.title,
+      videoUrl: payload.videoUrl,
+      galleryId: payload.galleryId,
+      publisher: payload.publisher ?? null, // ✅ Tambahkan
+      date: payload.date ? new Date(payload.date) : null,
+      description: payload.description ?? null,
+      status: payload.status ?? 'Review', // ✅ Ubah dari 'Published' ke 'Review'
+    } as DeepPartial<Video>);
+
     return this.videoRepo.save(video);
   }
 
@@ -34,14 +49,13 @@ export class VideoService {
 
   async update(id: string, dto: UpdateVideoDto) {
     const updateData: any = { ...dto };
-  
-  if (dto.cover_url) {
-    updateData.thumbnailUrl = dto.cover_url; 
+    if (dto.cover_url) {
+      updateData.thumbnailUrl = dto.cover_url;
       delete updateData.cover_url;
-  }
-  
-  await this.videoRepo.update(id, updateData);
-  return this.findOne(id);
+    }
+
+    await this.videoRepo.update(id, updateData);
+    return this.findOne(id);
   }
 
   async remove(id: string) {
@@ -59,7 +73,7 @@ export class VideoService {
     const pendingVideos = await this.videoRepo.find({
       where: {
         status: 'Waiting',
-        date: LessThanOrEqual(today), 
+        date: LessThanOrEqual(today),
       },
     });
 

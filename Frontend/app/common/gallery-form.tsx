@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react"; // Tambahkan useMemo
 import { X, Check, ChevronLeft, ChevronRight, Eye } from "lucide-react";
 import MediaUploader from "./media-uploader";
 import ThumbnailUploader from "./thumbnail-uploader";
@@ -30,7 +30,7 @@ export default function GalleryForm({
 }: GalleryFormProps) {
   const isEditMode = !!initialData;
   const formTitle = isEditMode ? "Edit Gallery" : "Add New Gallery";
-  const submitButtonLabel = isEditMode ? "Save Changes" : "Add";
+  const submitButtonLabel = isEditMode ? "Save Changes" : "Publish";
 
   const defaultFormData: GalleryData = {
     title: "",
@@ -50,8 +50,39 @@ export default function GalleryForm({
   const [currentPreviewIndex, setCurrentPreviewIndex] = useState(0);
 
   useEffect(() => {
-    setFormData(initialData || defaultFormData);
+    if (initialData) {
+      setFormData(initialData);
+    }
   }, [initialData]);
+
+  // --- LOGIKA DETEKSI PERUBAHAN ---
+  const hasChanges = useMemo(() => {
+    // Kalau mode Add (bukan edit), tombol selalu aktif (kecuali validasi kosong nanti)
+    if (!isEditMode || !initialData) return true;
+
+    // 1. Cek perubahan field teks sederhana
+    if (formData.title !== initialData.title) return true;
+    if (formData.description !== initialData.description) return true;
+    if (formData.location !== initialData.location) return true;
+    if (formData.date !== initialData.date) return true;
+
+    // 2. Cek perubahan Media Types (Array)
+    const currentTypes = [...formData.mediaTypes].sort().join(",");
+    const initialTypes = [...initialData.mediaTypes].sort().join(",");
+    if (currentTypes !== initialTypes) return true;
+
+    // 3. Cek apakah ada file baru diupload
+    if (formData.thumbnailFile) return true; // Ada thumbnail baru
+    if (formData.mediaFilesRaw && formData.mediaFilesRaw.length > 0) return true; // Ada media baru
+
+    // 4. Cek apakah ada file lama yang dihapus
+    // Kita bandingkan list URL mediaFiles yang tampil sekarang dengan yang awal
+    const currentUrls = [...formData.mediaFiles].sort().join(",");
+    const initialUrls = [...initialData.mediaFiles].sort().join(",");
+    if (currentUrls !== initialUrls) return true;
+
+    return false;
+  }, [formData, initialData, isEditMode]);
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -82,6 +113,7 @@ export default function GalleryForm({
   };
 
   const handleSubmit = () => {
+    // Validasi Field Kosong
     if (
       !formData.title ||
       !formData.description ||
@@ -93,6 +125,14 @@ export default function GalleryForm({
         "Please fill in all required fields (marked with *) and select at least one Media Type."
       );
       return;
+    }
+
+    // LOGIKA PERINGATAN RE-REVIEW
+    if (isEditMode) {
+        const confirmSave = window.confirm(
+            "Perubahan ini akan mengubah status postingan menjadi 'Review' untuk diperiksa ulang oleh admin. Lanjutkan?"
+        );
+        if (!confirmSave) return; // Batal simpan jika user klik Cancel
     }
 
     onSubmit(formData);
@@ -108,16 +148,6 @@ export default function GalleryForm({
   };
 
   const minDate = getTodayString();
-
-  const formatDate = (dateString: string) => {
-    if (!dateString) return "";
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat("en-GB", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    }).format(date);
-  };
 
   const openPreview = () => {
     if (formData.mediaFiles.length === 0) {
@@ -157,7 +187,7 @@ export default function GalleryForm({
           </button>
         </div>
 
-        {/* --- FORM AREA (Layout Project Form) --- */}
+        {/* --- FORM AREA --- */}
         <div className="max-w-6xl mx-auto space-y-6 bg-white p-8 rounded-xl shadow-sm pb-24">
           <div>
             <label className="block text-base font-medium text-gray-700 mb-2">
@@ -213,7 +243,6 @@ export default function GalleryForm({
                 value={formData.date}
                 onChange={handleChange}
                 className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                placeholder="e.g., 25 Dec 2025"
               />
             </div>
           </div>
@@ -265,7 +294,7 @@ export default function GalleryForm({
             </div>
           </div>
 
-          {/* --- UPLOAD AREA (Modern Drag & Drop + Grid) --- */}
+          {/* --- UPLOAD AREA --- */}
           <div>
             <MediaUploader
               label="Upload Media (Photo/Video/Animation)"
@@ -305,15 +334,21 @@ export default function GalleryForm({
             <Eye size={18} /> Preview
           </button>
 
+          {/* BUTTON SAVE CHANGES YANG DIMODIFIKASI */}
           <button
             onClick={handleSubmit}
-            className="px-8 py-3 text-base bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition"
+            disabled={isEditMode && !hasChanges} // Disabled jika edit mode & tidak ada perubahan
+            className={`px-8 py-3 text-base rounded-lg transition ${
+              isEditMode && !hasChanges
+                ? "bg-gray-300 text-gray-500 cursor-not-allowed" // Style Gray Out
+                : "bg-orange-600 text-white hover:bg-orange-700" // Style Normal
+            }`}
           >
             {submitButtonLabel}
           </button>
         </div>
 
-        {/* --- PREVIEW POPUP OVERLAY (Sesuai Content Gallery) --- */}
+        {/* --- PREVIEW POPUP --- */}
         {showPreviewPopup && (
           <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[9999] p-4 backdrop-blur-sm">
             <div

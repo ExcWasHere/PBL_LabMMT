@@ -23,10 +23,19 @@ export class Photo {
   @Column({ type: 'varchar', length: 100, nullable: true })
   category: string;
 
+  // @Column({ type: 'varchar', length: 255, nullable: true })
+  // location: string;
+
+  // @Column({ name: 'cover_url', type: 'text', nullable: true })
+  // coverUrl: string;
+
+  // @Column({ type: 'date', nullable: true })
+  // date: Date;
+
   @Column({
     type: 'enum',
-    enum: ['Published', 'Review', 'Waiting', 'Muted'],
-    default: 'Waiting',
+    enum: ['Published', 'Review', 'Waiting', 'Muted', 'Rejected'],
+    default: 'Review',
   })
   status: string;
 

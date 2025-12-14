@@ -1,19 +1,30 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, LessThanOrEqual } from 'typeorm';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { Photo } from './entities/photo.entity';
 import { CreatePhotoDto } from './dto/create-photo.dto';
 import { UpdatePhotoDto } from './dto/update-photo.dto';
 
 @Injectable()
 export class PhotoService {
+  private readonly logger = new Logger(PhotoService.name);
+  
   constructor(
     @InjectRepository(Photo)
     private readonly photoRepo: Repository<Photo>,
   ) {}
 
+  async remove(id: string) {
+    await this.photoRepo.delete(id);
+    return { message: 'Photo deleted' };
+  }
+
   create(dto: CreatePhotoDto) {
-    const photo = this.photoRepo.create(dto);
+    const photo = this.photoRepo.create({
+    ...dto,
+    // coverUrl: dto.cover_url,
+  });
     return this.photoRepo.save(photo);
   }
 
@@ -28,12 +39,37 @@ export class PhotoService {
   }
 
   async update(id: string, dto: UpdatePhotoDto) {
-    await this.photoRepo.update(id, dto);
-    return this.findOne(id);
+    const updateData: any = { ...dto };
+  
+  if (dto.cover_url) {
+    updateData.coverUrl = dto.cover_url;
+  }
+  
+  await this.photoRepo.update(id, updateData);
+  return this.findOne(id);
   }
 
-  async remove(id: string) {
-    await this.photoRepo.delete(id);
-    return { message: 'Photo deleted' };
-  }
+  // @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  // async handleScheduledPhotos() {
+  //   this.logger.debug('Checking for scheduled photos to publish...');
+
+  //   const today = new Date();
+  //   today.setHours(0, 0, 0, 0);
+
+  //   // Cari yang status Waiting DAN tanggalnya <= hari ini
+  //   const pendingPhotos = await this.photoRepo.find({
+  //     where: {
+  //       status: 'Waiting',
+  //       date: LessThanOrEqual(today), // Pastikan di entity Photo ada kolom 'date'
+  //     },
+  //   });
+
+  //   if (pendingPhotos.length > 0) {
+  //     for (const photo of pendingPhotos) {
+  //       photo.status = 'Published';
+  //       await this.photoRepo.save(photo);
+  //       this.logger.log(`Auto-published photo: ${photo.title}`);
+  //     }
+  //   }
+  // }
 }

@@ -211,9 +211,29 @@ export default function GalleryPage() {
     }
 
     if (editData && editData.id) {
-      // UPDATE existing gallery
-      await fetch(`${GALLERY_ENDPOINT}/${editData.id}`, {
-        method: "PATCH",
+  // 1️⃣ PATCH DATA GALLERY
+  await fetch(`${GALLERY_ENDPOINT}/${editData.id}`, {
+    method: "PATCH",
+    headers: getAuthHeaders(),
+    body: JSON.stringify({
+      title: formData.title,
+      description: formData.description,
+      location: formData.location,
+      date: formData.date,
+      thumbnailUrl: thumbnailUrl || editData.raw?.thumbnailUrl,
+      status: "Review",
+    }),
+  });
+
+  // 2️⃣ UPLOAD MEDIA BARU
+  const newFiles: File[] = formData.mediaFilesRaw ?? [];
+  if (newFiles.length > 0) {
+    for (const file of newFiles) {
+      const isVideo = file.type.startsWith("video/");
+      const uploadedUrl = await uploadFile(file, isVideo ? "video" : "photo");
+
+      await fetch(`${API_BASE_URL}/${isVideo ? "video" : "photo"}`, {
+        method: "POST",
         headers: getAuthHeaders(),
         body: JSON.stringify({
           title: formData.title,
@@ -221,34 +241,24 @@ export default function GalleryPage() {
           location: formData.location,
           date: formData.date,
           publisher,
-          thumbnailUrl: thumbnailUrl || editData.raw?.thumbnailUrl,
           status: "Review",
+          galleryId: editData.id,
+          ...(isVideo
+            ? { videoUrl: uploadedUrl }
+            : { photoUrl: uploadedUrl }),
         }),
       });
+    }
+  }
 
-      // Handle new media files if any
-      const newFiles: File[] = formData.mediaFilesRaw ?? [];
-      if (newFiles.length > 0) {
-        for (const file of newFiles) {
-          const isVideo = file.type.startsWith("video/");
-          const uploadedUrl = await uploadFile(file, isVideo ? "video" : "photo");
-
-          await fetch(`${API_BASE_URL}/${isVideo ? "video" : "photo"}`, {
-            method: "POST",
-            headers: getAuthHeaders(),
-            body: JSON.stringify({
-              title: formData.title, // ✅ TAMBAHKAN INI
-              description: formData.description,
-              location: formData.location,
-              date: formData.date,
-              publisher,
-              status: "Review",
-              galleryId: editData.id,
-              ...(isVideo ? { videoUrl: uploadedUrl } : { photoUrl: uploadedUrl }),
-            }),
-          });
-        }
-      }
+  // 3️⃣ 🔒 PATCH FINAL (INI YANG KAMU TAMBAHKAN)
+  await fetch(`${GALLERY_ENDPOINT}/${editData.id}`, {
+    method: "PATCH",
+    headers: getAuthHeaders(),
+    body: JSON.stringify({
+      status: "Review",
+    }),
+  });
     } else {
       // CREATE new gallery
       const files: File[] = formData.mediaFilesRaw ?? [];

@@ -12,8 +12,8 @@ type MemberItem = {
   name: string;
   identityNum: string;
   field: string;
+  role: "admin" | "dosen" | "mahasiswa";
   startDate: string;
-  position: string;
   email?: string;
   phone?: string;
   photoUrl?: string;
@@ -60,6 +60,10 @@ export default function MemberPage() {
   // Loading states (opsional, tapi baik untuk mencegah error render awal)
   const [isLoadingMembers, setIsLoadingMembers] = useState(false);
   const [isLoadingPending, setIsLoadingPending] = useState(false);
+  const [approveTarget, setApproveTarget] = useState<PendingItem | null>(null);
+  const [isApproving, setIsApproving] = useState(false);
+  const token = localStorage.getItem("access_token");
+
 
   // --- Helper Functions (Diambil dari member1.tsx) ---
   const buildCvUrl = (raw?: string) => {
@@ -91,9 +95,9 @@ export default function MemberPage() {
         userId: r.userId ?? r.user_id ?? null,
         name: r.name ?? r.fullname ?? r.username ?? "",
         identityNum: r.identityNum ?? r.identity_num ?? r.validationField ?? r.nim ?? "",
-        field: r.role ?? r.field ?? "",
+        field: r.field ?? "",
         startDate: startStr,
-        position: r.position ?? "",
+        role: r.role,
         email: r.email ?? "",
         phone: r.phone ?? "",
         photoUrl: r.photoUrl ?? r.photo_url ?? r.photo ?? "",
@@ -202,35 +206,11 @@ export default function MemberPage() {
     }
   };
 
-  // 2. Approve Registration
-  const handleApprove = async (p: PendingItem) => {
-    if (!p?.id) return;
-    if (!confirm(`Approve ${p.name}?`)) return;
-    try {
-      const res = await fetch(`${API_BASE}/member/approve/${p.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        alert(err.message || "Failed to approve");
-        return;
-      }
-      setMemberPending((prev) => prev.filter((x) => x.id !== p.id));
-      await fetchMembers(); // Refresh list member aktif
-      alert(`${p.name} approved`);
-    } catch (err) {
-      console.error(err);
-      alert("Failed to approve, check console");
-    }
-  };
-
-  // 3. Reject Registration
   const handleReject = async (p: PendingItem) => {
     if (!p?.id) return;
     if (!confirm(`Reject ${p.name}?`)) return;
     try {
-      const res = await fetch(`${API_BASE}/member/reject/${p.id}`, {
+      const res = await fetch(`${API_BASE}/member/${p.id}/reject`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
       });
@@ -251,9 +231,9 @@ export default function MemberPage() {
 
   // Stats Dinamis (Bukan hardcoded lagi)
   const stats = useMemo(() => {
-    const lecturer = memberList.filter((m) => (m.field ?? "").toLowerCase() === "dosen" || (m.position ?? "").toLowerCase() === "lecturer" || (m.field ?? "").toLowerCase() === "lecturer").length;
-    const student = memberList.filter((m) => (m.field ?? "").toLowerCase() === "mahasiswa" || (m.position ?? "").toLowerCase() === "student").length;
-    const alumni = memberList.filter((m) => (m.field ?? "").toLowerCase() === "alumni").length;
+    const lecturer = memberList.filter((m) => (m.role ?? "").toLowerCase() === "dosen"  || (m.role ?? "").toLowerCase() === "lecturer").length;
+    const student = memberList.filter((m) => (m.role ?? "").toLowerCase() === "mahasiswa").length;
+    const alumni = memberList.filter((m) => (m.role ?? "").toLowerCase() === "alumni").length;
     return [
       { label: "Lecturer", value: lecturer, color: "border-orange-400 text-orange-500" },
       { label: "Student", value: student, color: "border-blue-400 text-blue-500" },
@@ -407,8 +387,8 @@ export default function MemberPage() {
                 <th className="py-3">NIM/NIDN</th>
                 <th className="py-3">Field</th>
                 <th className="py-3">Start Date</th>
-                <th className="py-3">Position</th>
                 <th className="py-3">Action</th>
+                <th className="py-3">Role</th>
               </tr>
             </thead>
             <tbody>
@@ -438,12 +418,8 @@ export default function MemberPage() {
                     <td className={`py-3 ${borderClass} text-center`}>
                       {row.startDate}
                     </td>
-                    <td
-                      className={`py-3 ${borderClass} font-medium text-center ${getStatusColorClass(
-                        row.position
-                      )}`}
-                    >
-                      {row.position}
+                    <td className={`py-3 ${borderClass} text-center`}>
+                      {row.role}
                     </td>
                     {/* Action Column dengan Tombol Delete yang terhubung API */}
                     <td className={`py-3 ${borderClass} text-center`}>
@@ -556,12 +532,16 @@ export default function MemberPage() {
                         <td className="py-3 text-center">
                           <div className="flex items-center justify-center gap-3">
                             <button
-                              onClick={() => handleApprove(user)}
-                              className="text-green-600 hover:text-green-800"
-                              title="Approve"
-                            >
-                              <Check size={18} />
-                            </button>
+  onClick={() => {
+    setApproveTarget(user);
+    setselectedField("");
+  }}
+  className="text-green-600 hover:text-green-800"
+  title="Approve"
+>
+  <Check size={18} />
+</button>
+
 
                             <button
                               onClick={() => handleReject(user)}
@@ -579,6 +559,92 @@ export default function MemberPage() {
               </table>
             </div>
           )}
+
+        {approveTarget && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+    <div className="bg-white w-full max-w-md rounded-xl p-6 shadow-lg">
+      <h2 className="text-xl font-semibold text-orange-600 mb-4">
+        Approve Registration
+      </h2>
+
+      <p className="text-sm text-gray-600 mb-4">
+        Approve <b>{approveTarget.name}</b> sebagai anggota?
+      </p>
+
+      {/* FIELD SELECT */}
+      <label className="block text-sm font-medium mb-1">
+        Pilih Field
+      </label>
+      <select
+        value={selectedField}
+        onChange={(e) => setselectedField(e.target.value)}
+        className="w-full border rounded-lg px-3 py-2 mb-4"
+      >
+        <option value="">-- pilih field --</option>
+        <option value="UI/UX Designer">UI/UX Designer</option>
+        <option value="Frontend Developer">Frontend Developer</option>
+        <option value="Backend Developer">Backend Developer</option>
+        <option value="Game Developer">Game Developer</option>
+      </select>
+
+      {/* ACTION */}
+      <div className="flex justify-end gap-3">
+        <button
+          onClick={() => setApproveTarget(null)}
+          className="px-4 py-2 rounded-lg border hover:bg-gray-100"
+          disabled={isApproving}
+        >
+          Cancel
+        </button>
+
+        <button
+          disabled={!selectedField || isApproving}
+          onClick={async () => {
+            try {
+              setIsApproving(true);
+             const res = await fetch(
+                          `${API_BASE}/member/${approveTarget.id}/approve`,
+                          {
+                            method: "PATCH",
+                            headers: {
+                              "Content-Type": "application/json",
+                              Authorization: `Bearer ${token}`,
+                            },
+                            body: JSON.stringify({
+                              field: selectedField,
+                            }),
+                          }
+                        );
+
+              if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                alert(err.message || "Failed to approve");
+                return;
+              }
+
+              alert(`${approveTarget.name} approved`);
+              setMemberPending((prev) =>
+                prev.filter((x) => x.id !== approveTarget.id)
+              );
+              await fetchMembers();
+              setApproveTarget(null);
+            } catch (err) {
+              console.error(err);
+              alert("Approve failed");
+            } finally {
+              setIsApproving(false);
+            }
+          }}
+          className="px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
+        >
+          Approve
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
+
         </div>
       </div>
     </div>

@@ -12,7 +12,7 @@ type MemberItem = {
   identityNum?: string;
   field?: string;
   startDate?: string;
-  position?: string;
+  role: "admin" | "dosen" | "mahasiswa";
   email?: string;
   phone?: string;
   photoUrl?: string;
@@ -44,7 +44,7 @@ export default function MemberPage() {
   }, []);
 
   const [selectedYear, setSelectedYear] = useState("All Year");
-  const [selectedField, setSelectedField] = useState("All"); 
+  const [selectedField, setSelectedField] = useState("All");
   const [selectedSort, setSelectedSort] = useState("Latest");
   const [searchTerm, setSearchTerm] = useState("");
   const [memberList, setMemberList] = useState<MemberItem[]>([]);
@@ -52,15 +52,38 @@ export default function MemberPage() {
   const [showPending, setShowPending] = useState(false);
   const [isLoadingMembers, setIsLoadingMembers] = useState(false);
   const [isLoadingPending, setIsLoadingPending] = useState(false);
-  
+  const [approveTarget, setApproveTarget] = useState<PendingItem | null>(null);
+  const [isApproving, setIsApproving] = useState(false);
+  const token = localStorage.getItem("access_token");
+
   const stats = useMemo(() => {
-    const lecturer = memberList.filter((m) => (m.field ?? "").toLowerCase() === "dosen" || (m.position ?? "").toLowerCase() === "lecturer" || (m.field ?? "").toLowerCase() === "lecturer").length;
-    const student = memberList.filter((m) => (m.field ?? "").toLowerCase() === "mahasiswa" || (m.position ?? "").toLowerCase() === "student").length;
-    const alumni = memberList.filter((m) => (m.field ?? "").toLowerCase() === "alumni").length;
+    const lecturer = memberList.filter(
+      (m) =>
+        (m.role ?? "").toLowerCase() === "dosen" ||
+        (m.role ?? "").toLowerCase() === "lecturer"
+    ).length;
+    const student = memberList.filter(
+      (m) => (m.role ?? "").toLowerCase() === "mahasiswa"
+    ).length;
+    const alumni = memberList.filter(
+      (m) => (m.role ?? "").toLowerCase() === "alumni"
+    ).length;
     return [
-      { label: "Lecturer", value: lecturer, color: "border-orange-400 text-orange-500" },
-      { label: "Student", value: student, color: "border-blue-400 text-blue-500" },
-      { label: "Alumni", value: alumni, color: "border-green-400 text-green-500" },
+      {
+        label: "Lecturer",
+        value: lecturer,
+        color: "border-orange-400 text-orange-500",
+      },
+      {
+        label: "Student",
+        value: student,
+        color: "border-blue-400 text-blue-500",
+      },
+      {
+        label: "Alumni",
+        value: alumni,
+        color: "border-green-400 text-green-500",
+      },
     ];
   }, [memberList]);
 
@@ -81,7 +104,8 @@ export default function MemberPage() {
   const buildCvUrl = (raw?: string) => {
     if (!raw) return "";
     const trimmed = raw.trim();
-    if (/^https?:\/\//i.test(trimmed) || /^data:/i.test(trimmed)) return trimmed;
+    if (/^https?:\/\//i.test(trimmed) || /^data:/i.test(trimmed))
+      return trimmed;
     if (trimmed.startsWith("/")) return `${API_BASE}${trimmed}`;
     return `${API_BASE}/${trimmed.replace(/^\/+/, "")}`;
   };
@@ -100,16 +124,18 @@ export default function MemberPage() {
   const normalizeMembers = (rows: any[]): MemberItem[] => {
     if (!Array.isArray(rows)) return [];
     return rows.map((r: any) => {
-      const start = r.startDate ?? r.createdAt ?? r.start_date ?? r.created_at ?? null;
+      const start =
+        r.startDate ?? r.createdAt ?? r.start_date ?? r.created_at ?? null;
       const startStr = start ? formatDateShort(start) : "-";
       return {
         id: r.id,
         userId: r.userId ?? r.user_id ?? null,
         name: r.name ?? r.fullname ?? r.username ?? "",
-        identityNum: r.identityNum ?? r.identity_num ?? r.validationField ?? r.nim ?? "",
-        field: r.role ?? r.field ?? "",
+        identityNum:
+          r.identityNum ?? r.identity_num ?? r.validationField ?? r.nim ?? "",
+        field: r.field ?? "",
         startDate: startStr,
-        position: r.position ?? "",
+        role: r.role,
         email: r.email ?? "",
         phone: r.phone ?? "",
         photoUrl: r.photoUrl ?? r.photo_url ?? r.photo ?? "",
@@ -123,14 +149,19 @@ export default function MemberPage() {
   const normalizePending = (rows: any[]): PendingItem[] => {
     if (!Array.isArray(rows)) return [];
     return rows.map((p: any) => {
-      const reg = p.createdAt ?? p.created_at ?? p.registrationDate ?? p.registration_date ?? null;
+      const reg =
+        p.createdAt ??
+        p.created_at ??
+        p.registrationDate ??
+        p.registration_date ??
+        null;
       const regStr = reg ? formatDateShort(reg) : "-";
       return {
         id: p.id,
         name: p.name ?? p.fullname ?? "",
         nim: p.identityNum ?? p.validationField ?? p.nim ?? "",
         email: p.email ?? "",
-        field: p.role ?? p.field ?? "", 
+        field: p.role ?? p.field ?? "",
         registrationDate: regStr,
         cvUrl: p.cvUrl ?? p.cv_url ?? p.cvPath ?? p.cv_path ?? "",
       } as PendingItem;
@@ -147,7 +178,7 @@ export default function MemberPage() {
         return;
       }
       const data = await res.json();
-      const rows = Array.isArray(data) ? data : data.data ?? [];
+      const rows = Array.isArray(data) ? data : (data.data ?? []);
       const normalized = normalizeMembers(rows);
       setMemberList(normalized);
     } catch (err) {
@@ -168,7 +199,7 @@ export default function MemberPage() {
         return;
       }
       const data = await res.json();
-      const rows = Array.isArray(data) ? data : data.data ?? [];
+      const rows = Array.isArray(data) ? data : (data.data ?? []);
       const normalized = normalizePending(rows);
       setMemberPending(normalized);
     } catch (err) {
@@ -189,33 +220,11 @@ export default function MemberPage() {
     return () => clearInterval(interval);
   }, []);
 
-  const handleApprove = async (p: PendingItem) => {
-    if (!p?.id) return;
-    if (!confirm(`Approve ${p.name}?`)) return;
-    try {
-      const res = await fetch(`${API_BASE}/member/approve/${p.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        alert(err.message || "Failed to approve");
-        return;
-      }
-      setMemberPending((prev) => prev.filter((x) => x.id !== p.id));
-      await fetchMembers();
-      alert(`${p.name} approved`);
-    } catch (err) {
-      console.error(err);
-      alert("Failed to approve, check console");
-    }
-  };
-
   const handleReject = async (p: PendingItem) => {
     if (!p?.id) return;
     if (!confirm(`Reject ${p.name}?`)) return;
     try {
-      const res = await fetch(`${API_BASE}/member/reject/${p.id}`, {
+      const res = await fetch(`${API_BASE}/member/${p.id}/reject`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
       });
@@ -240,10 +249,14 @@ export default function MemberPage() {
     };
 
     if (selectedField !== "All") {
-      data = data.filter((row) => (row.field ?? "").toLowerCase() === selectedField.toLowerCase());
+      data = data.filter(
+        (row) => (row.field ?? "").toLowerCase() === selectedField.toLowerCase()
+      );
     }
     if (selectedYear !== "All Year") {
-      data = data.filter((row) => getYearFromString(row.startDate ?? "") === selectedYear);
+      data = data.filter(
+        (row) => getYearFromString(row.startDate ?? "") === selectedYear
+      );
     }
 
     if (searchTerm) {
@@ -261,8 +274,12 @@ export default function MemberPage() {
       data.sort((a, b) => (b.name ?? "").localeCompare(a.name ?? ""));
     } else {
       data.sort((a, b) => {
-        const da = a.createdAt ? new Date(a.createdAt).getTime() : new Date(a.startDate ?? "").getTime();
-        const db = b.createdAt ? new Date(b.createdAt).getTime() : new Date(b.startDate ?? "").getTime();
+        const da = a.createdAt
+          ? new Date(a.createdAt).getTime()
+          : new Date(a.startDate ?? "").getTime();
+        const db = b.createdAt
+          ? new Date(b.createdAt).getTime()
+          : new Date(b.startDate ?? "").getTime();
         return (db || 0) - (da || 0);
       });
     }
@@ -368,9 +385,9 @@ export default function MemberPage() {
                 <tr>
                   <th className="py-3 px-2">Name</th>
                   <th className="py-3 px-2">NIM/NIDN</th>
-                  <th className="py-3 px-2">Field</th> 
+                  <th className="py-3 px-2">Field</th>
                   <th className="py-3 px-2">Start Date</th>
-                  <th className="py-3 px-2">Position</th>
+                  <th className="py-3 px-2">Role</th>
                 </tr>
               </thead>
               <tbody>
@@ -389,17 +406,17 @@ export default function MemberPage() {
                         {row.identityNum}
                       </td>
                       <td className={`py-3 px-2 ${borderClass} text-center`}>
-                        {row.field} 
+                        {row.field}
                       </td>
                       <td className={`py-3 px-2 ${borderClass} text-center`}>
                         {row.startDate}
                       </td>
                       <td
                         className={`py-3 px-2 ${borderClass} font-medium text-center ${getStatusColorClass(
-                          row.position ?? ""
+                          row.role ?? "capitalize"
                         )}`}
                       >
-                        {row.position}
+                        {row.role}
                       </td>
                     </tr>
                   );
@@ -407,7 +424,7 @@ export default function MemberPage() {
                 {filteredData.length === 0 && (
                   <tr>
                     <td colSpan={5} className="py-8 text-center text-gray-500">
-                    No data matches the applied filter.
+                      No data matches the applied filter.
                     </td>
                   </tr>
                 )}
@@ -455,7 +472,7 @@ export default function MemberPage() {
                       <th className="py-3 px-2">Name</th>
                       <th className="py-3 px-2">NIM</th>
                       <th className="py-3 px-2">Email</th>
-                      <th className="py-3 px-2">Field</th> 
+                      <th className="py-3 px-2">Field</th>
                       <th className="py-3 px-2">Registration Date</th>
                       <th className="py-3 px-2">Document</th>
                       <th className="py-3 px-2">Action</th>
@@ -465,13 +482,19 @@ export default function MemberPage() {
                   <tbody>
                     {isLoadingPending ? (
                       <tr>
-                        <td colSpan={7} className="py-8 text-center text-gray-500">
+                        <td
+                          colSpan={7}
+                          className="py-8 text-center text-gray-500"
+                        >
                           Loading pending...
                         </td>
                       </tr>
                     ) : memberPending.length === 0 ? (
                       <tr>
-                        <td colSpan={7} className="py-8 text-center text-gray-500">
+                        <td
+                          colSpan={7}
+                          className="py-8 text-center text-gray-500"
+                        >
                           No pending registrations.
                         </td>
                       </tr>
@@ -480,8 +503,12 @@ export default function MemberPage() {
                         <tr key={user.id} className="border-b border-gray-200">
                           <td className="py-3 px-2 text-center">{user.name}</td>
                           <td className="py-3 px-2 text-center">{user.nim}</td>
-                          <td className="py-3 px-2 text-center">{user.email}</td>
-                          <td className="py-3 px-2 text-center">{user.field}</td> 
+                          <td className="py-3 px-2 text-center">
+                            {user.email}
+                          </td>
+                          <td className="py-3 px-2 text-center">
+                            {user.field}
+                          </td>
                           <td className="py-3 px-2 text-center">
                             {user.registrationDate}
                           </td>
@@ -501,12 +528,16 @@ export default function MemberPage() {
                           <td className="py-3 px-2 text-center">
                             <div className="flex items-center justify-center gap-3">
                               <button
-                                onClick={() => handleApprove(user)}
+                                onClick={() => {
+                                  setApproveTarget(user);
+                                  setSelectedField("");
+                                }}
                                 className="text-green-600 hover:text-green-800"
                                 title="Approve"
                               >
                                 <Check size={18} />
                               </button>
+
                               <button
                                 onClick={() => handleReject(user)}
                                 className="text-red-600 hover:text-red-800"
@@ -521,6 +552,90 @@ export default function MemberPage() {
                     )}
                   </tbody>
                 </table>
+              </div>
+            </div>
+          )}
+
+          {approveTarget && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+              <div className="bg-white w-full max-w-md rounded-xl p-6 shadow-lg">
+                <h2 className="text-xl font-semibold text-orange-600 mb-4">
+                  Approve Registration
+                </h2>
+
+                <p className="text-sm text-gray-600 mb-4">
+                  Approve <b>{approveTarget.name}</b> sebagai anggota?
+                </p>
+
+                {/* FIELD SELECT */}
+                <label className="block text-sm font-medium mb-1">
+                  Pilih Field
+                </label>
+                <select
+                  value={selectedField}
+                  onChange={(e) => setSelectedField(e.target.value)}
+                  className="w-full border rounded-lg px-3 py-2 mb-4"
+                >
+                  <option value="">-- pilih field --</option>
+                  <option value="UI/UX Designer">UI/UX Designer</option>
+                  <option value="Frontend Developer">Frontend Developer</option>
+                  <option value="Backend Developer">Backend Developer</option>
+                  <option value="Game Developer">Game Developer</option>
+                </select>
+
+                {/* ACTION */}
+                <div className="flex justify-end gap-3">
+                  <button
+                    onClick={() => setApproveTarget(null)}
+                    className="px-4 py-2 rounded-lg border hover:bg-gray-100"
+                    disabled={isApproving}
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    disabled={!selectedField || isApproving}
+                    onClick={async () => {
+                      try {
+                        setIsApproving(true);
+                        const res = await fetch(
+                          `${API_BASE}/member/${approveTarget.id}/approve`,
+                          {
+                            method: "PATCH",
+                            headers: {
+                              "Content-Type": "application/json",
+                              Authorization: `Bearer ${token}`,
+                            },
+                            body: JSON.stringify({
+                              field: selectedField,
+                            }),
+                          }
+                        );
+
+                        if (!res.ok) {
+                          const err = await res.json().catch(() => ({}));
+                          alert(err.message || "Failed to approve");
+                          return;
+                        }
+
+                        alert(`${approveTarget.name} approved`);
+                        setMemberPending((prev) =>
+                          prev.filter((x) => x.id !== approveTarget.id)
+                        );
+                        await fetchMembers();
+                        setApproveTarget(null);
+                      } catch (err) {
+                        console.error(err);
+                        alert("Approve failed");
+                      } finally {
+                        setIsApproving(false);
+                      }
+                    }}
+                    className="px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
+                  >
+                    Approve
+                  </button>
+                </div>
               </div>
             </div>
           )}

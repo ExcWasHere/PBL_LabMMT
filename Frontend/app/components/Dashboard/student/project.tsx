@@ -47,14 +47,14 @@ export default function ProjectPage() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const [publisherName, setPublisherName] = useState("KetuaLab");
+  const [publisherName, setPublisherName] = useState("Student"); // Changed default fallback to Student
   useEffect(() => {
     try {
       const raw = localStorage.getItem("user");
       if (raw) {
         const parsed = JSON.parse(raw);
         setPublisherName(
-          parsed.name ?? parsed.fullname ?? parsed.username ?? "KetuaLab"
+          parsed.name ?? parsed.fullname ?? parsed.username ?? "Student"
         );
       }
     } catch (e) {
@@ -295,7 +295,7 @@ export default function ProjectPage() {
         const url = extractUrlFromResponse(raw);
 
         if (!url) {
-           throw new Error("Upload berhasil, tapi tidak ditemukan URL/filename di respon server. Cek Console.");
+            throw new Error("Upload berhasil, tapi tidak ditemukan URL/filename di respon server. Cek Console.");
         }
 
         payload.thumbnailUrl = url;
@@ -313,10 +313,13 @@ export default function ProjectPage() {
       }
       
       const headers = getAuthHeaders(true);
+      
+      // --- PERUBAHAN DI SINI UNTUK STUDENT ---
+      // Paksa status kembali ke "Review" agar Admin harus menyetujui lagi
+      const statusToSend = "Review"; 
+      // ---------------------------------------
+
       if (editData) {
-        const statusToSend =
-          (formData as any).status ?? editData.status ?? "Review";
-        
         const res = await fetch(`${PROJECT_ENDPOINT}/${editData.id}`, {
           method: "PATCH",
           headers,
@@ -329,7 +332,7 @@ export default function ProjectPage() {
           headers,
           body: JSON.stringify({
             ...payload,
-            status: "Review",
+            status: statusToSend,
             stars: 0,
           }),
         });

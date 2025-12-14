@@ -67,7 +67,7 @@ const Sidebar: FC<SidebarProps> = ({ onClose }) => {
     { name: "Home", route: "/", icon: <Home size={18} /> },
     {
       name: "Logout",
-      route: "/masuk",
+      route: "/sign-in",
       icon: <LogOut size={18} />,
       danger: true,
     },

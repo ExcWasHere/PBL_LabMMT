@@ -317,4 +317,36 @@ export class MemberService {
     await this.memberRepo.delete(id);
     return { message: 'Member deleted' };
   }
+
+  async findPublicTeam() {
+    return await this.memberRepo.find({
+      where: [
+        { role: 'dosen', status: 'active' },
+        { role: 'admin', status: 'active' },
+      ],
+      select: [
+        'id',
+        'name',
+        'slug',
+        'photoUrl',
+        'role',
+        'tags',
+        'social_links',
+        'email',
+      ],
+      order: { createdAt: 'DESC' },
+    });
+  }
+
+  async updateMyProfile(userId: number, dto: UpdateMemberDto) {
+    const member = await this.memberRepo.findOne({
+      where: { userId },
+    });
+    if (!member) throw new NotFoundException();
+    if (member.role === 'mahasiswa') {
+      delete dto.field;
+    }
+    Object.assign(member, dto);
+    return this.memberRepo.save(member);
+  }
 }

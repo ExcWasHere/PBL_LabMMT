@@ -13,9 +13,9 @@ type Profile = {
   name: string;
   role: string;
   email: string;
-  phone: string;
   bio: string;
   photo: string;
+  field: string;
   // lecture/admin ya ges
   nip?: string;
   nidn?: string;
@@ -33,6 +33,7 @@ type EditData = {
   bio: string;
   photo: string;
   nip: string;
+  field: string;
   nidn: string;
   prodi: string;
   jabatan_akademik: string;
@@ -53,7 +54,7 @@ const ProfilPage = () => {
     name: "",
     role: "",
     email: "",
-    phone: "",
+    field: "",
     bio: "",
     photo: "",
     nip: "",
@@ -75,6 +76,7 @@ const ProfilPage = () => {
     nip: "",
     nidn: "",
     prodi: "",
+    field: "",
     jabatan_akademik: "",
     tags: "",
     pendidikan: "",
@@ -115,7 +117,9 @@ const ProfilPage = () => {
       setIsLoading(true);
 
       const userRes = await fetch("http://localhost:3000/user/profile", {
-        headers: { Authorization: `Bearer ${localStorage.getItem("access_token")}` },
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+        },
       });
 
       if (!userRes.ok) {
@@ -135,7 +139,9 @@ const ProfilPage = () => {
       if (base.role === "dosen" || base.role === "admin") {
         try {
           const memberRes = await fetch("http://localhost:3000/member/me", {
-            headers: { Authorization: `Bearer ${localStorage.getItem("access_token")}` },
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+            },
           });
 
           if (memberRes.ok) {
@@ -147,12 +153,23 @@ const ProfilPage = () => {
               nip: member.nip ?? "",
               nidn: member.nidn ?? "",
               prodi: member.prodi ?? "",
+              field: member.field ?? "",
               jabatan_akademik: member.jabatan_akademik ?? "",
-              tags: Array.isArray(member.tags) ? member.tags : textareaToArr(member.tags),
-              pendidikan: Array.isArray(member.pendidikan) ? member.pendidikan : textareaToArr(member.pendidikan),
-              sertifikasi: Array.isArray(member.sertifikasi) ? member.sertifikasi : textareaToArr(member.sertifikasi),
-              matkul_ganjil: Array.isArray(member.matkul_ganjil) ? member.matkul_ganjil : textareaToArr(member.matkul_ganjil),
-              matkul_genap: Array.isArray(member.matkul_genap) ? member.matkul_genap : textareaToArr(member.matkul_genap),
+              tags: Array.isArray(member.tags)
+                ? member.tags
+                : textareaToArr(member.tags),
+              pendidikan: Array.isArray(member.pendidikan)
+                ? member.pendidikan
+                : textareaToArr(member.pendidikan),
+              sertifikasi: Array.isArray(member.sertifikasi)
+                ? member.sertifikasi
+                : textareaToArr(member.sertifikasi),
+              matkul_ganjil: Array.isArray(member.matkul_ganjil)
+                ? member.matkul_ganjil
+                : textareaToArr(member.matkul_ganjil),
+              matkul_genap: Array.isArray(member.matkul_genap)
+                ? member.matkul_genap
+                : textareaToArr(member.matkul_genap),
               social_links: social,
               photo: member.photoUrl ?? base.photo,
               bio: member.bio ?? base.bio,
@@ -164,6 +181,7 @@ const ProfilPage = () => {
               nip: merged.nip ?? "",
               nidn: merged.nidn ?? "",
               prodi: merged.prodi ?? "",
+              field: merged.field ?? "",
               jabatan_akademik: merged.jabatan_akademik ?? "",
               tags: (merged.tags || []).join(", "),
               pendidikan: arrToTextarea(merged.pendidikan),
@@ -179,13 +197,21 @@ const ProfilPage = () => {
             return;
           } else {
             setProfile(base as any);
-            setEditData((prev) => ({ ...prev, bio: base.bio, photo: base.photo }));
+            setEditData((prev) => ({
+              ...prev,
+              bio: base.bio,
+              photo: base.photo,
+            }));
             return;
           }
         } catch (err) {
           console.error("member/me fetch failed:", err);
           setProfile(base as any);
-          setEditData((prev) => ({ ...prev, bio: base.bio, photo: base.photo }));
+          setEditData((prev) => ({
+            ...prev,
+            bio: base.bio,
+            photo: base.photo,
+          }));
           return;
         }
       }
@@ -208,7 +234,7 @@ const ProfilPage = () => {
         name: parsed.name ?? parsed.fullname ?? parsed.username ?? "User",
         role: parsed.role ?? "mahasiswa",
         email: parsed.email ?? "",
-        phone: parsed.phone ?? "",
+        field: parsed.field ?? "",
         bio: parsed.bio ?? "",
         photo: parsed.photo ?? "",
         nip: parsed.nip ?? "",
@@ -229,6 +255,7 @@ const ProfilPage = () => {
         nip: profileData.nip ?? "",
         nidn: profileData.nidn ?? "",
         prodi: profileData.prodi ?? "",
+        field: profileData.field ?? "",
         jabatan_akademik: profileData.jabatan_akademik ?? "",
         tags: (profileData.tags || []).join(", "),
         pendidikan: arrToTextarea(profileData.pendidikan),
@@ -270,7 +297,9 @@ const ProfilPage = () => {
 
         const photoResponse = await fetch("http://localhost:3000/user/photo", {
           method: "PUT",
-          headers: { Authorization: `Bearer ${localStorage.getItem("access_token")}` },
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+          },
           body: formData,
         });
 
@@ -306,6 +335,7 @@ const ProfilPage = () => {
           nip: editData.nip || undefined,
           nidn: editData.nidn || undefined,
           prodi: editData.prodi || undefined,
+          field: editData.field || undefined,
           jabatan_akademik: editData.jabatan_akademik || undefined,
           tags: textareaToArr(editData.tags),
           pendidikan: textareaToArr(editData.pendidikan),
@@ -346,16 +376,24 @@ const ProfilPage = () => {
           nip: updated.nip ?? prev.nip,
           nidn: updated.nidn ?? prev.nidn,
           prodi: updated.prodi ?? prev.prodi,
+          field: updated.field ?? prev.field,
           jabatan_akademik: updated.jabatan_akademik ?? prev.jabatan_akademik,
           tags: updated.tags ?? prev.tags,
           pendidikan: updated.pendidikan ?? prev.pendidikan,
           sertifikasi: updated.sertifikasi ?? prev.sertifikasi,
           matkul_ganjil: updated.matkul_ganjil ?? prev.matkul_ganjil,
           matkul_genap: updated.matkul_genap ?? prev.matkul_genap,
-          social_links: { ...(prev.social_links ?? {}), ...(updated.social_links ?? {}) },
+          social_links: {
+            ...(prev.social_links ?? {}),
+            ...(updated.social_links ?? {}),
+          },
         }));
       } else {
-        setProfile((prev) => ({ ...prev, bio: bioData.bio, photo: latestPhoto }));
+        setProfile((prev) => ({
+          ...prev,
+          bio: bioData.bio,
+          photo: latestPhoto,
+        }));
       }
 
       const userRaw = localStorage.getItem("user");
@@ -384,6 +422,7 @@ const ProfilPage = () => {
       nip: profile.nip ?? "",
       nidn: profile.nidn ?? "",
       prodi: profile.prodi ?? "",
+      field: profile.field ?? "",
       jabatan_akademik: profile.jabatan_akademik ?? "",
       tags: (profile.tags || []).join(", "),
       pendidikan: arrToTextarea(profile.pendidikan),
@@ -400,11 +439,20 @@ const ProfilPage = () => {
     setIsEditing(false);
   };
 
+  const isMahasiswa = profile.role === "mahasiswa";
+  const canEditField = !isMahasiswa;
+
   return (
-    <div className="min-h-screen bg-cover bg-center p-8" style={{ backgroundImage: "url(/latar-belakang.svg)" }}>
+    <div
+      className="min-h-screen bg-cover bg-center p-8"
+      style={{ backgroundImage: "url(/latar-belakang.svg)" }}
+    >
       <div className="max-w-4xl mx-auto">
         <div className="mb-6 flex items-center gap-4">
-          <button onClick={() => window.history.back()} className="p-2 hover:bg-white/60 rounded-lg transition">
+          <button
+            onClick={() => window.history.back()}
+            className="p-2 hover:bg-white/60 rounded-lg transition"
+          >
             <ArrowLeft size={24} className="text-gray-700" />
           </button>
           <h1 className="text-3xl font-bold text-gray-800">Profil Saya</h1>
@@ -415,15 +463,30 @@ const ProfilPage = () => {
           <div className="px-8 pb-8">
             <div className="flex flex-col items-center -mt-16 mb-6">
               <div className="relative">
-                <img src={isEditing ? editData.photo || getPhotoUrl(profile.photo) : getPhotoUrl(profile.photo)} alt="Profile" className="w-32 h-32 rounded-full border-4 border-white shadow-lg object-cover" />
+                <img
+                  src={
+                    isEditing
+                      ? editData.photo || getPhotoUrl(profile.photo)
+                      : getPhotoUrl(profile.photo)
+                  }
+                  alt="Profile"
+                  className="w-32 h-32 rounded-full border-4 border-white shadow-lg object-cover"
+                />
                 {isEditing && (
                   <label className="absolute bottom-0 right-0 bg-orange-500 p-2 rounded-full cursor-pointer hover:bg-orange-600 transition shadow-lg">
                     <Camera size={20} className="text-white" />
-                    <input type="file" accept="image/*" onChange={handlePhotoChange} className="hidden" />
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handlePhotoChange}
+                      className="hidden"
+                    />
                   </label>
                 )}
               </div>
-              <h2 className="text-2xl font-bold text-gray-800 mt-4">{profile.name}</h2>
+              <h2 className="text-2xl font-bold text-gray-800 mt-4">
+                {profile.name}
+              </h2>
               <p className="text-gray-600">{profile.role}</p>
             </div>
 
@@ -432,23 +495,53 @@ const ProfilPage = () => {
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <div className="flex items-center gap-3 mb-2">
                     <Mail size={20} className="text-orange-500" />
-                    <span className="text-sm font-semibold text-gray-600">Email</span>
+                    <span className="text-sm font-semibold text-gray-600">
+                      Email
+                    </span>
                   </div>
                   <p className="text-gray-800 ml-8">{profile.email}</p>
                 </div>
 
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <div className="flex items-center gap-3 mb-2">
-                    <Phone size={20} className="text-orange-500" />
-                    <span className="text-sm font-semibold text-gray-600">No. HP</span>
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <div className="flex items-center gap-3 mb-2">
+                      <Briefcase size={20} className="text-orange-500" />
+                      <span className="text-sm font-semibold text-gray-600">
+                        Field
+                      </span>
+                    </div>
+
+                    {isEditing && canEditField ? (
+                      <input
+                        type="text"
+                        value={editData.field}
+                        onChange={(e) =>
+                          setEditData((prev) => ({
+                            ...prev,
+                            field: e.target.value,
+                          }))
+                        }
+                        placeholder="Contoh: Frontend Developer"
+                        className="ml-8 w-[calc(100%-2rem)] px-3 py-2 border border-orange-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      />
+                    ) : (
+                      <div className="ml-8 text-gray-800">
+                        {profile.field || "-"}
+                        {isMahasiswa && (
+                          <p className="text-xs text-gray-500 mt-1">
+                            Field ditentukan saat approval
+                          </p>
+                        )}
+                      </div>
+                    )}
                   </div>
-                  <p className="text-gray-800 ml-8">{profile.phone}</p>
                 </div>
 
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <div className="flex items-center gap-3 mb-2">
                     <User size={20} className="text-orange-500" />
-                    <span className="text-sm font-semibold text-gray-600">Nama Lengkap</span>
+                    <span className="text-sm font-semibold text-gray-600">
+                      Nama Lengkap
+                    </span>
                   </div>
                   <p className="text-gray-800 ml-8">{profile.name}</p>
                 </div>
@@ -456,7 +549,9 @@ const ProfilPage = () => {
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <div className="flex items-center gap-3 mb-2">
                     <Briefcase size={20} className="text-orange-500" />
-                    <span className="text-sm font-semibold text-gray-600">Role</span>
+                    <span className="text-sm font-semibold text-gray-600">
+                      Role
+                    </span>
                   </div>
                   <p className="text-gray-800 ml-8">{profile.role}</p>
                 </div>
@@ -465,95 +560,364 @@ const ProfilPage = () => {
               <div className="bg-orange-50 p-4 rounded-lg border-2 border-orange-200">
                 <div className="flex items-center gap-3 mb-2">
                   <User size={20} className="text-orange-500" />
-                  <span className="text-sm font-semibold text-gray-600">Bio</span>
+                  <span className="text-sm font-semibold text-gray-600">
+                    Bio
+                  </span>
                 </div>
 
                 {isEditing ? (
-                  <textarea value={editData.bio} onChange={(e) => setEditData((prev) => ({ ...prev, bio: e.target.value }))} rows={3} className="w-full px-3 py-2 border border-orange-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none" placeholder="Ceritakan tentang dirimu..." />
+                  <textarea
+                    value={editData.bio}
+                    onChange={(e) =>
+                      setEditData((prev) => ({ ...prev, bio: e.target.value }))
+                    }
+                    rows={3}
+                    className="w-full px-3 py-2 border border-orange-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none"
+                    placeholder="Ceritakan tentang dirimu..."
+                  />
                 ) : (
-                  <p className="text-gray-800 ml-6 whitespace-pre-wrap">{profile.bio}</p>
+                  <p className="text-gray-800 ml-6 whitespace-pre-wrap">
+                    {profile.bio}
+                  </p>
                 )}
               </div>
 
               {(profile.role === "dosen" || profile.role === "admin") && (
                 <div className="space-y-6 mt-6">
                   <div className="bg-gray-50 p-4 rounded-lg border border-orange-300">
-                    <h3 className="font-semibold mb-3 text-gray-700">Informasi Akademik</h3>
+                    <h3 className="font-semibold mb-3 text-gray-700">
+                      Informasi Akademik
+                    </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-gray-800">
-                      <p><strong>NIP:</strong> {profile.nip || "-"}</p>
-                      <p><strong>NIDN:</strong> {profile.nidn || "-"}</p>
-                      <p><strong>Program Studi:</strong> {profile.prodi || "-"}</p>
-                      <p><strong>Jabatan Akademik:</strong> {profile.jabatan_akademik || "-"}</p>
+                      <p>
+                        <strong>NIP:</strong> {profile.nip || "-"}
+                      </p>
+                      <p>
+                        <strong>NIDN:</strong> {profile.nidn || "-"}
+                      </p>
+                      <p>
+                        <strong>Program Studi:</strong> {profile.prodi || "-"}
+                      </p>
+                      <p>
+                        <strong>Jabatan Akademik:</strong>{" "}
+                        {profile.jabatan_akademik || "-"}
+                      </p>
                     </div>
                     {isEditing && (
                       <div className="mt-4 space-y-3">
-                        <input type="text" placeholder="NIP" value={editData.nip} onChange={(e) => setEditData((p) => ({ ...p, nip: e.target.value }))} className="w-full border border-orange-300 px-3 py-2 rounded" />
-                        <input type="text" placeholder="NIDN" value={editData.nidn} onChange={(e) => setEditData((p) => ({ ...p, nidn: e.target.value }))} className="w-full border border-orange-300 px-3 py-2 rounded" />
-                        <input type="text" placeholder="Program Studi" value={editData.prodi} onChange={(e) => setEditData((p) => ({ ...p, prodi: e.target.value }))} className="w-full border border-orange-300 px-3 py-2 rounded" />
-                        <input type="text" placeholder="Jabatan Akademik" value={editData.jabatan_akademik} onChange={(e) => setEditData((p) => ({ ...p, jabatan_akademik: e.target.value }))} className="w-full border border-orange-300 px-3 py-2 rounded" />
+                        <input
+                          type="text"
+                          placeholder="NIP"
+                          value={editData.nip}
+                          onChange={(e) =>
+                            setEditData((p) => ({ ...p, nip: e.target.value }))
+                          }
+                          className="w-full border border-orange-300 px-3 py-2 rounded"
+                        />
+                        <input
+                          type="text"
+                          placeholder="NIDN"
+                          value={editData.nidn}
+                          onChange={(e) =>
+                            setEditData((p) => ({ ...p, nidn: e.target.value }))
+                          }
+                          className="w-full border border-orange-300 px-3 py-2 rounded"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Program Studi"
+                          value={editData.prodi}
+                          onChange={(e) =>
+                            setEditData((p) => ({
+                              ...p,
+                              prodi: e.target.value,
+                            }))
+                          }
+                          className="w-full border border-orange-300 px-3 py-2 rounded"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Jabatan Akademik"
+                          value={editData.jabatan_akademik}
+                          onChange={(e) =>
+                            setEditData((p) => ({
+                              ...p,
+                              jabatan_akademik: e.target.value,
+                            }))
+                          }
+                          className="w-full border border-orange-300 px-3 py-2 rounded"
+                        />
                       </div>
                     )}
                   </div>
 
                   <div className="bg-gray-50 p-4 rounded-lg border border-orange-300">
-                    <h3 className="font-semibold mb-3 text-gray-700">Keahlian / Tags</h3>
+                    <h3 className="font-semibold mb-3 text-gray-700">
+                      Keahlian / Tags
+                    </h3>
                     <div className="flex flex-wrap gap-2 text-gray-800">
-                      {(profile.tags || []).map((t, i) => <span key={i} className="px-3 py-1 bg-orange-100 rounded-full text-sm">{t}</span>)}
+                      {(profile.tags || []).map((t, i) => (
+                        <span
+                          key={i}
+                          className="px-3 py-1 bg-orange-100 rounded-full text-sm"
+                        >
+                          {t}
+                        </span>
+                      ))}
                     </div>
-                    {isEditing && <textarea placeholder="Pisahkan dengan koma. Contoh: AI, ML" value={editData.tags} onChange={(e) => setEditData((p) => ({ ...p, tags: e.target.value }))} className="w-full mt-3 px-3 py-2 border border-orange-300 rounded" />}
+                    {isEditing && (
+                      <textarea
+                        placeholder="Pisahkan dengan koma. Contoh: AI, ML"
+                        value={editData.tags}
+                        onChange={(e) =>
+                          setEditData((p) => ({ ...p, tags: e.target.value }))
+                        }
+                        className="w-full mt-3 px-3 py-2 border border-orange-300 rounded"
+                      />
+                    )}
                   </div>
 
                   <div className="bg-gray-50 p-4 rounded-lg border border-orange-300">
-                    <h3 className="font-semibold mb-3 text-gray-700">Pendidikan</h3>
+                    <h3 className="font-semibold mb-3 text-gray-700">
+                      Pendidikan
+                    </h3>
                     <ul className="list-disc ml-6 text-gray-800">
-                      {(profile.pendidikan || []).map((p, i) => <li key={i}>{p}</li>)}
+                      {(profile.pendidikan || []).map((p, i) => (
+                        <li key={i}>{p}</li>
+                      ))}
                     </ul>
-                    {isEditing && <textarea placeholder="Pisahkan baris per baris" value={editData.pendidikan} onChange={(e) => setEditData((p) => ({ ...p, pendidikan: e.target.value }))} className="w-full mt-3 px-3 py-2 border border-orange-300 rounded" />}
+                    {isEditing && (
+                      <textarea
+                        placeholder="Pisahkan baris per baris"
+                        value={editData.pendidikan}
+                        onChange={(e) =>
+                          setEditData((p) => ({
+                            ...p,
+                            pendidikan: e.target.value,
+                          }))
+                        }
+                        className="w-full mt-3 px-3 py-2 border border-orange-300 rounded"
+                      />
+                    )}
                   </div>
 
                   <div className="bg-gray-50 p-4 rounded-lg border border-orange-300">
-                    <h3 className="font-semibold mb-3 text-gray-700">Sertifikasi</h3>
+                    <h3 className="font-semibold mb-3 text-gray-700">
+                      Sertifikasi
+                    </h3>
                     <ul className="list-disc ml-6 text-gray-800">
-                      {(profile.sertifikasi || []).map((s, i) => <li key={i}>{s}</li>)}
+                      {(profile.sertifikasi || []).map((s, i) => (
+                        <li key={i}>{s}</li>
+                      ))}
                     </ul>
-                    {isEditing && <textarea placeholder="Pisahkan baris per baris" value={editData.sertifikasi} onChange={(e) => setEditData((p) => ({ ...p, sertifikasi: e.target.value }))} className="w-full mt-3 px-3 py-2 border border-orange-300 rounded" />}
+                    {isEditing && (
+                      <textarea
+                        placeholder="Pisahkan baris per baris"
+                        value={editData.sertifikasi}
+                        onChange={(e) =>
+                          setEditData((p) => ({
+                            ...p,
+                            sertifikasi: e.target.value,
+                          }))
+                        }
+                        className="w-full mt-3 px-3 py-2 border border-orange-300 rounded"
+                      />
+                    )}
                   </div>
 
                   <div className="grid md:grid-cols-2 gap-4">
                     <div className="bg-gray-50 p-4 rounded-lg border border-orange-300">
-                      <h3 className="font-semibold mb-3 text-gray-700">Semester Ganjil</h3>
+                      <h3 className="font-semibold mb-3 text-gray-700">
+                        Semester Ganjil
+                      </h3>
                       <ul className="list-disc ml-6 text-gray-800">
-                        {(profile.matkul_ganjil || []).map((m, i) => <li key={i}>{m}</li>)}
+                        {(profile.matkul_ganjil || []).map((m, i) => (
+                          <li key={i}>{m}</li>
+                        ))}
                       </ul>
-                      {isEditing && <textarea placeholder="Pisahkan baris per baris" value={editData.matkul_ganjil} onChange={(e) => setEditData((p) => ({ ...p, matkul_ganjil: e.target.value }))} className="w-full mt-3 px-3 py-2 border border-orange-300 rounded" />}
+                      {isEditing && (
+                        <textarea
+                          placeholder="Pisahkan baris per baris"
+                          value={editData.matkul_ganjil}
+                          onChange={(e) =>
+                            setEditData((p) => ({
+                              ...p,
+                              matkul_ganjil: e.target.value,
+                            }))
+                          }
+                          className="w-full mt-3 px-3 py-2 border border-orange-300 rounded"
+                        />
+                      )}
                     </div>
 
                     <div className="bg-gray-50 p-4 rounded-lg border border-orange-300">
-                      <h3 className="font-semibold mb-3 text-gray-700">Semester Genap</h3>
+                      <h3 className="font-semibold mb-3 text-gray-700">
+                        Semester Genap
+                      </h3>
                       <ul className="list-disc ml-6 text-gray-800">
-                        {(profile.matkul_genap || []).map((m, i) => <li key={i}>{m}</li>)}
+                        {(profile.matkul_genap || []).map((m, i) => (
+                          <li key={i}>{m}</li>
+                        ))}
                       </ul>
-                      {isEditing && <textarea placeholder="Pisahkan baris per baris" value={editData.matkul_genap} onChange={(e) => setEditData((p) => ({ ...p, matkul_genap: e.target.value }))} className="w-full mt-3 px-3 py-2 border border-orange-300 rounded" />}
+                      {isEditing && (
+                        <textarea
+                          placeholder="Pisahkan baris per baris"
+                          value={editData.matkul_genap}
+                          onChange={(e) =>
+                            setEditData((p) => ({
+                              ...p,
+                              matkul_genap: e.target.value,
+                            }))
+                          }
+                          className="w-full mt-3 px-3 py-2 border border-orange-300 rounded"
+                        />
+                      )}
                     </div>
                   </div>
                 </div>
               )}
+<div className="bg-gray-50 p-4 rounded-lg border border-orange-300">
+  <h3 className="font-semibold mb-4 text-gray-700">
+    Social & Academic Links
+  </h3>
+
+  <div className="space-y-4">
+
+    {/* LinkedIn */}
+    <div>
+      <p className="text-xs font-medium text-gray-500 mb-1">LinkedIn</p>
+      {isEditing ? (
+        <input
+          type="text"
+          placeholder="https://linkedin.com/in/username"
+          value={editData.linkedin}
+          onChange={(e) =>
+            setEditData((p) => ({ ...p, linkedin: e.target.value }))
+          }
+          className="w-full px-3 py-2 border border-orange-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+        />
+      ) : (
+        <p className="text-gray-800 text-sm">
+          {profile.social_links?.linkedin || "-"}
+        </p>
+      )}
+    </div>
+
+    {/* Email Akademik */}
+    <div>
+      <p className="text-xs font-medium text-gray-500 mb-1">Email Akademik</p>
+      {isEditing ? (
+        <input
+          type="email"
+          placeholder="email@kampus.ac.id"
+          value={editData.emailSocial}
+          onChange={(e) =>
+            setEditData((p) => ({ ...p, emailSocial: e.target.value }))
+          }
+          className="w-full px-3 py-2 border border-orange-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+        />
+      ) : (
+        <p className="text-gray-800 text-sm">
+          {profile.social_links?.email || "-"}
+        </p>
+      )}
+    </div>
+
+    {/* Google Scholar */}
+    <div>
+      <p className="text-xs font-medium text-gray-500 mb-1">Google Scholar</p>
+      {isEditing ? (
+        <input
+          type="text"
+          placeholder="https://scholar.google.com/..."
+          value={editData.scholar}
+          onChange={(e) =>
+            setEditData((p) => ({ ...p, scholar: e.target.value }))
+          }
+          className="w-full px-3 py-2 border border-orange-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+        />
+      ) : (
+        <p className="text-gray-800 text-sm">
+          {profile.social_links?.scholar || "-"}
+        </p>
+      )}
+    </div>
+
+    {/* SINTA */}
+    <div>
+      <p className="text-xs font-medium text-gray-500 mb-1">SINTA</p>
+      {isEditing ? (
+        <input
+          type="text"
+          placeholder="https://sinta.kemdikbud.go.id/..."
+          value={editData.sinta}
+          onChange={(e) =>
+            setEditData((p) => ({ ...p, sinta: e.target.value }))
+          }
+          className="w-full px-3 py-2 border border-orange-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+        />
+      ) : (
+        <p className="text-gray-800 text-sm">
+          {profile.social_links?.sinta || "-"}
+        </p>
+      )}
+    </div>
+
+    {/* CV */}
+    <div>
+      <p className="text-xs font-medium text-gray-500 mb-1">CV</p>
+      {isEditing ? (
+        <input
+          type="text"
+          placeholder="https://drive.google.com/..."
+          value={editData.cv}
+          onChange={(e) =>
+            setEditData((p) => ({ ...p, cv: e.target.value }))
+          }
+          className="w-full px-3 py-2 border border-orange-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+        />
+      ) : (
+        <p className="text-gray-800 text-sm">
+          {profile.social_links?.cv || "-"}
+        </p>
+      )}
+    </div>
+
+  </div>
+</div>
+
 
               <div className="mt-8 flex gap-3 justify-end">
                 {isEditing ? (
                   <>
-                    <button onClick={handleCancel} disabled={isLoading} className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition disabled:opacity-50">Batal</button>
-                    <button onClick={handleSave} disabled={isLoading} className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition shadow-lg disabled:opacity-50">{isLoading ? "Menyimpan..." : "Simpan Perubahan"}</button>
+                    <button
+                      onClick={handleCancel}
+                      disabled={isLoading}
+                      className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition disabled:opacity-50"
+                    >
+                      Batal
+                    </button>
+                    <button
+                      onClick={handleSave}
+                      disabled={isLoading}
+                      className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition shadow-lg disabled:opacity-50"
+                    >
+                      {isLoading ? "Menyimpan..." : "Simpan Perubahan"}
+                    </button>
                   </>
                 ) : (
-                  <button onClick={() => setIsEditing(true)} className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition shadow-lg">Edit Profil</button>
+                  <button
+                    onClick={() => setIsEditing(true)}
+                    className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition shadow-lg"
+                  >
+                    Edit Profil
+                  </button>
                 )}
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
   );
 };
 

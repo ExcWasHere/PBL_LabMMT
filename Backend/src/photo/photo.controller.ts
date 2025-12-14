@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* src/photo/photo.controller.ts */
 import {
   Controller,
   Get,
@@ -16,6 +14,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { PhotoService } from './photo.service';
+import { CreatePhotoDto } from './dto/create-photo.dto';
 import { UpdatePhotoDto } from './dto/update-photo.dto';
 
 @Controller('photo')
@@ -57,9 +56,8 @@ export class PhotoController {
   }
 
   @Post()
-  async create(@Body() createDto: any) {
-    if (!createDto.status) createDto.status = 'Review';
-    return this.photoService.create(createDto);
+  create(@Body() createDto: CreatePhotoDto) {
+    return this.photoService.createPhoto(createDto);
   }
 
   @Patch(':id')

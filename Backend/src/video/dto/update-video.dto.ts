@@ -1,9 +1,39 @@
-import { PartialType } from '@nestjs/mapped-types';
-import { CreateVideoDto } from './create-video.dto';
 import { IsString, IsOptional } from 'class-validator';
 
-export class UpdateVideoDto extends PartialType(CreateVideoDto) {
-    @IsOptional()
-    @IsString()
-    status?: string;
+export class UpdateVideoDto {
+  @IsString()
+  title: string;
+
+  galleryId?: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsOptional()
+  date?: Date | string;
+
+  @IsOptional()
+  @IsString()
+  status?: string; // <--- PENTING
+
+  @IsOptional()
+  @IsString()
+  publisher?: string;
+
+  @IsOptional()
+  @IsString()
+  videoUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  cover_url?: string;
+
+  @IsOptional()
+  @IsString()
+  location?: string;
+
+  @IsOptional()
+  @IsString()
+  category?: string;
 }

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import {
   Controller,
   Get,
@@ -15,6 +14,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { VideoService } from './video.service';
+import { CreateVideoDto } from './dto/create-video.dto';
 import { UpdateVideoDto } from './dto/update-video.dto';
 
 @Controller('video')
@@ -55,9 +55,8 @@ export class VideoController {
   }
 
   @Post()
-  async create(@Body() createDto: any) {
-    if (!createDto.status) createDto.status = 'Review';
-    return this.videoService.create(createDto);
+  create(@Body() createDto: CreateVideoDto) {
+    return this.videoService.createVideo(createDto);
   }
 
   @Patch(':id')

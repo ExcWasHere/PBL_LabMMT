@@ -4,30 +4,36 @@ import {
   PrimaryGeneratedColumn,
   CreateDateColumn,
   UpdateDateColumn,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
+import { Gallery } from '../../gallery/gallery.entity';
 
 @Entity('photos')
 export class Photo {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'varchar', length: 255 })
+  @Column({ length: 255 })
   title: string;
 
-  @Column({ type: 'varchar', length: 500 })
+  @Column({ name: 'photoUrl', type: 'varchar', length: 500 })
   photoUrl: string;
+
+  @Column({ name: 'gallery_id', type: 'uuid', nullable: true })
+  galleryId: string;
+
+  @ManyToOne(() => Gallery, (gallery) => gallery.photos, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'gallery_id' })
+  gallery: Gallery;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
   publisher: string;
 
-  @Column({ type: 'varchar', length: 100, nullable: true })
-  category: string;
-
   @Column({ type: 'varchar', length: 255, nullable: true })
   location: string;
-
-  @Column({ name: 'cover_url', type: 'text', nullable: true })
-  thumbnailUrl: string;
 
   @Column({ type: 'date', nullable: true })
   date: Date;

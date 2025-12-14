@@ -18,6 +18,7 @@ import { StatsModule } from './stats/stats.module';
 import { ActivityModule } from './activity/activity.module';
 import { UploadModule } from './upload/upload.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { GalleryModule } from './gallery/gallery.module';
 
 @Module({
   imports: [
@@ -49,6 +50,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     StatsModule,
     ActivityModule,
     UploadModule,
+    GalleryModule,
   ],
   controllers: [AppController, AnalyticsController],
   providers: [AppService, AnalyticsService, AnalyticsGateway],

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 import { IsEmail, IsNotEmpty, MinLength, IsOptional } from 'class-validator';
 
 export class RegisterDto {

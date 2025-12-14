@@ -20,8 +20,8 @@ export class Member {
   @Column({ type: 'varchar', length: 50, nullable: true })
   identityNum: string;
 
-  @Column({ type: 'varchar', length: 100, nullable: true })
-  role: string;
+  @Column()
+  role: 'dosen' | 'mahasiswa' | 'admin';
 
   // =====================================================
   // REQUIRED by your existing MemberService + DB
@@ -30,18 +30,11 @@ export class Member {
   @Column({ type: 'varchar', length: 255, nullable: true })
   email: string;
 
-  @Column({ type: 'varchar', length: 20, nullable: true })
-  phone: string;
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  field?: string;
 
   @Column({ type: 'varchar', length: 500, nullable: true })
   cvUrl: string;
-
-  @Column({
-    type: 'enum',
-    enum: ['researcher', 'admin'],
-    default: 'researcher',
-  })
-  position: string;
 
   @Column({
     type: 'enum',

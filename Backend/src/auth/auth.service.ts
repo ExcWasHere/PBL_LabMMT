@@ -36,13 +36,6 @@ export class AuthService {
 
     const user = await this.usersService.createUser(payload);
     const { password, ...rest } = user;
-    const mapRoleToPosition = (role?: string) => {
-      const r = (role ?? '').toLowerCase();
-      if (r === 'admin') return 'admin';
-      if (r === 'dosen' || r === 'lecturer') return 'lecturer';
-      if (r === 'mahasiswa' || r === 'student') return 'student';
-      return undefined;
-    };
 
     try {
       if ((payload.role ?? '').toLowerCase() === 'mahasiswa') {
@@ -54,7 +47,6 @@ export class AuthService {
           role: payload.role ?? 'mahasiswa',
           cvUrl: payload.cvPath ?? undefined,
           photoUrl: user.photo ?? undefined,
-          position: mapRoleToPosition(payload.role),
           status: 'pending',
         } as any);
       } else {
@@ -67,7 +59,6 @@ export class AuthService {
           cvUrl: payload.cvPath ?? undefined,
           photoUrl: user.photo ?? undefined,
           status: 'active',
-          position: mapRoleToPosition(payload.role),
         } as any);
       }
     } catch (err) {

@@ -19,11 +19,7 @@ export class UpdateMemberDto {
 
   @IsOptional()
   @IsString()
-  role?: string;
-
-  @IsOptional()
-  @IsString()
-  position?: 'researcher' | 'admin';
+  role: 'dosen' | 'mahasiswa' | 'admin';
 
   @IsOptional()
   @IsEmail()
@@ -31,7 +27,7 @@ export class UpdateMemberDto {
 
   @IsOptional()
   @IsString()
-  phone?: string;
+  field?: string;
 
   @IsOptional()
   @IsString()

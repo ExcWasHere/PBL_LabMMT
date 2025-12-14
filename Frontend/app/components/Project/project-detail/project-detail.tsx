@@ -22,7 +22,7 @@ const slugify = (text: string) =>
     .replace(/[^\w\s-]/g, "")
     .replace(/\s+/g, "-");
 
-/* ================= OTHER PROJECTS COMPONENT ================= */
+
 function OtherProjects({ currentProjectId, category }: { currentProjectId: string; category: string }) {
   const [otherProjects, setOtherProjects] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -121,7 +121,7 @@ export default function ProjectDetail() {
       .replace(/[^\w\s-]/g, "")
       .replace(/\s+/g, "-");
 
-  // Load comments from localStorage
+
   useEffect(() => {
     if (!slug) return;
     
@@ -164,17 +164,17 @@ export default function ProjectDetail() {
         
         let foundProject = null;
         
-        // Handle if API returns array
+       
         if (Array.isArray(data)) {
           foundProject = data.find((p: any) => slugify(p.title) === slug);
         } 
-        // Handle if API returns single object
+       
         else if (data && typeof data === 'object') {
           foundProject = data;
         }
         
         if (foundProject) {
-          // Parse mediaUrls if they're JSON strings
+      
           if (foundProject.mediaUrls && Array.isArray(foundProject.mediaUrls)) {
             foundProject.mediaUrls = foundProject.mediaUrls.map((item: any) => {
               if (typeof item === 'string') {
@@ -208,7 +208,7 @@ export default function ProjectDetail() {
       });
   }, [slug]);
 
-  /* ================= COMMENT HANDLER (PERSISTENT WITH LOCALSTORAGE) ================= */
+  
   const addComment = () => {
     if (!userName || !commentText || userRating === 0 || !slug) return;
 
@@ -257,7 +257,7 @@ export default function ProjectDetail() {
 
     setComments(updatedComments);
 
-    // Update in localStorage
+   
     try {
       localStorage.setItem(`comments:${slug}`, JSON.stringify(updatedComments));
     } catch (err) {
@@ -274,7 +274,7 @@ export default function ProjectDetail() {
 
     setComments(updatedComments);
 
-    // Update in localStorage
+   
     try {
       localStorage.setItem(`comments:${slug}`, JSON.stringify(updatedComments));
     } catch (err) {
@@ -308,8 +308,7 @@ export default function ProjectDetail() {
     );
   }
 
-  /* ================= PROJECT DETAILS ================= */
-  // Calculate average rating from comments
+ 
   const averageRating = comments.length > 0
     ? (comments.reduce((sum, c) => sum + (c.rating || 0), 0) / comments.length).toFixed(1)
     : 0;
@@ -329,8 +328,10 @@ export default function ProjectDetail() {
   ];
 
   return (
-    <div className="bg-white min-h-screen text-gray-800 pt-20">
-      <div className="fixed top-0 left-0 right-0 h-20 z-40 bg-gradient-to-b from-black/70 to-transparent pointer-events-none" />
+  
+    <div className="bg-white min-h-screen text-gray-800">
+      
+      
 
       <main className="max-w-6xl mx-auto px-6 py-10">
         {/* BACK BUTTON */}
@@ -374,11 +375,10 @@ export default function ProjectDetail() {
               members={project.teamMembers.map((m: any) => {
                 let imageUrl = `https://i.pravatar.cc/300?u=${m.name}`;
                 
-                // Check if imageUrl is valid and not a blob
                 if (m.imageUrl && 
                     !m.imageUrl.startsWith('blob:') && 
-                    m.imageUrl !== '' &&
-                    m.imageUrl !== 'null' &&
+                    m.imageUrl !== '' && 
+                    m.imageUrl !== 'null' && 
                     m.imageUrl !== 'undefined') {
                   imageUrl = withBaseUrl(m.imageUrl);
                 }
@@ -394,12 +394,10 @@ export default function ProjectDetail() {
           </>
         )}
 
-        {/* OTHER PROJECTS */}
         <OtherProjects currentProjectId={project.id} category={project.kategori} />
 
         <hr className="my-12 border-gray-200" />
 
-        {/* COMMENTS */}
         <CommentSection
           comments={comments}
           userName={userName}

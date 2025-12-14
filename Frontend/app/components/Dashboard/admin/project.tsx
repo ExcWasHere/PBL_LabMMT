@@ -10,6 +10,7 @@ import TableStatus from "~/common/table-status";
 const API_BASE_URL = "http://localhost:3000";
 const PROJECT_ENDPOINT = `${API_BASE_URL}/project`;
 const UPLOAD_ENDPOINT = `${API_BASE_URL}/upload`;
+
 const mapApiToProject = (p: any) => ({
   id: String(p.id),
   title: p.title ?? p.name ?? "-",
@@ -46,26 +47,32 @@ const getAuthHeaders = (json = true) => {
 
 export default function ProjectPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  
   useEffect(() => {
     const handleResize = () => setIsSidebarOpen(window.innerWidth >= 1024);
     handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
   const [projects, setProjects] = useState<any[]>([]);
   const [pending, setPending] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editData, setEditData] = useState<any | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  
+  // Filters
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedYear, setSelectedYear] = useState("All Year");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedSort, setSelectedSort] = useState("Latest");
   const [selectedStatus, setSelectedStatus] = useState("All Status");
   const [showPending, setShowPending] = useState(false);
+  
   const navigate = useNavigate();
   const [publisherName, setPublisherName] = useState("Admin");
+
   useEffect(() => {
     try {
       const raw = localStorage.getItem("user");
@@ -99,10 +106,12 @@ export default function ProjectPage() {
     },
   ];
 
+  
   const fetchProjects = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
+    
       const res = await fetch(PROJECT_ENDPOINT, {
         headers: getAuthHeaders(true),
       });
@@ -110,24 +119,24 @@ export default function ProjectPage() {
       const data = await res.json();
       const mapped = (Array.isArray(data) ? data : []).map(mapApiToProject);
       setProjects(mapped);
+
+    
       try {
         const pendRes = await fetch(`${PROJECT_ENDPOINT}/pending`, {
           headers: getAuthHeaders(true),
         });
         if (pendRes.ok) {
           const pend = await pendRes.json();
-          setPending(Array.isArray(pend) ? pend.map(mapApiToProject) : []);
+          const pendingRaw = Array.isArray(pend) ? pend.map(mapApiToProject) : [];
+        
+          setPending(pendingRaw.filter((p) => p.status === "Review"));
         } else {
-          setPending(
-            mapped.filter(
-              (p) => p.status === "Waiting" || p.status === "Review"
-            )
-          );
+   
+          setPending(mapped.filter((p) => p.status === "Review"));
         }
       } catch {
-        setPending(
-          mapped.filter((p) => p.status === "Waiting" || p.status === "Review")
-        );
+  
+        setPending(mapped.filter((p) => p.status === "Review"));
       }
     } catch (err) {
       console.error(err);
@@ -251,13 +260,9 @@ export default function ProjectPage() {
     try {
       if (formData.thumbnailFile) {
         const thumbnailUrls = await uploadFiles([formData.thumbnailFile]);
-
         const raw = thumbnailUrls?.[0];
-
         const url = typeof raw === "string" ? raw : raw?.url || raw?.path;
-
         if (!url) throw new Error("Thumbnail upload failed");
-
         payload.thumbnailUrl = url;
       }
       if (formData.mediaFiles && formData.mediaFiles.length > 0) {
@@ -344,16 +349,43 @@ export default function ProjectPage() {
       alert("Project ID not found");
       return;
     }
-
     navigate(`/preview-project/${item.id}`);
   };
 
+  const formatDate = (dateString: string) => {
+    if (!dateString) return "-";
+    const d = new Date(dateString);
+    if (isNaN(d.getTime())) return dateString;
+    return new Intl.DateTimeFormat("en-GB", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    }).format(d);
+  };
+
   const handleApprove = async (item: any) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const projectDate = new Date(item.date);
+    projectDate.setHours(0, 0, 0, 0);
+
+    let newStatus = "Published";
+    let message = "Approve this submission? It will be Published immediately.";
+
+    // LOGIC: Check if date is in future
+    if (projectDate > today) {
+        newStatus = "Waiting";
+        message = `The publish date is in the future (${formatDate(item.date)}). The project will be set to Waiting status. Continue?`;
+    }
+
+    if (!window.confirm(message)) return;
+
     try {
       const res = await fetch(`${PROJECT_ENDPOINT}/${item.id}`, {
         method: "PATCH",
         headers: getAuthHeaders(true),
-        body: JSON.stringify({ status: "Published" }),
+        body: JSON.stringify({ status: newStatus }),
       });
       if (!res.ok) throw new Error("Approve failed");
       await fetchProjects();
@@ -381,17 +413,6 @@ export default function ProjectPage() {
   const handleEditClick = (project: any) => {
     setEditData(project);
     setIsFormOpen(true);
-  };
-
-  const formatDate = (dateString: string) => {
-    if (!dateString) return "-";
-    const d = new Date(dateString);
-    if (isNaN(d.getTime())) return dateString;
-    return new Intl.DateTimeFormat("en-GB", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    }).format(d);
   };
 
   return (

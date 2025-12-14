@@ -1,6 +1,5 @@
 import Dashboard from "~/components/News/detailPageNews";
 import type { Route } from "./+types/news-detail";
-import Navbar from "~/common/navbar";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -12,7 +11,6 @@ export function meta({}: Route.MetaArgs) {
 export default function Viewer() {
   return (
     <>
-    <Navbar />
     <Dashboard />
     </>
   );

@@ -107,7 +107,7 @@ export class ActivityService {
       if (!at) return;
       items.push({
         user: m.name,
-        activity: `New member joined: ${m.position || m.role}`,
+        activity: `New member joined: ${m.role.toUpperCase()}`,
         at,
         type: 'member',
       });

@@ -24,14 +24,6 @@ export class UsersService {
     private readonly memberService: MemberService,
   ) {}
 
-  private mapRoleToPosition(role?: string): string | undefined {
-    const r = (role ?? '').toLowerCase();
-    if (r === 'admin') return 'admin';
-    if (r === 'dosen' || r === 'lecturer') return 'lecturer';
-    if (r === 'mahasiswa' || r === 'student') return 'student';
-    return undefined;
-  }
-
   async createUser(payload: {
     name: string;
     email: string;
@@ -145,7 +137,6 @@ export class UsersService {
     cvUrl?: string | undefined;
     photoUrl?: string | undefined;
     status?: string | undefined;
-    position?: string | undefined;
   }) {
     const dto = {
       userId: payload.userId,
@@ -156,7 +147,6 @@ export class UsersService {
       cvUrl: payload.cvUrl,
       photoUrl: payload.photoUrl,
       status: payload.status ?? 'active',
-      position: payload.position ?? this.mapRoleToPosition(payload.role),
     } as any;
 
     console.log('UsersService.createMember ->', dto);

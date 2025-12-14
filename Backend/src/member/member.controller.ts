@@ -11,6 +11,7 @@ import {
   UseGuards,
   Req,
   Put,
+  BadRequestException,
 } from '@nestjs/common';
 import { MemberService } from './member.service';
 import { CreateMemberDto } from './dto/create-member.dto';
@@ -86,11 +87,13 @@ export class MemberController {
     return updated;
   }
 
-  @Patch('approve/:id')
-  async approve(@Param('id') id: string) {
-    const ok = await this.memberService.approve(id);
-    if (!ok) throw new NotFoundException('Member not found or cannot approve');
-    return { message: 'Approved' };
+  @Patch(':id/approve')
+  @UseGuards(JwtAuthGuard)
+  async approve(@Param('id') id: string, @Body() body: { field: string }) {
+    if (!body.field) {
+      throw new BadRequestException('Field wajib diisi');
+    }
+    return this.memberService.approve(id, body.field);
   }
 
   @Patch('reject/:id')

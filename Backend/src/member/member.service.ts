@@ -1,10 +1,14 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { Injectable, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DeepPartial } from 'typeorm';
 import { Member } from './entities/member.entity';
 import { CreateMemberDto } from './dto/create-member.dto';
 import { UpdateMemberDto } from './dto/update-member.dto';
+import slugify from 'slugify';
 
 @Injectable()
 export class MemberService {
@@ -16,13 +20,11 @@ export class MemberService {
   // ====================================
   // HELPER: Generate Slug dari Name
   // ====================================
-  private generateSlug(name: string): string {
-    return name
-      .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, '') // Remove special chars (titik, koma, dll)
-      .trim()
-      .replace(/\s+/g, '-') // Replace spaces dengan dash
-      .replace(/-+/g, '-'); // Remove duplicate dashes
+  private makeSlug(name: string) {
+    return slugify(name, {
+      lower: true,
+      strict: true,
+    });
   }
 
   // ====================================
@@ -56,47 +58,38 @@ export class MemberService {
       throw new BadRequestException('Missing member data');
     }
 
-    // Generate slug dari name
-    const slug = this.generateSlug(createMemberDto.name);
+    // ===== SLUG =====
+    const baseSlug = this.makeSlug(createMemberDto.name);
+    let finalSlug = baseSlug;
+    let counter = 1;
 
-    // Check if slug already exists
-    const existingSlug = await this.memberRepo.findOne({ where: { slug } });
-    let finalSlug = slug;
-
-    // Jika slug sudah ada, tambahkan nomor di belakang
-    if (existingSlug) {
-      let counter = 1;
-      while (
-        await this.memberRepo.findOne({ where: { slug: `${slug}-${counter}` } })
-      ) {
-        counter++;
-      }
-      finalSlug = `${slug}-${counter}`;
+    while (await this.memberRepo.findOne({ where: { slug: finalSlug } })) {
+      finalSlug = `${baseSlug}-${counter++}`;
     }
 
-    const roleLower = (createMemberDto.role ?? '').toLowerCase();
-    const defaultStatus = roleLower === 'mahasiswa' ? 'pending' : 'active';
+    const defaultStatus =
+      createMemberDto.role === 'mahasiswa' ? 'pending' : 'active';
 
     const payload: DeepPartial<Member> = {
       userId: createMemberDto.userId,
       name: createMemberDto.name,
-      slug: finalSlug, // TAMBAHAN: slug field
-      identityNum: createMemberDto.identityNum ?? '',
-      role: createMemberDto.role ?? 'mahasiswa',
+      slug: finalSlug,
+      identityNum: createMemberDto.identityNum ?? null,
+      role: createMemberDto.role,
       email: createMemberDto.email,
-      phone: createMemberDto.phone,
+      field: createMemberDto.field,
       photoUrl: createMemberDto.photoUrl,
       cvUrl: createMemberDto.cvUrl,
       startDate: createMemberDto.startDate
         ? new Date(createMemberDto.startDate)
         : new Date(),
-      status: (createMemberDto.status as any) ?? defaultStatus,
-      nip: createMemberDto.nip ?? undefined,
-      nidn: createMemberDto.nidn ?? undefined,
-      prodi: createMemberDto.prodi ?? undefined,
-      jabatan_akademik: createMemberDto.jabatan_akademik ?? undefined,
-      bio: createMemberDto.bio ?? undefined,
-      social_links: createMemberDto.social_links ?? undefined,
+      status: createMemberDto.status ?? defaultStatus,
+      nip: createMemberDto.nip,
+      nidn: createMemberDto.nidn,
+      prodi: createMemberDto.prodi,
+      jabatan_akademik: createMemberDto.jabatan_akademik,
+      bio: createMemberDto.bio,
+      social_links: createMemberDto.social_links,
       tags: this.normalizeToStringArray(createMemberDto.tags),
       pendidikan: this.normalizeToStringArray(createMemberDto.pendidikan),
       sertifikasi: this.normalizeToStringArray(createMemberDto.sertifikasi),
@@ -104,15 +97,8 @@ export class MemberService {
       matkul_genap: this.normalizeToStringArray(createMemberDto.matkul_genap),
     };
 
-    if (
-      createMemberDto.position !== undefined &&
-      createMemberDto.position !== null
-    ) {
-      payload.position = createMemberDto.position as any;
-    }
-
-    const member = this.memberRepo.create(payload as any);
-    return await this.memberRepo.save(member);
+    const member = this.memberRepo.create(payload);
+    return this.memberRepo.save(member);
   }
 
   // ====================================
@@ -167,34 +153,26 @@ export class MemberService {
     // Regenerate slug jika name berubah
     let newSlug = exists.slug;
     if (updateMemberDto.name && updateMemberDto.name !== exists.name) {
-      newSlug = this.generateSlug(updateMemberDto.name);
+      const baseSlug = this.makeSlug(updateMemberDto.name);
+      newSlug = baseSlug;
 
-      // Check slug conflict
-      const existingSlug = await this.memberRepo.findOne({
-        where: { slug: newSlug },
-      });
-
-      if (existingSlug && existingSlug.id !== id) {
-        let counter = 1;
-        while (
-          await this.memberRepo.findOne({
-            where: { slug: `${newSlug}-${counter}` },
-          })
-        ) {
-          counter++;
-        }
-        newSlug = `${newSlug}-${counter}`;
+      let counter = 1;
+      while (
+        await this.memberRepo.findOne({
+          where: { slug: newSlug },
+        })
+      ) {
+        newSlug = `${baseSlug}-${counter++}`;
       }
     }
 
     const payload: DeepPartial<Member> = {
       name: updateMemberDto.name ?? exists.name,
-      slug: newSlug, // Update slug jika name berubah
+      slug: newSlug,
       identityNum: updateMemberDto.identityNum ?? exists.identityNum,
       role: updateMemberDto.role ?? exists.role,
-      position: updateMemberDto.position ?? exists.position,
       email: updateMemberDto.email ?? exists.email,
-      phone: updateMemberDto.phone ?? exists.phone,
+      field: updateMemberDto.field ?? exists.field,
       photoUrl: updateMemberDto.photoUrl ?? exists.photoUrl,
       cvUrl: updateMemberDto.cvUrl ?? exists.cvUrl,
       status: updateMemberDto.status ?? exists.status,
@@ -241,7 +219,7 @@ export class MemberService {
     // Regenerate slug jika name berubah
     let newSlug = existing.slug;
     if (updateMemberDto.name && updateMemberDto.name !== existing.name) {
-      newSlug = this.generateSlug(updateMemberDto.name);
+      newSlug = this.makeSlug(updateMemberDto.name);
 
       const existingSlug = await this.memberRepo.findOne({
         where: { slug: newSlug },
@@ -265,9 +243,8 @@ export class MemberService {
       slug: newSlug,
       identityNum: updateMemberDto.identityNum ?? existing.identityNum,
       role: updateMemberDto.role ?? existing.role,
-      position: updateMemberDto.position ?? existing.position,
       email: updateMemberDto.email ?? existing.email,
-      phone: updateMemberDto.phone ?? existing.phone,
+      field: updateMemberDto.field ?? existing.field,
       photoUrl: updateMemberDto.photoUrl ?? existing.photoUrl,
       cvUrl: updateMemberDto.cvUrl ?? existing.cvUrl,
       status: updateMemberDto.status ?? existing.status,
@@ -307,13 +284,20 @@ export class MemberService {
   // ====================================
   // APPROVE Member
   // ====================================
-  async approve(id: string) {
-    const existing = await this.memberRepo.findOne({ where: { id } });
-    if (!existing) return null;
-    await this.memberRepo.update(id, {
-      status: 'active',
-    } as DeepPartial<Member>);
-    return true;
+  async approve(id: string, field: string) {
+    const member = await this.memberRepo.findOne({ where: { id } });
+    if (!member) {
+      throw new NotFoundException('Member tidak ditemukan');
+    }
+
+    if (member.status !== 'pending') {
+      throw new BadRequestException('Member sudah aktif');
+    }
+
+    member.status = 'active';
+    member.field = field;
+
+    return this.memberRepo.save(member);
   }
 
   // ====================================

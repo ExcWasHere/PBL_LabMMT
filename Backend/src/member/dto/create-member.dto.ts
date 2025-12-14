@@ -20,11 +20,7 @@ export class CreateMemberDto {
   identityNum: string;
 
   @IsString()
-  role: string;
-
-  @IsOptional()
-  @IsString()
-  position?: 'researcher' | 'admin';
+  role: 'dosen' | 'mahasiswa' | 'admin';
 
   @IsOptional()
   @IsEmail()
@@ -32,7 +28,7 @@ export class CreateMemberDto {
 
   @IsOptional()
   @IsString()
-  phone?: string;
+  field?: string;
 
   @IsOptional()
   @IsString()

@@ -28,6 +28,17 @@ export class MemberController {
     return created;
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Get('me')
+  async getMyProfile(@Req() req: any) {
+    const userId = Number(req.user?.sub ?? req.user?.id);
+    const member = await this.memberService.findByUserId(userId);
+    if (!member) {
+      throw new NotFoundException('Member profile not found for current user');
+    }
+    return member;
+  }
+
   @Get()
   async findAll() {
     return await this.memberService.findAllActive();
@@ -66,16 +77,9 @@ export class MemberController {
     return updated;
   }
 
-  // Guarded endpoints for current user
-  @UseGuards(JwtAuthGuard)
-  @Get('me')
-  async getMyProfile(@Req() req: any) {
-    const userId = Number(req.user?.sub ?? req.user?.id);
-    const member = await this.memberService.findByUserId(userId);
-    if (!member) {
-      throw new NotFoundException('Member profile not found for current user');
-    }
-    return member;
+  @Get('public/team')
+  async findPublicTeam() {
+    return this.memberService.findPublicTeam();
   }
 
   @UseGuards(JwtAuthGuard)

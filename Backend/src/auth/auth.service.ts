@@ -11,12 +11,14 @@ import {
 import { UsersService } from '../user/user.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import { MemberService } from 'src/member/member.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
+    private memberService: MemberService,
   ) {}
 
   async register(payload: {
@@ -24,7 +26,6 @@ export class AuthService {
     email: string;
     password: string;
     role?: string;
-    phoneNumber?: string;
     validationField?: string;
     cvPath?: string | null;
     photo?: string | null;
@@ -34,35 +35,35 @@ export class AuthService {
       throw new ConflictException('Email already in use');
     }
 
+    // 1. Buat USER
     const user = await this.usersService.createUser(payload);
     const { password, ...rest } = user;
 
-    try {
-      if ((payload.role ?? '').toLowerCase() === 'mahasiswa') {
-        await this.usersService.createPendingMember({
-          userId: user.id ?? undefined,
-          name: user.name,
-          identityNum: payload.validationField ?? '',
-          email: user.email,
-          role: payload.role ?? 'mahasiswa',
-          cvUrl: payload.cvPath ?? undefined,
-          photoUrl: user.photo ?? undefined,
-          status: 'pending',
-        } as any);
-      } else {
-        await this.usersService.createMember({
-          userId: user.id ?? undefined,
-          name: user.name,
-          identityNum: payload.validationField ?? '',
-          email: user.email,
-          role: payload.role ?? 'dosen',
-          cvUrl: payload.cvPath ?? undefined,
-          photoUrl: user.photo ?? undefined,
-          status: 'active',
-        } as any);
-      }
-    } catch (err) {
-      console.error('Member creation during register failed:', err);
+    // 2. Tentukan role (FIXED TYPE)
+    const role = (payload.role ?? 'mahasiswa').toLowerCase() as
+      | 'mahasiswa'
+      | 'dosen'
+      | 'admin';
+
+    // 3. AUTO CREATE MEMBER (INILAH SOLUSI UTAMA)
+    const existingMember = await this.memberService.findByUserId(user.id);
+    const identityNum =
+      payload.validationField && payload.validationField.trim() !== ''
+        ? payload.validationField
+        : `AUTO-${user.id}`;
+
+    if (!existingMember) {
+      await this.memberService.create({
+        userId: user.id,
+        name: user.name,
+        identityNum,
+        email: user.email,
+        role,
+        cvUrl: payload.cvPath ?? undefined,
+        photoUrl: user.photo ?? undefined,
+        status: role === 'mahasiswa' ? 'pending' : 'active',
+        startDate: new Date().toISOString(),
+      });
     }
 
     return rest;

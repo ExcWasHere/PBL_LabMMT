@@ -27,7 +27,6 @@ type Member = {
   matkul_ganjil?: string[];
   matkul_genap?: string[];
   social_links?: SocialLinks;
-  position?: string;
 };
 
 const LinkedinIcon = ({ className }: { className?: string }) => (
@@ -47,6 +46,13 @@ const MemberDetailPage = () => {
   const [member, setMember] = useState<Member | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const normalizeUrl = (url?: string) => {
+  if (!url) return "";
+  if (url.startsWith("http")) return url;
+  if (url.startsWith("mailto:")) return url;
+  return `https://${url}`;
+};
+
 
   const getPhotoUrl = (raw?: string) => {
     if (!raw) return "../member/person1.jpg";
@@ -89,10 +95,10 @@ const MemberDetailPage = () => {
   };
 
   const handleSocialLink = (url?: string) => {
-    if (url) {
-      window.open(url.startsWith("http") ? url : `https://${url}`, "_blank");
-    }
-  };
+  const finalUrl = normalizeUrl(url);
+  if (!finalUrl) return;
+  window.open(finalUrl, "_blank", "noopener,noreferrer");
+};
 
   const commonItemStyle = 
     "flex items-center gap-2 px-3 py-1.5 rounded-lg border border-black text-xs text-black bg-white font-medium hover:bg-gray-50 transition-colors";
@@ -164,7 +170,7 @@ const MemberDetailPage = () => {
 
               <div className="flex-1 pb-2">
                 <p className="text-orange-500 font-bold text-sm uppercase tracking-wider mb-0">
-                  {member.position || "Lab Member"}
+                  {member.role || "Lab Member"}
                 </p>
                 
                 <h1 className="text-3xl md:text-4xl font-extrabold text-black mb-2 leading-tight">
@@ -266,7 +272,7 @@ const MemberDetailPage = () => {
                       )}
                       {member.jabatan_akademik && (
                         <div>
-                          <p className="text-gray-500 text-xs uppercase tracking-wide mb-1">Position</p>
+                          <p className="text-gray-500 text-xs uppercase tracking-wide mb-1">Role</p>
                           <p className="text-gray-900 font-medium text-sm">
                             {member.jabatan_akademik}
                           </p>

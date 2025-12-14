@@ -25,24 +25,32 @@ export function HomeMember() {
   const [index, setIndex] = useState(0);
   const [itemsPerView, setItemsPerView] = useState(2);
   useEffect(() => {
-  fetch(`${API_BASE_URL}/member`)
+  fetch(`${API_BASE_URL}/member/public/team`)
     .then((res) => res.json())
     .then((data) => {
       const lecturers = data
-        .filter((m: any) => m.role?.toLowerCase() === "dosen")
-        .map((m: any) => ({
-          id: m.id,
-          slug: m.slug,
-          image: m.photoUrl || "/member/person1.jpg",
-          name: m.name,
-          role: m.position || "Dosen",
-          tags: m.tags ?? [],
-          socials: {
-            email: m.email,
-            linkedin: m.social_links?.linkedin,
-            website: m.social_links?.website,
-          },
-        }));
+        .filter((m: any) =>
+  ["dosen", "admin"].includes(m.role?.toLowerCase())
+)
+       .map((m: any) => ({
+  id: m.id,
+  slug: m.slug,
+  image: getPhotoUrl(m.photoUrl),
+  name: m.name,
+  role:
+    m.role === "admin"
+      ? "Admin"
+      : m.role === "dosen"
+      ? "Dosen"
+      : "Member",
+  tags: m.tags ?? [],
+  socials: {
+    email: m.email,
+    linkedin: m.social_links?.linkedin,
+    website: m.social_links?.website,
+  },
+}));
+
 
       setTeamMembers(lecturers);
     })
@@ -91,6 +99,15 @@ export function HomeMember() {
   const swipeConfidenceThreshold = 10000;
   const swipePower = (offset: number, velocity: number) =>
     Math.abs(offset) * velocity;
+
+  const getPhotoUrl = (raw?: string) => {
+  if (!raw) return "/member/person1.jpg";
+  if (raw.startsWith("/uploads")) {
+    return `http://localhost:3000${raw}`;
+  }
+  return raw;
+};
+
 
   return (
     <section className="bg-white py-12 sm:py-20 lg:py-24 px-4 sm:px-6 lg:px-20">

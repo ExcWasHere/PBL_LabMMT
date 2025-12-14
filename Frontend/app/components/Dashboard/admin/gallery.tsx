@@ -89,7 +89,7 @@ export default function GalleryPage() {
       if (!res.ok) throw new Error("Gagal mengambil data dari server");
       const data = await res.json();
 
-      console.log("🔍 Gallery API Response:", data); // DEBUG
+      console.log("🔍 Gallery API Response:", data); 
 
       const normalized = (Array.isArray(data) ? data : []).map((g: any) => {
         // Handle berbagai kemungkinan struktur data
@@ -122,10 +122,10 @@ export default function GalleryPage() {
         };
       });
 
-      console.log("✅ Normalized data:", normalized); // DEBUG
+      console.log("✅ Normalized data:", normalized); 
 
       setGalleryList(normalized);
-      setPending(normalized.filter((i: any) => ["Review", "Waiting"].includes(i.status)));
+      setPending(normalized.filter((i: any) => i.status === "Review"));
     } catch (err) {
       console.error("❌ Fetch error:", err);
     } finally {
@@ -558,6 +558,7 @@ export default function GalleryPage() {
                     mediaTypes: editData.mediaTypes || [],
                     mediaFiles: editData.mediaFiles || [],
                     thumbnailUrl: editData.thumbnailUrl || "",
+                    publisher: editData.publisher || "",
                 } : undefined}
             />
         )}

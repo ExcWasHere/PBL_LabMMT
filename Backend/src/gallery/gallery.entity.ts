@@ -36,6 +36,9 @@ export class Gallery {
   })
   status: string;
 
+  @Column({length: 256, nullable: true})
+  publisher: string;
+
   @OneToMany(() => Photo, (photo) => photo.gallery)
   photos: Photo[];
 

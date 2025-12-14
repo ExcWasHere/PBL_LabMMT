@@ -7,7 +7,7 @@ export default function StatusLabel({ status }: StatusLabelProps) {
     switch (status) {
       case "Muted":
         return "text-red-500";
-      case "Denied":
+      case "Rejected":
         return "text-red-900 font-bold"; 
       case "Waiting":
         return "text-green-500"; 

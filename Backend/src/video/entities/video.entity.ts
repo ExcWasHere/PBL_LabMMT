@@ -29,10 +29,19 @@ export class Video {
   @Column({ type: 'int', nullable: true })
   duration: number;
 
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  location: string;
+
+  // @Column({ type: 'varchar', length: 100, nullable: true })
+  // category: string;
+
+  @Column({ type: 'date', nullable: true })
+  date: Date;
+
   @Column({
     type: 'enum',
-    enum: ['Published', 'Review', 'Waiting', 'Muted'],
-    default: 'Waiting',
+    enum: ['Published', 'Review', 'Waiting', 'Muted', 'Rejected'],
+    default: 'Review',
   })
   status: string;
 

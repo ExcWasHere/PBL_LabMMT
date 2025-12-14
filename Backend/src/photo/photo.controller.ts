@@ -16,6 +16,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { PhotoService } from './photo.service';
+import { UpdatePhotoDto } from './dto/update-photo.dto';
 
 @Controller('photo')
 export class PhotoController {
@@ -62,7 +63,7 @@ export class PhotoController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateDto: any) {
+  update(@Param('id') id: string, @Body() updateDto: UpdatePhotoDto) {
     return this.photoService.update(id, updateDto);
   }
 

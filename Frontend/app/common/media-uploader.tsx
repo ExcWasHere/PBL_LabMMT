@@ -9,6 +9,8 @@ interface MediaUploaderProps {
   maxFiles?: number;
   accept?: string;
   allowMultiple?: boolean;
+  onRemove?: (urlToRemove: string) => void;
+  maxSizeMB?: number;
 }
 
 type PreviewItem = {
@@ -25,6 +27,8 @@ export default function MediaUploader({
   maxFiles = 5,
   accept = "image/*,video/*",
   allowMultiple = true,
+  onRemove,
+  maxSizeMB = 50,
 }: MediaUploaderProps) {
   const [existingUrls, setExistingUrls] = useState<string[]>([]);
   const [newFiles, setNewFiles] = useState<File[]>([]);
@@ -91,6 +95,15 @@ export default function MediaUploader({
     if (!fileList) return;
 
     const incoming = Array.from(fileList);
+
+    const maxSizeBytes = maxSizeMB * 1024 * 1024;
+    const oversizedFiles = incoming.filter((file) => file.size > maxSizeBytes);
+    
+    if (oversizedFiles.length > 0) {
+        alert(`File is too big! Max is ${maxSizeMB}MB per file.\nRejected File:\n${oversizedFiles.map(f => f.name).join("\n")}`);
+        return; 
+    }
+
     const totalCurrent = existingUrls.length + newFiles.length;
 
     if (allowMultiple) {
@@ -125,9 +138,11 @@ export default function MediaUploader({
     }
 
     if (isRemovingExisting) {
+      const urlToRemove = existingUrls[index];
       const newExisting = existingUrls.filter((_, i) => i !== index);
       setExistingUrls(newExisting);
       onMediaChange(newFiles); 
+      if (onRemove && urlToRemove) onRemove(urlToRemove);
       return;
     }
 
@@ -144,6 +159,8 @@ export default function MediaUploader({
     setNewFiles(updatedFiles);
     setNewPreviewUrls(updatedUrls);
     onMediaChange(updatedFiles);
+
+    if (onRemove && urlToRemove) onRemove(urlToRemove);
   };
 
   return (

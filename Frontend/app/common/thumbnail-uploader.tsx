@@ -29,7 +29,6 @@ export default function ThumbnailUploader({
                 alt="Thumbnail Preview"
                 className="w-full h-full object-cover"
               />
-              {/* Overlay Actions */}
               <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4 z-10">
                 <label className="cursor-pointer px-4 py-2 bg-white/90 text-gray-800 rounded-lg text-sm font-medium hover:bg-white transition shadow-sm">
                   Change
@@ -54,7 +53,6 @@ export default function ThumbnailUploader({
                   Remove
                 </button>
               </div>
-              {/* Overlay Info (Visual only) */}
               <div className="absolute top-4 left-4 flex gap-2 pointer-events-none">
                 <span className="bg-orange-500 text-white text-xs px-2 py-1 rounded shadow-sm">
                   {date || "Date"}

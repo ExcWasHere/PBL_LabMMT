@@ -197,7 +197,7 @@ export default function NewsPage() {
         const res = await fetch(`${NEWS_ENDPOINT}/${editData.id}`, {
           method: "PATCH",
           headers: getAuthHeaders(),
-          body: JSON.stringify(payload),
+          body: JSON.stringify({ ...payload, status: "Review" }),
         });
         if (!res.ok) throw new Error("Failed to update news");
       } else {

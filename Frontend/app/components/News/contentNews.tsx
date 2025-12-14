@@ -257,7 +257,7 @@ export default function ContentNews() {
                     to={`/news/slug/${slugify(n.title)}`}
                   >
                     <Card
-                      image={n.thumbnailUrl || "/galeri/eventA.jpg"}
+                      image={n.imageUrl || "/galeri/eventA.jpg"}
                       title={n.title}
                       desc={n.content}
                       date={n.year || n.createdAt}

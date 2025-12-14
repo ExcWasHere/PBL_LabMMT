@@ -23,7 +23,7 @@ export class PhotoService {
   create(dto: CreatePhotoDto) {
     const photo = this.photoRepo.create({
     ...dto,
-    // coverUrl: dto.cover_url,
+    thumbnailUrl: dto.cover_url,
   });
     return this.photoRepo.save(photo);
   }
@@ -42,34 +42,34 @@ export class PhotoService {
     const updateData: any = { ...dto };
   
   if (dto.cover_url) {
-    updateData.coverUrl = dto.cover_url;
+    updateData.thumbnailUrl = dto.cover_url;
+    delete updateData.cover_url;
   }
   
   await this.photoRepo.update(id, updateData);
   return this.findOne(id);
   }
 
-  // @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
-  // async handleScheduledPhotos() {
-  //   this.logger.debug('Checking for scheduled photos to publish...');
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  async handleScheduledPhotos() {
+    this.logger.debug('Checking for scheduled photos to publish...');
 
-  //   const today = new Date();
-  //   today.setHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-  //   // Cari yang status Waiting DAN tanggalnya <= hari ini
-  //   const pendingPhotos = await this.photoRepo.find({
-  //     where: {
-  //       status: 'Waiting',
-  //       date: LessThanOrEqual(today), // Pastikan di entity Photo ada kolom 'date'
-  //     },
-  //   });
+    const pendingPhotos = await this.photoRepo.find({
+      where: {
+        status: 'Waiting',
+        date: LessThanOrEqual(today), 
+      },
+    });
 
-  //   if (pendingPhotos.length > 0) {
-  //     for (const photo of pendingPhotos) {
-  //       photo.status = 'Published';
-  //       await this.photoRepo.save(photo);
-  //       this.logger.log(`Auto-published photo: ${photo.title}`);
-  //     }
-  //   }
-  // }
+    if (pendingPhotos.length > 0) {
+      for (const photo of pendingPhotos) {
+        photo.status = 'Published';
+        await this.photoRepo.save(photo);
+        this.logger.log(`Auto-published photo: ${photo.title}`);
+      }
+    }
+  }
 }

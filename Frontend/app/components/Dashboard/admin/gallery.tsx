@@ -10,14 +10,12 @@ import DropdownFilter from "~/common/dropdown-filter";
 import TableAction from "~/common/table-action";
 import TableStatus from "~/common/table-status";
 
-// --- KONFIGURASI API ---
 const API_BASE_URL = "http://localhost:3000";
 const PHOTO_ENDPOINT = `${API_BASE_URL}/photo`;
 const VIDEO_ENDPOINT = `${API_BASE_URL}/video`;
 const PHOTO_UPLOAD = `${PHOTO_ENDPOINT}/upload`;
 const VIDEO_UPLOAD = `${VIDEO_ENDPOINT}/upload`;
 
-// --- HELPER ---
 const normalizePhoto = (p: any) => ({
   id: p.id,
   type: "photo" as const,
@@ -26,7 +24,6 @@ const normalizePhoto = (p: any) => ({
   status: p.status ?? "Review",
   category: p.category ?? "-",
   date: p.date ?? p.createdAt ?? "",
-  // Deteksi animasi gif
   isAnimation:
     (p.photoUrl && String(p.photoUrl).toLowerCase().endsWith(".gif")) ||
     (p.media_url && String(p.media_url).toLowerCase().endsWith(".gif")),
@@ -72,29 +69,24 @@ export default function GalleryPage() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // --- STATE ---
   const [editData, setEditData] = useState<any | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   
-  // Filters
   const [selectedYear, setSelectedYear] = useState("All Year");
   const [selectedSort, setSelectedSort] = useState("Latest");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("All Status");
   
-  // Data
   const [galleryList, setGalleryList] = useState<any[]>([]); 
   const [pending, setPending] = useState<any[]>([]); 
   const [showPending, setShowPending] = useState(true);
   
   const [isLoading, setIsLoading] = useState(true);
 
-  // Preview
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [previewFiles, setPreviewFiles] = useState<string[]>([]);
   const [previewIndex, setPreviewIndex] = useState(0);
 
-  // --- AUTH ---
   const getAuthHeaders = () => {
     const token = localStorage.getItem("token");
     const headers: HeadersInit = { "Content-Type": "application/json" };
@@ -124,7 +116,6 @@ export default function GalleryPage() {
     return `${String(raw.title ?? raw.name ?? "").trim()}|${String(raw.publisher ?? "").trim()}`;
   };
 
-  // --- FETCH ---
   const fetchGallery = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -177,7 +168,6 @@ export default function GalleryPage() {
         (a, b) => new Date(b.date ?? 0).getTime() - new Date(a.date ?? 0).getTime()
       );
 
-      // Pending = Waiting OR Review
       const pendingItems = aggregated.filter(item => item.status === "Waiting" || item.status === "Review");
       
       setPending(pendingItems);
@@ -194,7 +184,6 @@ export default function GalleryPage() {
     fetchGallery();
   }, [fetchGallery]);
 
-  // --- ACTIONS ---
 
   const updateMemberStatus = async (item: any, newStatus: string) => {
     try {
@@ -245,8 +234,6 @@ export default function GalleryPage() {
     const group = galleryList.find((g) => g.groupKey === groupKey);
     if (!group) return;
 
-    // Toggle logic: Muted <-> Published
-    // Kalau Rejected mau di-restore, bisa tambah logic di sini
     const newStatus = group.status === "Muted" ? "Published" : "Muted";
     updateMemberStatus(group, newStatus);
   };
@@ -268,7 +255,6 @@ export default function GalleryPage() {
     }
   };
 
-  // --- UPLOAD & SAVE (Logic mirip News) ---
   const uploadFile = async (file: File, type: "photo" | "video") => {
     const fd = new FormData();
     fd.append("file", file);
@@ -284,88 +270,126 @@ export default function GalleryPage() {
   };
 
   const handleSaveGallery = async (formData: any) => {
-    const publisher = getPublisherName();
-    let coverUrl = "";
-    
-    // 1. Upload Thumbnail (Optional)
-    if (formData.thumbnailFile) {
-      try {
-        coverUrl = await uploadFile(formData.thumbnailFile, "photo");
-      } catch(e) { 
-        alert("Gagal upload thumbnail"); return; 
-      }
-    }
+  const publisher = getPublisherName();
+  let finalCoverUrl = "";
 
-    const files: File[] = formData.mediaFilesRaw ?? [];
-    if (!editData && (!files || files.length === 0)) {
-        alert("Please attach media."); return;
-    }
-
+  if (formData.thumbnailFile) {
     try {
-      if (editData && editData.groupKey) {
-        // --- EDIT MODE ---
-        const group = galleryList.find((g) => g.groupKey === editData.groupKey);
-        if (!group) return;
-
-        // Loop update semua member di group
-        for (const m of group.members) {
-          const endpoint = m.type === "video" ? VIDEO_ENDPOINT : PHOTO_ENDPOINT;
-          
-          const payload: any = {
-            title: formData.title,
-            description: formData.description,
-            location: formData.location,
-            date: formData.date,
-            publisher, 
-            status: "Review", // <--- FORCE RE-REVIEW (Backend DTO harus support field ini)
-            cover_url: coverUrl || undefined,
-          };
-          
-          // Bersihkan key undefined
-          Object.keys(payload).forEach((k) => payload[k] === undefined && delete payload[k]);
-          
-          await fetch(`${endpoint}/${m.id}`, {
-            method: "PATCH",
-            headers: getAuthHeaders(),
-            body: JSON.stringify(payload),
-          });
-        }
-      } else {
-        // --- CREATE MODE ---
-        for (const file of files) {
-          const isVideo = file.type.startsWith("video/");
-          const uploadedUrl = await uploadFile(file, isVideo ? "video" : "photo");
-          const endpoint = isVideo ? VIDEO_ENDPOINT : PHOTO_ENDPOINT;
-          
-          const payload: any = {
-            title: formData.title,
-            description: formData.description,
-            location: formData.location,
-            date: formData.date,
-            publisher,
-            status: "Review", // Default New = Review
-            category: "General",
-            cover_url: coverUrl || uploadedUrl,
-          };
-
-          if (isVideo) payload.videoUrl = uploadedUrl;
-          else payload.photoUrl = uploadedUrl;
-
-          await fetch(endpoint, {
-            method: "POST",
-            headers: getAuthHeaders(),
-            body: JSON.stringify(payload),
-          });
-        }
-      }
-      fetchGallery();
-      setIsFormOpen(false);
-      setEditData(null);
-    } catch (err) {
-      console.error(err);
-      alert("Gagal menyimpan gallery.");
+      finalCoverUrl = await uploadFile(formData.thumbnailFile, "photo");
+    } catch (e) {
+      alert("Gagal upload thumbnail");
+      return;
     }
-  };
+  }
+
+  if (editData && editData.groupKey) {
+    const group = galleryList.find((g) => g.groupKey === editData.groupKey);
+    if (!group) return;
+
+    const coverUrlForUpdate = finalCoverUrl || editData.thumbnailUrl;
+
+    const desiredUrls = new Set(formData.mediaFiles);
+
+    for (const m of group.members) {
+      const endpoint = m.type === "video" ? VIDEO_ENDPOINT : PHOTO_ENDPOINT;
+
+      const currentUrl = m.type === "video"
+        ? (m.raw.videoUrl || m.raw.url)
+        : (m.raw.photoUrl || m.raw.url);
+
+      if (currentUrl && !desiredUrls.has(currentUrl)) {
+        await fetch(`${endpoint}/${m.id}`, {
+          method: "DELETE",
+          headers: getAuthHeaders(),
+        });
+      } else {
+        const payload: any = {
+          title: formData.title,
+          description: formData.description,
+          location: formData.location,
+          date: formData.date,
+          publisher,
+          status: "Review", 
+          cover_url: coverUrlForUpdate || undefined,
+        };
+
+        Object.keys(payload).forEach(
+          (k) => payload[k] === undefined && delete payload[k]
+        );
+
+        await fetch(`${endpoint}/${m.id}`, {
+          method: "PATCH",
+          headers: getAuthHeaders(),
+          body: JSON.stringify(payload),
+        });
+      }
+    }
+
+    const newFiles: File[] = formData.mediaFilesRaw ?? [];
+    if (newFiles.length > 0) {
+      for (const file of newFiles) {
+        const isVideo = file.type.startsWith("video/");
+        const uploadedUrl = await uploadFile(file, isVideo ? "video" : "photo");
+        const endpoint = isVideo ? VIDEO_ENDPOINT : PHOTO_ENDPOINT;
+
+        const payload: any = {
+          title: formData.title,
+          description: formData.description,
+          location: formData.location,
+          date: formData.date,
+          publisher,
+          status: "Review", 
+          cover_url: coverUrlForUpdate || uploadedUrl,
+        };
+
+        if (isVideo) payload.videoUrl = uploadedUrl;
+        else payload.photoUrl = uploadedUrl;
+
+        await fetch(endpoint, {
+          method: "POST",
+          headers: getAuthHeaders(),
+          body: JSON.stringify(payload),
+        });
+      }
+    }
+
+  } else {
+    const files: File[] = formData.mediaFilesRaw ?? [];
+    if (!files || files.length === 0) {
+      alert("Please attach media.");
+      return;
+    }
+
+    for (const file of files) {
+      const isVideo = file.type.startsWith("video/");
+      const uploadedUrl = await uploadFile(file, isVideo ? "video" : "photo");
+      const endpoint = isVideo ? VIDEO_ENDPOINT : PHOTO_ENDPOINT;
+
+      const payload: any = {
+        title: formData.title,
+        description: formData.description,
+        location: formData.location,
+        date: formData.date,
+        publisher,
+        status: "Review",
+        cover_url: finalCoverUrl || uploadedUrl,
+      };
+
+      if (isVideo) payload.videoUrl = uploadedUrl;
+      else payload.photoUrl = uploadedUrl;
+
+      await fetch(endpoint, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload),
+      });
+    }
+  }
+
+  fetchGallery();
+  setIsFormOpen(false);
+  setEditData(null);
+};
 
   const handleEditClick = (groupKey: string) => {
     const group = galleryList.find((g) => g.groupKey === groupKey);
@@ -398,7 +422,6 @@ export default function GalleryPage() {
     setIsPreviewOpen(true);
   };
 
-  // --- RENDER HELPERS ---
   const formatDate = (dateString: string) => {
     if (!dateString) return "-";
     const date = new Date(dateString);
@@ -449,7 +472,7 @@ export default function GalleryPage() {
             <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 mr-4 text-gray-700 hover:text-orange-600 transition">
                 <Menu size={24} />
             </button>
-            <h1 className="text-3xl font-bold text-orange-600">Gallery (Admin)</h1>
+            <h1 className="text-3xl font-bold text-orange-600">Gallery</h1>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">

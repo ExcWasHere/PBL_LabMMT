@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react"; // Tambahkan useMemo
+import { useState, useEffect, useMemo } from "react"; 
 import { X, Check, ChevronLeft, ChevronRight, Eye } from "lucide-react";
 import MediaUploader from "./media-uploader";
 import ThumbnailUploader from "./thumbnail-uploader";
@@ -55,28 +55,21 @@ export default function GalleryForm({
     }
   }, [initialData]);
 
-  // --- LOGIKA DETEKSI PERUBAHAN ---
   const hasChanges = useMemo(() => {
-    // Kalau mode Add (bukan edit), tombol selalu aktif (kecuali validasi kosong nanti)
     if (!isEditMode || !initialData) return true;
 
-    // 1. Cek perubahan field teks sederhana
     if (formData.title !== initialData.title) return true;
     if (formData.description !== initialData.description) return true;
     if (formData.location !== initialData.location) return true;
     if (formData.date !== initialData.date) return true;
 
-    // 2. Cek perubahan Media Types (Array)
     const currentTypes = [...formData.mediaTypes].sort().join(",");
     const initialTypes = [...initialData.mediaTypes].sort().join(",");
     if (currentTypes !== initialTypes) return true;
 
-    // 3. Cek apakah ada file baru diupload
-    if (formData.thumbnailFile) return true; // Ada thumbnail baru
-    if (formData.mediaFilesRaw && formData.mediaFilesRaw.length > 0) return true; // Ada media baru
+    if (formData.thumbnailFile) return true; 
+    if (formData.mediaFilesRaw && formData.mediaFilesRaw.length > 0) return true; 
 
-    // 4. Cek apakah ada file lama yang dihapus
-    // Kita bandingkan list URL mediaFiles yang tampil sekarang dengan yang awal
     const currentUrls = [...formData.mediaFiles].sort().join(",");
     const initialUrls = [...initialData.mediaFiles].sort().join(",");
     if (currentUrls !== initialUrls) return true;
@@ -113,7 +106,6 @@ export default function GalleryForm({
   };
 
   const handleSubmit = () => {
-    // Validasi Field Kosong
     if (
       !formData.title ||
       !formData.description ||
@@ -127,12 +119,11 @@ export default function GalleryForm({
       return;
     }
 
-    // LOGIKA PERINGATAN RE-REVIEW
     if (isEditMode) {
         const confirmSave = window.confirm(
             "Perubahan ini akan mengubah status postingan menjadi 'Review' untuk diperiksa ulang oleh admin. Lanjutkan?"
         );
-        if (!confirmSave) return; // Batal simpan jika user klik Cancel
+        if (!confirmSave) return; 
     }
 
     onSubmit(formData);
@@ -302,16 +293,28 @@ export default function GalleryForm({
               accept="image/*,video/*"
               maxFiles={20}
               initialMedia={formData.mediaFiles}
-              onMediaChange={(files) => {
-                const previewUrls = files.map((file) =>
+              onMediaChange={(newFiles) => {
+                const newPreviewUrls = newFiles.map((file) =>
                   URL.createObjectURL(file)
                 );
 
                 setFormData((prev) => ({
                   ...prev,
-                  mediaFiles: previewUrls,
-                  mediaFilesRaw: files,
+                  mediaFiles: [...prev.mediaFiles, ...newPreviewUrls],
+                  mediaFilesRaw: [...(prev.mediaFilesRaw || []), ...newFiles],
                 }));
+              }}
+
+              onRemove={(itemRemoved) => {
+                setFormData((prev) => {
+                  const updatedMediaFiles = prev.mediaFiles.filter(
+                    (url) => url !== itemRemoved
+                  );
+                  return {
+                    ...prev,
+                    mediaFiles: updatedMediaFiles,
+                  };
+                });
               }}
             />
           </div>
@@ -337,11 +340,11 @@ export default function GalleryForm({
           {/* BUTTON SAVE CHANGES YANG DIMODIFIKASI */}
           <button
             onClick={handleSubmit}
-            disabled={isEditMode && !hasChanges} // Disabled jika edit mode & tidak ada perubahan
+            disabled={isEditMode && !hasChanges} 
             className={`px-8 py-3 text-base rounded-lg transition ${
               isEditMode && !hasChanges
-                ? "bg-gray-300 text-gray-500 cursor-not-allowed" // Style Gray Out
-                : "bg-orange-600 text-white hover:bg-orange-700" // Style Normal
+                ? "bg-gray-300 text-gray-500 cursor-not-allowed" 
+                : "bg-orange-600 text-white hover:bg-orange-700" 
             }`}
           >
             {submitButtonLabel}

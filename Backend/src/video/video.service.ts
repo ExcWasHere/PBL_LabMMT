@@ -17,7 +17,7 @@ export class VideoService {
   create(dto: CreateVideoDto) {
     const video = this.videoRepo.create({
     ...dto,
-    // coverUrl: dto.cover_url, 
+    thumbnailUrl: dto.cover_url, 
   });
     return this.videoRepo.save(video);
   }
@@ -36,7 +36,8 @@ export class VideoService {
     const updateData: any = { ...dto };
   
   if (dto.cover_url) {
-    updateData.coverUrl = dto.cover_url; 
+    updateData.thumbnailUrl = dto.cover_url; 
+      delete updateData.cover_url;
   }
   
   await this.videoRepo.update(id, updateData);
@@ -48,26 +49,26 @@ export class VideoService {
     return { message: 'Video deleted' };
   }
 
-  // @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
-  // async handleScheduledVideos() {
-  //   this.logger.debug('Checking for scheduled videos to publish...');
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  async handleScheduledVideos() {
+    this.logger.debug('Checking for scheduled videos to publish...');
 
-  //   const today = new Date();
-  //   today.setHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-  //   const pendingVideos = await this.videoRepo.find({
-  //     where: {
-  //       status: 'Waiting',
-  //       date: LessThanOrEqual(today), // Pastikan entity Video punya kolom 'date'
-  //     },
-  //   });
+    const pendingVideos = await this.videoRepo.find({
+      where: {
+        status: 'Waiting',
+        date: LessThanOrEqual(today), 
+      },
+    });
 
-  //   if (pendingVideos.length > 0) {
-  //     for (const video of pendingVideos) {
-  //       video.status = 'Published';
-  //       await this.videoRepo.save(video);
-  //       this.logger.log(`Auto-published video: ${video.title}`);
-  //     }
-  //   }
-  // }
+    if (pendingVideos.length > 0) {
+      for (const video of pendingVideos) {
+        video.status = 'Published';
+        await this.videoRepo.save(video);
+        this.logger.log(`Auto-published video: ${video.title}`);
+      }
+    }
+  }
 }

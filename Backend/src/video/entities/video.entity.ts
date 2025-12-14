@@ -29,17 +29,14 @@ export class Video {
   @Column({ type: 'int', nullable: true })
   duration: number;
 
-  // @Column({ type: 'varchar', length: 255, nullable: true })
-  // location: string;
-
-  // @Column({ name: 'cover_url', type: 'text', nullable: true })
-  // coverUrl: string; 
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  location: string;
 
   // @Column({ type: 'varchar', length: 100, nullable: true })
   // category: string;
 
-  // @Column({ type: 'date', nullable: true })
-  // date: Date;
+  @Column({ type: 'date', nullable: true })
+  date: Date;
 
   @Column({
     type: 'enum',

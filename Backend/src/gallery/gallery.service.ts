@@ -87,7 +87,6 @@ export class GalleryService {
       order: { createdAt: 'DESC' },
     });
 
-    // optional: rapihin response biar FE enak
     return galleries.map((g) => ({
       id: g.id,
       title: g.title,
@@ -95,6 +94,7 @@ export class GalleryService {
       location: g.location,
       date: g.date,
       thumbnailUrl: g.thumbnailUrl,
+      media_types: g.media_types, 
       createdAt: g.createdAt,
       photos: (g.photos || []).map((p) => ({
         id: p.id,

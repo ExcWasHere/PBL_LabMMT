@@ -29,6 +29,9 @@ export class Gallery {
   @Column({ name: 'thumbnail_url', type: 'text', nullable: true })
   thumbnailUrl: string;
 
+  @Column('text', { name: 'media_types', array: true, nullable: true })
+  media_types: string[];
+
   @Column({
     type: 'enum',
     enum: ['Published', 'Review', 'Waiting', 'Muted', 'Rejected'],
@@ -36,7 +39,7 @@ export class Gallery {
   })
   status: string;
 
-  @Column({length: 256, nullable: true})
+  @Column({ length: 256, nullable: true })
   publisher: string;
 
   @OneToMany(() => Photo, (photo) => photo.gallery)

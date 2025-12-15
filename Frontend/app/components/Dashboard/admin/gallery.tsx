@@ -201,113 +201,115 @@ export default function GalleryPage() {
     const publisher = getPublisherName();
     let thumbnailUrl = "";
 
-    if (formData.thumbnailFile) {
-      try {
-        thumbnailUrl = await uploadFile(formData.thumbnailFile, "photo");
-      } catch (e) {
-        alert("Gagal upload thumbnail");
-        return;
-      }
+    try {
+        if (formData.thumbnailFile) {
+            try {
+                thumbnailUrl = await uploadFile(formData.thumbnailFile, "photo");
+            } catch (e) {
+                alert("Gagal upload thumbnail, periksa koneksi atau ukuran file.");
+                return;
+            }
+        }
+
+        const mediaTypesToSend = formData.mediaTypes || []; 
+
+        if (editData && editData.id) {
+          const res = await fetch(`${GALLERY_ENDPOINT}/${editData.id}`, {
+            method: "PATCH",
+            headers: getAuthHeaders(),
+            body: JSON.stringify({
+              title: formData.title,
+              description: formData.description,
+              location: formData.location,
+              date: formData.date,
+              thumbnailUrl: thumbnailUrl || editData.raw?.thumbnailUrl,
+              status: "Review",
+              media_types: mediaTypesToSend, 
+            }),
+          });
+          
+          if (!res.ok) throw new Error("Gagal mengupdate gallery");
+
+          const newFiles: File[] = formData.mediaFilesRaw ?? [];
+          if (newFiles.length > 0) {
+            for (const file of newFiles) {
+              const isVideo = file.type.startsWith("video/");
+              const uploadedUrl = await uploadFile(file, isVideo ? "video" : "photo");
+
+              await fetch(`${API_BASE_URL}/${isVideo ? "video" : "photo"}`, {
+                method: "POST",
+                headers: getAuthHeaders(),
+                body: JSON.stringify({
+                  title: formData.title,
+                  description: formData.description,
+                  location: formData.location,
+                  date: formData.date,
+                  publisher,
+                  status: "Review",
+                  galleryId: editData.id,
+                  ...(isVideo ? { videoUrl: uploadedUrl } : { photoUrl: uploadedUrl }),
+                }),
+              });
+            }
+          }
+        } else {
+          const files: File[] = formData.mediaFilesRaw ?? [];
+          if (!files || files.length === 0) {
+            alert("Please attach media.");
+            return;
+          }
+
+          const res = await fetch(GALLERY_ENDPOINT, {
+            method: "POST",
+            headers: getAuthHeaders(),
+            body: JSON.stringify({
+              title: formData.title,
+              description: formData.description,
+              location: formData.location,
+              date: formData.date,
+              publisher,
+              thumbnailUrl,
+              status: "Review",
+              media_types: mediaTypesToSend, 
+            }),
+          });
+
+          if (!res.ok) {
+            const errJson = await res.json().catch(() => ({}));
+            throw new Error(errJson.message || "Gagal membuat gallery");
+          }
+
+          const gallery = await res.json();
+
+          for (const file of files) {
+            const isVideo = file.type.startsWith("video/");
+            const uploadedUrl = await uploadFile(file, isVideo ? "video" : "photo");
+
+            await fetch(`${API_BASE_URL}/${isVideo ? "video" : "photo"}`, {
+              method: "POST",
+              headers: getAuthHeaders(),
+              body: JSON.stringify({
+                title: formData.title,
+                description: formData.description,
+                location: formData.location,
+                date: formData.date,
+                publisher,
+                status: "Review",
+                galleryId: gallery.id,
+                ...(isVideo ? { videoUrl: uploadedUrl } : { photoUrl: uploadedUrl }),
+              }),
+            });
+          }
+        }
+
+        await fetchGallery();
+        setIsFormOpen(false);
+        setEditData(null);
+
+    } catch (error: any) {
+        console.error("Error saving gallery:", error);
+        alert("Terjadi kesalahan: " + error.message);
     }
-
-    if (editData && editData.id) {
-  // 1️⃣ PATCH DATA GALLERY
-  await fetch(`${GALLERY_ENDPOINT}/${editData.id}`, {
-    method: "PATCH",
-    headers: getAuthHeaders(),
-    body: JSON.stringify({
-      title: formData.title,
-      description: formData.description,
-      location: formData.location,
-      date: formData.date,
-      thumbnailUrl: thumbnailUrl || editData.raw?.thumbnailUrl,
-      status: "Review",
-    }),
-  });
-
-  // 2️⃣ UPLOAD MEDIA BARU
-  const newFiles: File[] = formData.mediaFilesRaw ?? [];
-  if (newFiles.length > 0) {
-    for (const file of newFiles) {
-      const isVideo = file.type.startsWith("video/");
-      const uploadedUrl = await uploadFile(file, isVideo ? "video" : "photo");
-
-      await fetch(`${API_BASE_URL}/${isVideo ? "video" : "photo"}`, {
-        method: "POST",
-        headers: getAuthHeaders(),
-        body: JSON.stringify({
-          title: formData.title,
-          description: formData.description,
-          location: formData.location,
-          date: formData.date,
-          publisher,
-          status: "Review",
-          galleryId: editData.id,
-          ...(isVideo
-            ? { videoUrl: uploadedUrl }
-            : { photoUrl: uploadedUrl }),
-        }),
-      });
-    }
-  }
-
-  // 3️⃣ 🔒 PATCH FINAL (INI YANG KAMU TAMBAHKAN)
-  await fetch(`${GALLERY_ENDPOINT}/${editData.id}`, {
-    method: "PATCH",
-    headers: getAuthHeaders(),
-    body: JSON.stringify({
-      status: "Review",
-    }),
-  });
-    } else {
-      // CREATE new gallery
-      const files: File[] = formData.mediaFilesRaw ?? [];
-      if (!files || files.length === 0) {
-        alert("Please attach media.");
-        return;
-      }
-
-      const res = await fetch(GALLERY_ENDPOINT, {
-        method: "POST",
-        headers: getAuthHeaders(),
-        body: JSON.stringify({
-          title: formData.title,
-          description: formData.description,
-          location: formData.location,
-          date: formData.date,
-          publisher,
-          thumbnailUrl,
-          status: "Review",
-        }),
-      });
-
-      if (!res.ok) throw new Error("Failed to create gallery");
-      const gallery = await res.json();
-
-      for (const file of files) {
-        const isVideo = file.type.startsWith("video/");
-        const uploadedUrl = await uploadFile(file, isVideo ? "video" : "photo");
-
-        await fetch(`${API_BASE_URL}/${isVideo ? "video" : "photo"}`, {
-          method: "POST",
-          headers: getAuthHeaders(),
-          body: JSON.stringify({
-            title: formData.title,           // ✅ TAMBAHKAN INI
-            description: formData.description,
-            location: formData.location,
-            date: formData.date,
-            publisher,
-            status: "Review",
-            galleryId: gallery.id,
-            ...(isVideo ? { videoUrl: uploadedUrl } : { photoUrl: uploadedUrl }),
-          }),
-        });
-      }
-    }
-
-    fetchGallery();
-    setIsFormOpen(false);
-    setEditData(null);
   };
 
   const handleEditClick = (id: string) => {
@@ -320,7 +322,7 @@ export default function GalleryPage() {
       description: gallery.raw?.description ?? "",
       date: gallery.date,
       location: gallery.raw?.location ?? "",
-      mediaTypes: [],
+      mediaTypes: gallery.raw?.media_types || gallery.raw?.mediaTypes || [],
       mediaFiles: [
         ...(gallery.raw?.photos?.map((p: any) => p.photoUrl) ?? []),
         ...(gallery.raw?.videos?.map((v: any) => v.videoUrl) ?? []),
@@ -333,7 +335,7 @@ export default function GalleryPage() {
   };
 
   const handlePreview = (item: any) => {
-    console.log("🖼️ Preview item:", item); // DEBUG
+    console.log("Preview item:", item); 
     
     const photos = item.raw?.photos ?? item.raw?.Photos ?? [];
     const videos = item.raw?.videos ?? item.raw?.Videos ?? [];
@@ -343,7 +345,7 @@ export default function GalleryPage() {
       ...videos.map((v: any) => v.videoUrl || v.url),
     ].filter((url: any) => url);
 
-    console.log("📁 Preview files:", files); // DEBUG
+    console.log("Preview files:", files); 
 
     if (files.length === 0) { 
       alert("No files to preview"); 
@@ -480,7 +482,6 @@ export default function GalleryPage() {
             </table>
         </div>
 
-        {/* PENDING / SUBMISSIONS */}
         <div className="mt-8">
             <button
                 onClick={() => setShowPending(!showPending)}

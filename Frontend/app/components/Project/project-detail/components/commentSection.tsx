@@ -1,4 +1,8 @@
-import { Link as LinkIcon, Image as ImageIcon, ThumbsUp, MessageCircle, X } from "lucide-react";
+import {
+  ThumbsUp,
+  MessageCircle,
+} from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { StarRating } from "./starRating";
 import type { Comment } from "../types";
 import { useState } from "react";
@@ -14,6 +18,7 @@ interface CommentSectionProps {
   onSubmit: () => void;
   onReply: (commentId: number, text: string) => void;
   onLike: (commentId: number) => void;
+  onDelete: (commentId: number) => void;
   reviewCount: number;
 }
 
@@ -28,6 +33,7 @@ export function CommentSection({
   onSubmit,
   onReply,
   onLike,
+  onDelete,
   reviewCount,
 }: CommentSectionProps) {
   const [hoverRating, setHoverRating] = useState(0);
@@ -118,33 +124,40 @@ export function CommentSection({
                   <span className="text-xs text-gray-400 ml-auto">
                     {comment.time}
                   </span>
+                  <button
+                    onClick={() => onDelete(comment.id)}
+                    className="p-1 text-red-500 hover:text-red-700"
+                    title="Hapus komentar"
+                  >
+                    <Trash2 size={14} />
+                  </button>
                 </div>
                 <p className="text-gray-700 mb-3">{comment.text}</p>
-                
+
                 <div className="flex items-center gap-4">
-                  <button 
+                  <button
                     onClick={() => onLike(comment.id)}
                     className={`flex items-center gap-1 text-sm transition-colors ${
-                      comment.isLike 
-                        ? "text-orange-500 font-bold"   
-                        : "text-gray-400 hover:text-orange-500" 
+                      comment.isLike
+                        ? "text-orange-500 font-bold"
+                        : "text-gray-400 hover:text-orange-500"
                     }`}
                   >
-                    <ThumbsUp 
-                        size={16} 
-                        fill={comment.isLike ? "currentColor" : "none"} 
+                    <ThumbsUp
+                      size={16}
+                      fill={comment.isLike ? "currentColor" : "none"}
                     />
                     ({comment.likes})
                   </button>
-                  
-                  <button 
+
+                  <button
                     onClick={() => {
-                        if (activeReplyId === comment.id) {
-                            setActiveReplyId(null);
-                        } else {
-                            setActiveReplyId(comment.id);
-                            setReplyTextContent("");
-                        }
+                      if (activeReplyId === comment.id) {
+                        setActiveReplyId(null);
+                      } else {
+                        setActiveReplyId(comment.id);
+                        setReplyTextContent("");
+                      }
                     }}
                     className={`flex items-center gap-1 text-sm transition-colors ${activeReplyId === comment.id ? "text-orange-500 font-medium" : "text-gray-400 hover:text-orange-500"}`}
                   >
@@ -153,35 +166,35 @@ export function CommentSection({
                 </div>
 
                 {activeReplyId === comment.id && (
-                    <div className="mt-4 animate-in fade-in slide-in-from-top-2 duration-200">
-                        <div className="flex gap-3">
-                            <div className="w-8 h-8 rounded-full bg-gray-200 flex-shrink-0 flex items-center justify-center text-xs font-bold text-gray-500">
-                                You
-                            </div>
-                            <div className="flex-1">
-                                <textarea
-                                    value={replyTextContent}
-                                    onChange={(e) => setReplyTextContent(e.target.value)}
-                                    placeholder={`Reply to ${comment.user}...`}
-                                    className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-orange-400 focus:outline-none min-h-[80px]"
-                                />
-                                <div className="flex justify-end gap-2 mt-2">
-                                    <button 
-                                        onClick={() => setActiveReplyId(null)}
-                                        className="text-gray-500 hover:text-gray-700 text-sm px-3 py-1.5"
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button 
-                                        onClick={() => handleReplySubmit(comment.id)}
-                                        className="bg-orange-500 text-white text-sm px-4 py-1.5 rounded-full hover:bg-orange-600 transition"
-                                    >
-                                        Send Reply
-                                    </button>
-                                </div>
-                            </div>
+                  <div className="mt-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="flex gap-3">
+                      <div className="w-8 h-8 rounded-full bg-gray-200 flex-shrink-0 flex items-center justify-center text-xs font-bold text-gray-500">
+                        You
+                      </div>
+                      <div className="flex-1">
+                        <textarea
+                          value={replyTextContent}
+                          onChange={(e) => setReplyTextContent(e.target.value)}
+                          placeholder={`Reply to ${comment.user}...`}
+                          className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-orange-400 focus:outline-none min-h-[80px]"
+                        />
+                        <div className="flex justify-end gap-2 mt-2">
+                          <button
+                            onClick={() => setActiveReplyId(null)}
+                            className="text-gray-500 hover:text-gray-700 text-sm px-3 py-1.5"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={() => handleReplySubmit(comment.id)}
+                            className="bg-orange-500 text-white text-sm px-4 py-1.5 rounded-full hover:bg-orange-600 transition"
+                          >
+                            Send Reply
+                          </button>
                         </div>
+                      </div>
                     </div>
+                  </div>
                 )}
               </div>
             </div>

@@ -1,6 +1,5 @@
 import { Link, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
-
 import { ImageCarousel } from "./components/imageCarousel";
 import { ProjectInfo } from "./components/projectInfo";
 import { TeamSection } from "./components/teamSection";
@@ -113,6 +112,7 @@ export default function ProjectDetail() {
   const [userName, setUserName] = useState("");
   const [commentText, setCommentText] = useState("");
   const [userRating, setUserRating] = useState(0);
+  const token = localStorage.getItem("access_token");
 
   const slugify = (text: string) =>
     text
@@ -209,33 +209,55 @@ export default function ProjectDetail() {
   }, [slug]);
 
   
-  const addComment = () => {
-    if (!userName || !commentText || userRating === 0 || !slug) return;
+  const addComment = async () => {
+  if (!userName || !commentText || userRating === 0 || !slug) return;
 
-    const newComment = {
-      id: Date.now(),
-      timestamp: Date.now(),
-      user: userName,
-      avatar: `https://i.pravatar.cc/150?u=${userName}`,
-      time: "Just now",
-      text: commentText,
-      rating: userRating,
-      likes: 0,
-      replies: [],
-    };
-
-    try {
-      const updatedComments = [newComment, ...comments];
-      localStorage.setItem(`comments:${slug}`, JSON.stringify(updatedComments));
-      setComments(updatedComments);
-      setUserName("");
-      setCommentText("");
-      setUserRating(0);
-    } catch (err) {
-      console.error("Error saving comment:", err);
-      alert("Failed to save comment. Please try again.");
-    }
+  const newComment = {
+    id: Date.now(),
+    timestamp: Date.now(),
+    user: userName,
+    avatar: `https://i.pravatar.cc/150?u=${userName}`,
+    time: "Just now",
+    text: commentText,
+    rating: userRating,
+    likes: 0,
+    replies: [],
   };
+
+  const updatedComments = [newComment, ...comments];
+
+  // simpan local
+  localStorage.setItem(`comments:${slug}`, JSON.stringify(updatedComments));
+  setComments(updatedComments);
+
+  // 🔥 HITUNG AVERAGE RATING
+  const avg =
+    updatedComments.reduce((sum, c) => sum + (c.rating || 0), 0) /
+    updatedComments.length;
+
+  // 🔥 SIMPAN KE DATABASE
+  try {
+    const res = await fetch(`${API_BASE_URL}/project/${project.id}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        stars: Number(avg.toFixed(1)),
+      }),
+    });
+
+    console.log("⭐ stars saved:", avg, "status:", res.status);
+  } catch (err) {
+    console.error("❌ failed to save stars", err);
+  }
+
+  setUserName("");
+  setCommentText("");
+  setUserRating(0);
+};
+
 
   const addReply = (commentId: number, text: string) => {
     const reply = {
@@ -255,8 +277,7 @@ export default function ProjectDetail() {
         : c
     );
 
-    setComments(updatedComments);
-
+setComments(updatedComments);
    
     try {
       localStorage.setItem(`comments:${slug}`, JSON.stringify(updatedComments));
@@ -326,6 +347,39 @@ export default function ProjectDetail() {
     },
     { label: "Rating", value: averageRating },
   ];
+
+  const deleteComment = async (commentId: number) => {
+  const updatedComments = comments.filter(c => c.id !== commentId);
+
+  setComments(updatedComments);
+  localStorage.setItem(`comments:${slug}`, JSON.stringify(updatedComments));
+
+  // 🔥 hitung ulang rating
+  const avg =
+    updatedComments.length > 0
+      ? updatedComments.reduce((sum, c) => sum + (c.rating || 0), 0) /
+        updatedComments.length
+      : 0;
+
+  // 🔥 update stars ke backend
+  try {
+    await fetch(`${API_BASE_URL}/project/${project.id}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        stars: Number(avg.toFixed(1)),
+      }),
+    });
+
+    console.log("🗑️ comment deleted, stars updated:", avg);
+  } catch (err) {
+    console.error("❌ failed to update stars after delete", err);
+  }
+};
+
 
   return (
   
@@ -409,8 +463,11 @@ export default function ProjectDetail() {
           onSubmit={addComment}
           onReply={addReply}
           onLike={toggleLike}
+          onDelete={deleteComment}
           reviewCount={comments.length}
         />
+
+        
       </main>
     </div>
   );

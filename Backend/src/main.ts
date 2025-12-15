@@ -4,6 +4,7 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import * as fs from 'fs';
 import cookieParser from 'cookie-parser';
 import * as path from 'path';
+import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -17,6 +18,13 @@ async function bootstrap() {
   app.useStaticAssets(path.join(process.cwd(), 'uploads'), {
     prefix: '/uploads',
   });
+
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true,
+      whitelist: true,
+    }),
+  );
 
   const uploadsRoot = path.join(process.cwd(), 'uploads');
   if (!fs.existsSync(uploadsRoot)) {

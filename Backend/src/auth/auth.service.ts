@@ -35,17 +35,14 @@ export class AuthService {
       throw new ConflictException('Email already in use');
     }
 
-    // 1. Buat USER
     const user = await this.usersService.createUser(payload);
     const { password, ...rest } = user;
 
-    // 2. Tentukan role (FIXED TYPE)
     const role = (payload.role ?? 'mahasiswa').toLowerCase() as
       | 'mahasiswa'
       | 'dosen'
       | 'admin';
 
-    // 3. AUTO CREATE MEMBER (INILAH SOLUSI UTAMA)
     const existingMember = await this.memberService.findByUserId(user.id);
     const identityNum =
       payload.validationField && payload.validationField.trim() !== ''

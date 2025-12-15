@@ -153,6 +153,18 @@ export function ContentGallery() {
         const data = await res.json();
 
         const normalized = data.map((g: any) => {
+          const dbTags = g.media_types || g.mediaTypes || [];
+          let finalImage = g.thumbnailUrl || g.thumbnail_url;
+
+          if (!finalImage) {
+             const photoList = g.photos || g.Photos || [];
+             if (photoList.length > 0) {
+                 finalImage = photoList[0].photoUrl || photoList[0].url;
+             }
+          }
+
+          finalImage = finalImage;
+
           return {
             image: g.thumbnailUrl || "/placeholder.jpg",
             title: g.title,
@@ -162,7 +174,7 @@ export function ContentGallery() {
            
             rawDate: g.date || g.createdAt,
             
-            kategori: g.kategori || "", 
+            tags: Array.isArray(dbTags) ? dbTags : [], 
 
             dateFormatted: new Intl.DateTimeFormat("id-ID", {
               day: "2-digit",
@@ -196,7 +208,10 @@ export function ContentGallery() {
    
       .filter((g) => {
         if (!category) return true; 
-        return g.kategori.toLowerCase() === category.toLowerCase();
+        if (g.tags && Array.isArray(g.tags)) {
+            return g.tags.some((t: string) => t.toLowerCase() === category.toLowerCase());
+        }
+        return g.kategori?.toLowerCase() === category.toLowerCase();
       })
       
       .filter((g) => {
@@ -292,7 +307,7 @@ export function ContentGallery() {
                     location={g.location}
                     title={g.title}
                     desc={g.desc}
-                    tags={g.kategori ? [g.kategori] : []} 
+                    tags={g.tags}
                   />
                 </div>
               ))}

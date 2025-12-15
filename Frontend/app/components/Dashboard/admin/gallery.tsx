@@ -92,7 +92,6 @@ export default function GalleryPage() {
       console.log("🔍 Gallery API Response:", data); 
 
       const normalized = (Array.isArray(data) ? data : []).map((g: any) => {
-        // Handle berbagai kemungkinan struktur data
         const photos = g.photos ?? g.Photos ?? [];
         const videos = g.videos ?? g.Videos ?? [];
         
@@ -102,7 +101,7 @@ export default function GalleryPage() {
           photos, 
           videos,
           raw: g 
-        }); // DEBUG
+        });
 
         return {
           id: g.id,

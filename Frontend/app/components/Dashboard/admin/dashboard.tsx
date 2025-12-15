@@ -34,7 +34,6 @@ type RecentActivity = {
   activity: string;
   at: string;
   type: string;
-  // optional photo fields that backend may provide
   photo?: string;
   avatar?: string;
   userPhoto?: string;
@@ -79,7 +78,6 @@ function getActivityColor(type: string): string {
   }
 }
 
-// === MATCH Sidebar's getPhotoUrl EXACTLY ===
 function getPhotoUrl(raw?: string) {
   if (!raw) return "../member/person1.jpg";
   if (raw.startsWith("/uploads")) {
@@ -87,7 +85,6 @@ function getPhotoUrl(raw?: string) {
   }
   return raw;
 }
-// === END getPhotoUrl ===
 
 function toISODateLocal(date: Date) {
   const tzOffset = date.getTimezoneOffset() * 60000;
@@ -238,7 +235,6 @@ export default function Dashboard() {
     return points;
   }
 
-  // --- STATS fetch (robust/fallback) ---
   useEffect(() => {
     const base = "http://localhost:3000";
     let isCancelled = false;
@@ -284,7 +280,6 @@ export default function Dashboard() {
     };
   }, []);
 
-  // --- TRAFFIC (current week Mon..Sun) + socket updates ---
   useEffect(() => {
     const base = "http://localhost:3000";
     let isCancelled = false;
@@ -367,7 +362,6 @@ export default function Dashboard() {
     };
   }, []);
 
-  // --- RECENT ACTIVITIES (show profile photo if available) ---
   useEffect(() => {
     const base = "http://localhost:3000";
     let isCancelled = false;
@@ -375,7 +369,6 @@ export default function Dashboard() {
     const fetchActivities = async () => {
       setIsLoadingActivity(true);
       try {
-        // limit 3 as requested
         const res = await fetch(`${base}/activity/recent?limit=3`, {
           cache: "no-store",
         });

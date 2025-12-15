@@ -132,97 +132,107 @@ export default function GalleryPage() {
 
     try {
         if (formData.thumbnailFile) {
-            thumbnailUrl = await uploadFile(formData.thumbnailFile, "photo");
+            try {
+                thumbnailUrl = await uploadFile(formData.thumbnailFile, "photo");
+            } catch (e) {
+                alert("Gagal upload thumbnail");
+                return;
+            }
         }
-    } catch (e) {
-        alert("Gagal upload thumbnail");
-        return;
-    }
 
-    if (editData && editData.id) {
-      await fetch(`${GALLERY_ENDPOINT}/${editData.id}`, {
-        method: "PATCH",
-        headers: getAuthHeaders(),
-        body: JSON.stringify({
-          title: formData.title,
-          description: formData.description,
-          location: formData.location,
-          date: formData.date,
-          thumbnailUrl: thumbnailUrl || editData.raw?.thumbnailUrl,
-          status: "Review",
-        }),
-      });
+        const mediaTypesToSend = formData.mediaTypes || []; 
 
-      const newFiles: File[] = formData.mediaFilesRaw ?? [];
-      if (newFiles.length > 0) {
-        for (const file of newFiles) {
-          const isVideo = file.type.startsWith("video/");
-          const uploadedUrl = await uploadFile(file, isVideo ? "video" : "photo");
+        if (editData && editData.id) {
+            await fetch(`${GALLERY_ENDPOINT}/${editData.id}`, {
+                method: "PATCH",
+                headers: getAuthHeaders(),
+                body: JSON.stringify({
+                    title: formData.title,
+                    description: formData.description,
+                    location: formData.location,
+                    date: formData.date,
+                    thumbnailUrl: thumbnailUrl || editData.raw?.thumbnailUrl,
+                    status: "Review",
+                    media_types: mediaTypesToSend, 
+                }),
+            });
 
-          await fetch(`${API_BASE_URL}/${isVideo ? "video" : "photo"}`, {
-            method: "POST",
-            headers: getAuthHeaders(),
-            body: JSON.stringify({
-              title: formData.title,
-              description: formData.description,
-              location: formData.location,
-              date: formData.date,
-              publisher,
-              status: "Review",
-              galleryId: editData.id,
-              ...(isVideo ? { videoUrl: uploadedUrl } : { photoUrl: uploadedUrl }),
-            }),
-          });
+            const newFiles: File[] = formData.mediaFilesRaw ?? [];
+            if (newFiles.length > 0) {
+                for (const file of newFiles) {
+                    const isVideo = file.type.startsWith("video/");
+                    const uploadedUrl = await uploadFile(file, isVideo ? "video" : "photo");
+
+                    await fetch(`${API_BASE_URL}/${isVideo ? "video" : "photo"}`, {
+                        method: "POST",
+                        headers: getAuthHeaders(),
+                        body: JSON.stringify({
+                            title: formData.title,
+                            description: formData.description,
+                            location: formData.location,
+                            date: formData.date,
+                            publisher,
+                            status: "Review",
+                            galleryId: editData.id,
+                            ...(isVideo ? { videoUrl: uploadedUrl } : { photoUrl: uploadedUrl }),
+                        }),
+                    });
+                }
+            }
+        } else {
+            const files: File[] = formData.mediaFilesRaw ?? [];
+            if (!files || files.length === 0) {
+                alert("Please attach media.");
+                return;
+            }
+
+            const res = await fetch(GALLERY_ENDPOINT, {
+                method: "POST",
+                headers: getAuthHeaders(),
+                body: JSON.stringify({
+                    title: formData.title,
+                    description: formData.description,
+                    location: formData.location,
+                    date: formData.date,
+                    publisher,
+                    thumbnailUrl,
+                    status: "Review",
+                    media_types: mediaTypesToSend, 
+                }),
+            });
+
+            if (!res.ok) throw new Error("Failed to create gallery");
+            const gallery = await res.json();
+
+            for (const file of files) {
+                const isVideo = file.type.startsWith("video/");
+                const uploadedUrl = await uploadFile(file, isVideo ? "video" : "photo");
+
+                await fetch(`${API_BASE_URL}/${isVideo ? "video" : "photo"}`, {
+                    method: "POST",
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify({
+                        title: formData.title,
+                        description: formData.description,
+                        location: formData.location,
+                        date: formData.date,
+                        publisher,
+                        status: "Review",
+                        galleryId: gallery.id,
+                        ...(isVideo ? { videoUrl: uploadedUrl } : { photoUrl: uploadedUrl }),
+                    }),
+                });
+            }
         }
-      }
-    } else {
-      const files: File[] = formData.mediaFilesRaw ?? [];
-      if (!files || files.length === 0) {
-        alert("Please attach media.");
-        return;
-      }
 
-      const res = await fetch(GALLERY_ENDPOINT, {
-        method: "POST",
-        headers: getAuthHeaders(),
-        body: JSON.stringify({
-          title: formData.title,
-          description: formData.description,
-          location: formData.location,
-          date: formData.date,
-          publisher,
-          thumbnailUrl,
-          status: "Review",
-        }),
-      });
+        await fetchGallery();
+        setIsFormOpen(false);
+        setEditData(null);
 
-      if (!res.ok) throw new Error("Failed to create gallery");
-      const gallery = await res.json();
-
-      for (const file of files) {
-        const isVideo = file.type.startsWith("video/");
-        const uploadedUrl = await uploadFile(file, isVideo ? "video" : "photo");
-
-        await fetch(`${API_BASE_URL}/${isVideo ? "video" : "photo"}`, {
-          method: "POST",
-          headers: getAuthHeaders(),
-          body: JSON.stringify({
-            title: formData.title,
-            description: formData.description,
-            location: formData.location,
-            date: formData.date,
-            publisher,
-            status: "Review",
-            galleryId: gallery.id,
-            ...(isVideo ? { videoUrl: uploadedUrl } : { photoUrl: uploadedUrl }),
-          }),
-        });
-      }
+    } catch (error: any) {
+        console.error("Error saving gallery:", error);
+        alert("Terjadi kesalahan: " + error.message);
     }
-
-    fetchGallery();
-    setIsFormOpen(false);
-    setEditData(null);
   };
 
   const handleDeleteMain = async (id: string) => {
@@ -245,7 +255,7 @@ export default function GalleryPage() {
       description: row.raw?.description ?? "",
       date: row.date,
       location: row.raw?.location ?? "",
-      mediaTypes: [],
+      mediaTypes: row.raw?.media_types || row.raw?.mediaTypes || [],
       mediaFiles: [
         ...(row.raw?.photos?.map((p: any) => p.photoUrl) ?? []),
         ...(row.raw?.videos?.map((v: any) => v.videoUrl) ?? []),

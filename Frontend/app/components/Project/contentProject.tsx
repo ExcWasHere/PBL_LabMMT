@@ -1,9 +1,10 @@
-import { Search, Funnel, ChevronDown } from "lucide-react";
+import { Search, ChevronDown } from "lucide-react"; // Hapus Funnel import
 import { useState, useRef, useEffect, useLayoutEffect } from "react";
 import type { ElementType } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import Card from "../../common/card";
+
 const API_BASE_URL = "http://localhost:3000";
 const PUBLIC_PROJECT_ENDPOINT = `${API_BASE_URL}/project/public`;
 
@@ -26,6 +27,7 @@ interface CustomDropdownProps {
   options: { value: string; label: string }[];
   placeholder: string;
   icon?: ElementType;
+  className?: string; // Tambah prop className biar flexible
 }
 
 function CustomDropdown({
@@ -34,6 +36,7 @@ function CustomDropdown({
   options,
   placeholder,
   icon: Icon,
+  className = "",
 }: CustomDropdownProps) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLButtonElement>(null);
@@ -55,17 +58,17 @@ function CustomDropdown({
       <button
         ref={ref}
         onClick={() => setOpen(!open)}
-        className="
-          w-full h-12 px-4
-          flex items-center justify-between
-          rounded-xl bg-[#FAF5F0]
-          text-gray-700 font-medium text-sm
-          hover:bg-[#F4EBE4]
-          transition
-        "
+        className={`
+          h-10 px-4 
+          flex items-center justify-between gap-3
+          rounded-lg border border-gray-300 bg-white
+          text-gray-500 text-sm hover:border-gray-400
+          transition whitespace-nowrap
+          ${className}
+        `}
       >
         <div className="flex items-center gap-2 truncate">
-          {Icon && <Icon size={16} className="text-gray-500" />}
+          {Icon && <Icon size={16} className="text-gray-400" />}
           <span className={value ? "text-gray-900" : "text-gray-500"}>
             {options.find((o) => o.value === value)?.label || placeholder}
           </span>
@@ -80,16 +83,16 @@ function CustomDropdown({
       {open &&
         createPortal(
           <div
-            className="fixed z-[9999] bg-white rounded-xl border shadow-lg"
+            className="fixed z-[9999] bg-white rounded-lg border border-gray-200 shadow-lg py-1"
             style={style}
           >
-            <div className="py-2 max-h-60 overflow-y-auto">
+            <div className="max-h-60 overflow-y-auto">
               <div
                 onClick={() => {
                   onChange("");
                   setOpen(false);
                 }}
-                className="px-4 py-2 text-sm cursor-pointer hover:bg-gray-50"
+                className="px-4 py-2 text-sm text-gray-500 cursor-pointer hover:bg-gray-50"
               >
                 All {placeholder}
               </div>
@@ -101,7 +104,7 @@ function CustomDropdown({
                     onChange(opt.value);
                     setOpen(false);
                   }}
-                  className="px-4 py-2 text-sm cursor-pointer hover:bg-gray-50"
+                  className="px-4 py-2 text-sm text-gray-700 cursor-pointer hover:bg-gray-50"
                 >
                   {opt.label}
                 </div>
@@ -130,7 +133,21 @@ export function ContentProject() {
   useEffect(() => {
     fetch(PUBLIC_PROJECT_ENDPOINT)
       .then((res) => res.json())
-      .then((data) => setProjects(Array.isArray(data) ? data : []))
+      .then((data) => {
+        if (Array.isArray(data)) {
+          const normalized = data.map((p: any) => ({
+            ...p,
+            formattedDate: new Intl.DateTimeFormat("id-ID", {
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+            }).format(new Date(p.year || p.createdAt)),
+          }));
+          setProjects(normalized);
+        } else {
+          setProjects([]);
+        }
+      })
       .catch(() => setProjects([]))
       .finally(() => setLoading(false));
   }, []);
@@ -196,44 +213,60 @@ export function ContentProject() {
   return (
     <div className="bg-white min-h-screen py-8">
       <div className="max-w-6xl mx-auto px-4">
-        {/* SEARCH */}
-        <div className="flex items-center bg-[#FAF5F0] rounded-xl px-4 h-12 mb-6">
-          <Search size={20} className="text-gray-400" />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search project..."
-            className="bg-transparent flex-1 ml-3 outline-none"
-          />
-        </div>
+        
+        <div className="flex flex-col md:flex-row gap-3 mb-8">
+          
+          <div className="relative flex-1">
+            <Search
+              size={18}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+            />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search..."
+              className="
+                w-full h-10 pl-10 pr-4 
+                rounded-lg border border-gray-300 bg-white 
+                text-sm text-gray-700 placeholder:text-gray-500
+                focus:outline-none focus:border-gray-400
+                transition
+              "
+            />
+          </div>
 
-        {/* FILTER */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
-          <CustomDropdown
-            placeholder="Category"
-            value={category}
-            onChange={setCategory}
-            options={categoryOptions}
-          />
-          <CustomDropdown
-            placeholder="Tech"
-            value={tech}
-            onChange={setTech}
-            options={techOptions}
-          />
-          <CustomDropdown
-            placeholder="Year"
-            value={year}
-            onChange={setYear}
-            options={yearOptions}
-          />
-          <CustomDropdown
-            placeholder="Sort"
-            icon={Funnel}
-            value={sort}
-            onChange={setSort}
-            options={sortOptions}
-          />
+          {/* FILTERS (Dropdowns sejajar) */}
+          <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 no-scrollbar">
+            <CustomDropdown
+              placeholder="Category"
+              value={category}
+              onChange={setCategory}
+              options={categoryOptions}
+              className="min-w-[120px]"
+            />
+            <CustomDropdown
+              placeholder="Tech"
+              value={tech}
+              onChange={setTech}
+              options={techOptions}
+              className="min-w-[100px]"
+            />
+            <CustomDropdown
+              placeholder="Year"
+              value={year}
+              onChange={setYear}
+              options={yearOptions}
+              className="min-w-[100px]"
+            />
+            <CustomDropdown
+              placeholder="Sort By" 
+              value={sort}
+              onChange={setSort}
+              options={sortOptions}
+             
+              className="min-w-[110px]"
+            />
+          </div>
         </div>
 
         {/* CONTENT */}
@@ -248,29 +281,25 @@ export function ContentProject() {
         ) : (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {showing.map((p) => {
-                console.log("PROJECT ID FROM FRONTEND:", p.id);
-
-                return (
-                  <Link key={p.id} to={`/project/slug/${slugify(p.title)}`}>
-                    <Card
-                      title={p.title}
-                      desc={p.description}
-                      image={withBaseUrl(p.thumbnailUrl)}
-                      date={p.year}
-                      tags={p.tech ? p.tech.split(",") : []}
-                      kategori={p.kategori}
-                    />
-                  </Link>
-                );
-              })}
+              {showing.map((p) => (
+                <Link key={p.id} to={`/project/slug/${slugify(p.title)}`}>
+                  <Card
+                    title={p.title}
+                    desc={p.description}
+                    image={withBaseUrl(p.thumbnailUrl)}
+                    date={p.formattedDate}
+                    tags={p.tech ? p.tech.split(",") : []}
+                    kategori={p.kategori}
+                  />
+                </Link>
+              ))}
             </div>
 
             {visible < filtered.length && (
               <div className="flex justify-center mt-10">
                 <button
                   onClick={() => setVisible((v) => v + 6)}
-                  className="px-6 py-2 bg-orange-500 text-white rounded-lg"
+                  className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition"
                 >
                   Load More
                 </button>

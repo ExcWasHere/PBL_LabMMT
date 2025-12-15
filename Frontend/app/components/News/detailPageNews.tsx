@@ -1,12 +1,10 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { useParams, Link } from "react-router-dom"; // Ganti useNavigate dengan Link
 
 const API_BASE_URL = "http://localhost:3000";
 
 export default function BeritaDetail() {
   const { slug } = useParams<{ slug: string }>();
-  const navigate = useNavigate();
 
   const [news, setNews] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -45,6 +43,9 @@ export default function BeritaDetail() {
           Berita tidak ditemukan
         </h2>
         <p>Link mungkin salah atau berita sudah dihapus.</p>
+        <Link to="/news" className="mt-4 text-orange-500 hover:underline">
+          Kembali ke News
+        </Link>
       </div>
     );
   }
@@ -52,27 +53,26 @@ export default function BeritaDetail() {
   /* ================= RENDER ================= */
 
   return (
-    <div className="bg-white text-gray-800 min-h-screen relative">
-
-      {/* BACK BUTTON */}
-      <button
-        onClick={() => navigate(-1)}
-        className="
-          absolute top-8 left-6 md:left-10
-          z-10 flex items-center gap-2
-          bg-gradient-to-r from-orange-500 to-orange-600
-          text-white
-          px-5 py-2.5 rounded-full
-          shadow-lg hover:shadow-xl hover:scale-105
-          transition-all duration-300
-          font-medium
-        "
-      >
-        <ArrowLeft size={18} />
-        <span className="text-sm">Back</span>
-      </button>
-
-      <div className="pt-28 pb-16 px-6 md:px-20 max-w-7xl mx-auto">
+    <div className="bg-white text-gray-800 min-h-screen">
+      
+      {/* CONTAINER UTAMA */}
+      <div className="py-10 px-6 md:px-20 max-w-7xl mx-auto">
+        
+        {/* BACK BUTTON (Style disamakan dengan ProjectDetail) */}
+        <Link 
+          to="/news"
+          className="inline-flex items-center gap-2 text-gray-600 hover:text-orange-500 mb-6 group transition-colors"
+        >
+          <svg 
+            className="w-5 h-5 group-hover:-translate-x-1 transition-transform" 
+            fill="none" 
+            stroke="currentColor" 
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+          <span className="font-medium">Back to News</span>
+        </Link>
 
         {/* HEADER IMAGE */}
         <img

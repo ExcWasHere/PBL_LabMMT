@@ -47,7 +47,7 @@ export default function ProjectPage() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const [publisherName, setPublisherName] = useState("Student"); // Changed default fallback to Student
+  const [publisherName, setPublisherName] = useState("Student");
   useEffect(() => {
     try {
       const raw = localStorage.getItem("user");
@@ -157,22 +157,22 @@ export default function ProjectPage() {
   const stats = [
     {
       label: "Published",
-      value: projects.filter((p) => p.status === "Published").length,
+      value: projects.filter((p) => p.status === "Published" && p.publisher === publisherName).length,
       color: "border-orange-400 text-orange-500",
     },
     {
       label: "Review",
-      value: projects.filter((p) => p.status === "Review").length,
+      value: projects.filter((p) => p.status === "Review" && p.publisher === publisherName).length,
       color: "border-blue-400 text-blue-500",
     },
     {
       label: "Wait To Publish",
-      value: projects.filter((p) => p.status === "Waiting").length,
+      value: projects.filter((p) => p.status === "Waiting" && p.publisher === publisherName).length,
       color: "border-green-400 text-green-500",
     },
     {
       label: "Muted",
-      value: projects.filter((p) => p.status === "Muted").length,
+      value: projects.filter((p) => p.status === "Muted" && p.publisher === publisherName).length,
       color: "border-red-400 text-red-500",
     },
   ];
@@ -220,7 +220,8 @@ export default function ProjectPage() {
   };
 
   const filteredData = useMemo(() => {
-    let data = [...projects];
+    
+    let data = projects.filter(p => p.publisher === publisherName);
 
     const getYearFromString = (dateString: string) => {
       const d = new Date(dateString);
@@ -268,6 +269,7 @@ export default function ProjectPage() {
     searchTerm,
     selectedSort,
     selectedStatus,
+    publisherName, 
   ]);
 
   const handleSaveProject = async (
@@ -314,10 +316,8 @@ export default function ProjectPage() {
       
       const headers = getAuthHeaders(true);
       
-      // --- PERUBAHAN DI SINI UNTUK STUDENT ---
-      // Paksa status kembali ke "Review" agar Admin harus menyetujui lagi
+     
       const statusToSend = "Review"; 
-      // ---------------------------------------
 
       if (editData) {
         const res = await fetch(`${PROJECT_ENDPOINT}/${editData.id}`, {
@@ -475,7 +475,7 @@ export default function ProjectPage() {
           </button>
         </div>
 
-        {/* Table Section */}
+     
         <div className="border border-orange-500 rounded-lg overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm min-w-[800px]">

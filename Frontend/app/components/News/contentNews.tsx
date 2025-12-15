@@ -1,4 +1,4 @@
-import { Search, Funnel, ChevronDown, Check } from "lucide-react";
+import { Search, ChevronDown } from "lucide-react";
 import { useState, useRef, useEffect, useLayoutEffect } from "react";
 import type { ElementType } from "react";
 import { createPortal } from "react-dom";
@@ -9,7 +9,7 @@ import Card from "../../common/card";
 const API_BASE_URL = "http://localhost:3000";
 const PUBLIC_NEWS_ENDPOINT = `${API_BASE_URL}/news/public`;
 
-/* ================= SLUG ================= */
+/* ================= UTILS ================= */
 const slugify = (text: string) =>
   text
     .toLowerCase()
@@ -17,98 +17,79 @@ const slugify = (text: string) =>
     .replace(/[^\w\s-]/g, "")
     .replace(/\s+/g, "-");
 
-/* ================= DROPDOWN ================= */
+/* ================= DROPDOWN (NEW DESIGN) ================= */
 interface CustomDropdownProps {
   value: string;
   onChange: (value: string) => void;
   options: { value: string; label: string }[];
   placeholder: string;
   icon?: ElementType;
+  className?: string;
 }
 
-/* ⛔ UI DROPDOWN TIDAK DIUBAH */
 function CustomDropdown({
   value,
   onChange,
   options,
   placeholder,
   icon: Icon,
+  className = "",
 }: CustomDropdownProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const buttonRef = useRef<HTMLButtonElement>(null);
-  const [menuStyle, setMenuStyle] = useState({});
-
-  useEffect(() => {
-    const handleScroll = () => isOpen && setIsOpen(false);
-    window.addEventListener("scroll", handleScroll, true);
-    return () => window.removeEventListener("scroll", handleScroll, true);
-  }, [isOpen]);
-
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (
-        buttonRef.current &&
-        !buttonRef.current.contains(e.target as Node)
-      ) {
-        setIsOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLButtonElement>(null);
+  const [style, setStyle] = useState({});
 
   useLayoutEffect(() => {
-    if (isOpen && buttonRef.current) {
-      const rect = buttonRef.current.getBoundingClientRect();
-      setMenuStyle({
-        top: rect.bottom + 8,
-        left: rect.left,
-        minWidth: rect.width,
+    if (open && ref.current) {
+      const r = ref.current.getBoundingClientRect();
+      setStyle({
+        top: r.bottom + 8,
+        left: r.left,
+        minWidth: r.width,
       });
     }
-  }, [isOpen]);
-
-  const selectedLabel =
-    options.find((o) => o.value === value)?.label || placeholder;
+  }, [open]);
 
   return (
     <>
       <button
-        ref={buttonRef}
-        onClick={() => setIsOpen(!isOpen)}
-        className="
-          relative flex items-center justify-between
-          w-full px-4 h-12
-          bg-[#FAF5F0] hover:bg-[#F4EBE4]
-          rounded-xl text-gray-700 text-sm font-medium
-        "
+        ref={ref}
+        onClick={() => setOpen(!open)}
+        className={`
+          h-10 px-4 
+          flex items-center justify-between gap-3
+          rounded-lg border border-gray-300 bg-white
+          text-gray-500 text-sm hover:border-gray-400
+          transition whitespace-nowrap
+          ${className}
+        `}
       >
         <div className="flex items-center gap-2 truncate">
-          {Icon && <Icon size={16} className="text-gray-500" />}
-          <span>{selectedLabel}</span>
+          {Icon && <Icon size={16} className="text-gray-400" />}
+          <span className={value ? "text-gray-900" : "text-gray-500"}>
+            {options.find((o) => o.value === value)?.label || placeholder}
+          </span>
         </div>
 
         <ChevronDown
           size={16}
-          className={`text-gray-400 transition ${
-            isOpen ? "rotate-180" : ""
-          }`}
+          className={`text-gray-400 transition ${open ? "rotate-180" : ""}`}
         />
       </button>
 
-      {isOpen &&
+      {open &&
         createPortal(
           <div
-            className="fixed z-[9999] bg-white rounded-xl border shadow-lg"
-            style={menuStyle}
+            className="fixed z-[9999] bg-white rounded-lg border border-gray-200 shadow-lg py-1"
+            style={style}
           >
-            <div className="py-2 max-h-60 overflow-y-auto">
+            <div className="max-h-60 overflow-y-auto">
               <div
                 onClick={() => {
                   onChange("");
-                  setIsOpen(false);
+                  setOpen(false);
                 }}
-                className="px-4 py-2 text-sm cursor-pointer hover:bg-gray-50"
+                className="px-4 py-2 text-sm text-gray-500 cursor-pointer hover:bg-gray-50"
               >
                 All {placeholder}
               </div>
@@ -118,9 +99,9 @@ function CustomDropdown({
                   key={opt.value}
                   onClick={() => {
                     onChange(opt.value);
-                    setIsOpen(false);
+                    setOpen(false);
                   }}
-                  className="px-4 py-2 text-sm cursor-pointer hover:bg-gray-50"
+                  className="px-4 py-2 text-sm text-gray-700 cursor-pointer hover:bg-gray-50"
                 >
                   {opt.label}
                 </div>
@@ -133,7 +114,7 @@ function CustomDropdown({
   );
 }
 
-/* ================= MAIN ================= */
+/* ================= MAIN COMPONENT ================= */
 export default function ContentNews() {
   const [news, setNews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -148,7 +129,22 @@ export default function ContentNews() {
   useEffect(() => {
     fetch(PUBLIC_NEWS_ENDPOINT)
       .then((res) => res.json())
-      .then((data) => setNews(Array.isArray(data) ? data : []))
+      .then((data) => {
+        if (Array.isArray(data)) {
+          // Normalize & Format Date
+          const normalized = data.map((n: any) => ({
+            ...n,
+            formattedDate: new Intl.DateTimeFormat("id-ID", {
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+            }).format(new Date(n.year || n.createdAt)),
+          }));
+          setNews(normalized);
+        } else {
+          setNews([]);
+        }
+      })
       .catch(() => setNews([]))
       .finally(() => setLoading(false));
   }, []);
@@ -172,7 +168,7 @@ export default function ContentNews() {
     { value: "z-a", label: "Z - A" },
   ];
 
-  /* ===== FILTER (POLA SAMA CONTENTPROJECT) ===== */
+  /* ===== FILTER & SORT ===== */
   const filtered = news
     .filter((n) =>
       search ? n.title?.toLowerCase().includes(search.toLowerCase()) : true
@@ -182,16 +178,18 @@ export default function ContentNews() {
     )
     .filter((n) =>
       year
-        ? new Date(n.year || n.createdAt)
-            .getFullYear()
-            .toString() === year
+        ? new Date(n.year || n.createdAt).getFullYear().toString() === year
         : true
     )
     .sort((a, b) => {
       if (sort === "latest")
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        return (
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
       if (sort === "oldest")
-        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+        return (
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        );
       if (sort === "a-z") return a.title.localeCompare(b.title);
       if (sort === "z-a") return b.title.localeCompare(a.title);
       return 0;
@@ -201,94 +199,90 @@ export default function ContentNews() {
 
   /* ===== RENDER ===== */
   return (
-    <div className="bg-white min-h-screen">
-      <main className="flex justify-center py-10">
-        <section className="w-full max-w-6xl px-4">
-
-          {/* SEARCH */}
-          <div className="flex items-center bg-[#FAF5F0] rounded-xl px-4 h-12 mb-6">
-            <Search size={20} className="text-gray-400" />
+    <div className="bg-white min-h-screen py-8">
+      <div className="max-w-6xl mx-auto px-4">
+        <div className="flex flex-col md:flex-row gap-3 mb-8">
+          <div className="relative flex-1">
+            <Search
+              size={18}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+            />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search..."
-              className="bg-transparent flex-1 ml-3 outline-none"
+              placeholder="Search news..."
+              className="
+                w-full h-10 pl-10 pr-4 
+                rounded-lg border border-gray-300 bg-white 
+                text-sm text-gray-700 placeholder:text-gray-500
+                focus:outline-none focus:border-gray-400
+                transition
+              "
             />
           </div>
 
-          {/* FILTER */}
-          <div className="flex gap-3 mb-8">
+          {/* FILTERS */}
+          <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 no-scrollbar">
             <CustomDropdown
               placeholder="Category"
               value={category}
               onChange={setCategory}
               options={categoryOptions}
+              className="min-w-[120px]"
             />
             <CustomDropdown
               placeholder="Year"
               value={year}
               onChange={setYear}
               options={yearOptions}
+              className="min-w-[100px]"
             />
             <CustomDropdown
               placeholder="Sort By"
-              icon={Funnel}
               value={sort}
               onChange={setSort}
               options={sortOptions}
+              className="min-w-[110px]"
             />
           </div>
+        </div>
 
-          {/* CONTENT */}
-          {loading ? (
-            <div className="text-center py-20 text-gray-400">
-              Loading news...
+        {/* CONTENT LIST */}
+        {loading ? (
+          <div className="text-center py-20 text-gray-400">Loading news...</div>
+        ) : filtered.length === 0 ? (
+          <div className="text-center py-20 text-gray-400">No news found.</div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {showing.map((n) => (
+                <Link key={n.id} to={`/news/slug/${slugify(n.title)}`}>
+                  <Card
+                    image={n.imageUrl || "/galeri/eventA.jpg"}
+                    title={n.title}
+                    desc={n.content}
+                    date={n.formattedDate}
+                    location={n.location}
+                    kategori={undefined}
+                    tags={n.kategori ? [n.kategori] : []}
+                  />
+                </Link>
+              ))}
             </div>
-          ) : filtered.length === 0 ? (
-            <div className="text-center py-20 text-gray-400">
-              No news found.
-            </div>
-          ) : (
-            <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {showing.map((n) => (
-                  <Link
-                    key={n.id}
-                    to={`/news/slug/${slugify(n.title)}`}
-                  >
-                    <Card
-                      image={n.imageUrl || "/galeri/eventA.jpg"}
-                      title={n.title}
-                      desc={n.content}
-                      date={n.year || n.createdAt}
-                      kategori={n.kategori}
-                      location={n.location}
-                      tags={
-                        Array.isArray(n.tags)
-                          ? n.tags
-                          : n.kategori
-                          ? [n.kategori]
-                          : []
-                      }
-                    />
-                  </Link>
-                ))}
+
+            {visible < filtered.length && (
+              <div className="flex justify-center mt-10">
+                <button
+                  onClick={() => setVisible((v) => v + 6)}
+                  className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition"
+                >
+                  Load More
+                </button>
               </div>
-
-              {visible < filtered.length && (
-                <div className="flex justify-center mt-10">
-                  <button
-                    onClick={() => setVisible((v) => v + 6)}
-                    className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-gray-800 transition"
-                  >
-                    Load More
-                  </button>
-                </div>
-              )}
-            </>
-          )}
-        </section>
-      </main>
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 }

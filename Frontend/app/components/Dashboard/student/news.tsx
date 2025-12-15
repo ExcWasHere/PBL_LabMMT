@@ -71,6 +71,12 @@ export default function NewsPage() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  const [publisherName, setPublisherName] = useState("Student");
+
+  useEffect(() => {
+    setPublisherName(getPublisherName());
+  }, []);
+
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editData, setEditData] = useState<any | null>(null);
   
@@ -148,7 +154,7 @@ export default function NewsPage() {
 
   const handleSaveNews = async (formData: any) => {
     console.log("Raw FormData dari Form:", formData);
-    const publisherName = getPublisherName();
+    const currentPublisher = getPublisherName();
 
     const docFile = 
       formData.docFile || 
@@ -184,7 +190,7 @@ export default function NewsPage() {
         title: formData.title,
         kategori: formData.category || formData.type, 
         year: formData.date, 
-        publisher: publisherName,
+        publisher: currentPublisher,
         content: formData.description || formData.content || "", 
         imageUrl: finalImageUrl, 
         docGuide: finalDocUrl,
@@ -262,26 +268,25 @@ export default function NewsPage() {
     }
   };
 
-  // --- STATS ---
   const stats = [
     {
       label: "Published",
-      value: newsList.filter((n) => n.status === "Published").length,
+      value: newsList.filter((n) => n.status === "Published" && n.publisher === publisherName).length,
       color: "border-orange-400 text-orange-500",
     },
     {
       label: "Review",
-      value: newsList.filter((n) => n.status === "Review").length,
+      value: newsList.filter((n) => n.status === "Review" && n.publisher === publisherName).length,
       color: "border-blue-400 text-blue-500",
     },
     {
       label: "Wait To Publish",
-      value: newsList.filter((n) => n.status === "Waiting").length,
+      value: newsList.filter((n) => n.status === "Waiting" && n.publisher === publisherName).length,
       color: "border-green-400 text-green-500",
     },
     {
       label: "Muted",
-      value: newsList.filter((n) => n.status === "Muted").length,
+      value: newsList.filter((n) => n.status === "Muted" && n.publisher === publisherName).length,
       color: "border-red-400 text-red-500",
     },
   ];
@@ -298,7 +303,8 @@ export default function NewsPage() {
   };
 
   const filteredData = useMemo(() => {
-    let data = [...newsList];
+    let data = newsList.filter(item => item.publisher === publisherName);
+    
     const getYearFromString = (dateString: string) => {
       const d = new Date(dateString);
       if (!isNaN(d.getTime())) return String(d.getFullYear());
@@ -322,7 +328,15 @@ export default function NewsPage() {
     if (selectedStatus !== "All Status") data = data.filter((row) => row.status === selectedStatus);
 
     return data;
-  }, [newsList, selectedDate, selectedCategory, searchTerm, selectedSort, selectedStatus]);
+  }, [
+    newsList, 
+    selectedDate, 
+    selectedCategory, 
+    searchTerm, 
+    selectedSort, 
+    selectedStatus, 
+    publisherName 
+]);
 
   return (
     <div className="flex relative min-h-screen">

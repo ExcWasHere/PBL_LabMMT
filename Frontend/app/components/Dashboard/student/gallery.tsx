@@ -68,6 +68,12 @@ export default function GalleryPage() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  const [publisherName, setPublisherName] = useState("Mahasiswa");
+
+  useEffect(() => {
+    setPublisherName(getPublisherName());
+  }, []);
+
   const [editData, setEditData] = useState<any | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   
@@ -293,34 +299,42 @@ export default function GalleryPage() {
   };
 
   const filteredData = useMemo(() => {
-    let data = [...galleryList];
-    const getYear = (d: string) => {
-        const date = new Date(d);
-        return !isNaN(date.getTime()) ? String(date.getFullYear()) : "";
-    };
-
-    if (selectedYear !== "All Year") data = data.filter((row) => getYear(row.date) === selectedYear);
-    if (selectedStatus !== "All Status") data = data.filter((row) => row.status === selectedStatus);
-    if (searchTerm) {
-      const lower = searchTerm.toLowerCase();
-      data = data.filter((row) => 
-        row.title.toLowerCase().includes(lower) || 
-        row.publisher.toLowerCase().includes(lower)
-      );
-    }
-
-    if (selectedSort === "A-Z") data.sort((a, b) => a.title.localeCompare(b.title));
-    else if (selectedSort === "Z-A") data.sort((a, b) => b.title.localeCompare(a.title));
-    else if (selectedSort === "Latest") data.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-
-    return data;
-  }, [galleryList, selectedYear, searchTerm, selectedSort, selectedStatus]);
+      let data = galleryList.filter(row => row.publisher === publisherName);
+      
+      const getYear = (d: string) => {
+          const date = new Date(d);
+          return !isNaN(date.getTime()) ? String(date.getFullYear()) : "";
+      };
+  
+      if (selectedYear !== "All Year") data = data.filter((row) => getYear(row.date) === selectedYear);
+      if (selectedStatus !== "All Status") data = data.filter((row) => row.status === selectedStatus);
+      if (searchTerm) {
+        const lower = searchTerm.toLowerCase();
+        data = data.filter((row) => 
+          row.title.toLowerCase().includes(lower) || 
+          row.publisher.toLowerCase().includes(lower)
+        );
+      }
+  
+      if (selectedSort === "A-Z") data.sort((a, b) => a.title.localeCompare(b.title));
+      else if (selectedSort === "Z-A") data.sort((a, b) => b.title.localeCompare(a.title));
+      else if (selectedSort === "Latest") data.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  
+      return data;
+    }, [
+      galleryList, 
+      selectedYear, 
+      searchTerm, 
+      selectedSort, 
+      selectedStatus,
+      publisherName 
+    ]);
 
   const stats = [
-    { label: "Published", value: galleryList.filter(p => p.status === "Published").length, color: "border-orange-400 text-orange-500" },
-    { label: "Review", value: galleryList.filter(p => p.status === "Review").length, color: "border-blue-400 text-blue-500" },
-    { label: "Wait To Publish", value: galleryList.filter(p => p.status === "Waiting").length, color: "border-green-400 text-green-500" },
-    { label: "Muted", value: galleryList.filter(p => p.status === "Muted").length, color: "border-red-400 text-red-500" },
+    { label: "Published", value: galleryList.filter(p => p.status === "Published" && p.publisher === publisherName).length, color: "border-orange-400 text-orange-500" },
+    { label: "Review", value: galleryList.filter(p => p.status === "Review" && p.publisher === publisherName).length, color: "border-blue-400 text-blue-500" },
+    { label: "Wait To Publish", value: galleryList.filter(p => p.status === "Waiting" && p.publisher === publisherName).length, color: "border-green-400 text-green-500" },
+    { label: "Muted", value: galleryList.filter(p => p.status === "Muted" && p.publisher === publisherName).length, color: "border-red-400 text-red-500" },
   ];
 
   return (

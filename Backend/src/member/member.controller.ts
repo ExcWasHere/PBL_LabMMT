@@ -49,16 +49,12 @@ export class MemberController {
     return await this.memberService.findPending();
   }
 
-  // ========= TAMBAHAN: GET by SLUG =========
-  // PENTING: Taruh route ini SEBELUM route ':id'
-  // supaya 'slug/xxx' tidak dianggap sebagai ID
   @Get('slug/:slug')
   async findBySlug(@Param('slug') slug: string) {
     const member = await this.memberService.findBySlug(slug);
     if (!member) throw new NotFoundException('Member not found');
     return member;
   }
-  // =========================================
 
   @Get(':id')
   async findOne(@Param('id') id: string) {

@@ -8,7 +8,6 @@ import {
 } from 'class-validator';
 
 export class UpdateMemberDto {
-  // Existing fields
   @IsOptional()
   @IsString()
   name?: string;
@@ -41,10 +40,6 @@ export class UpdateMemberDto {
   @IsEnum(['pending', 'active'])
   status?: string;
 
-  // ============================
-  // Added new lecturer fields
-  // ============================
-
   @IsOptional()
   @IsString()
   nip?: string;
@@ -65,7 +60,6 @@ export class UpdateMemberDto {
   @IsString()
   bio?: string;
 
-  // Arrays
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
@@ -91,7 +85,6 @@ export class UpdateMemberDto {
   @IsString({ each: true })
   matkul_genap?: string[];
 
-  // JSON object
   @IsOptional()
   @IsObject()
   social_links?: {

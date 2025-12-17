@@ -17,9 +17,6 @@ export class MemberService {
     private readonly memberRepo: Repository<Member>,
   ) {}
 
-  // ====================================
-  // HELPER: Generate Slug dari Name
-  // ====================================
   private makeSlug(name: string) {
     return slugify(name, {
       lower: true,
@@ -27,9 +24,6 @@ export class MemberService {
     });
   }
 
-  // ====================================
-  // HELPER: Normalize Array Input
-  // ====================================
   private normalizeToStringArray(input: any): string[] {
     if (!input) return [];
     if (Array.isArray(input)) return input.map((v) => String(v));
@@ -50,15 +44,11 @@ export class MemberService {
     return [String(input)];
   }
 
-  // ====================================
-  // CREATE Member (dengan auto-generate slug)
-  // ====================================
   async create(createMemberDto: CreateMemberDto) {
     if (!createMemberDto || !createMemberDto.name) {
       throw new BadRequestException('Missing member data');
     }
 
-    // ===== SLUG =====
     const baseSlug = this.makeSlug(createMemberDto.name);
     let finalSlug = baseSlug;
     let counter = 1;
@@ -101,9 +91,6 @@ export class MemberService {
     return this.memberRepo.save(member);
   }
 
-  // ====================================
-  // FIND ALL Active Members
-  // ====================================
   async findAllActive() {
     return await this.memberRepo.find({
       where: { status: 'active' },
@@ -111,9 +98,6 @@ export class MemberService {
     });
   }
 
-  // ====================================
-  // FIND Pending Members
-  // ====================================
   async findPending() {
     return await this.memberRepo.find({
       where: { status: 'pending' },
@@ -121,36 +105,23 @@ export class MemberService {
     });
   }
 
-  // ====================================
-  // FIND ONE by ID (UUID)
-  // ====================================
   async findOne(id: string) {
     return await this.memberRepo.findOne({ where: { id } });
   }
 
-  // ====================================
-  // FIND by SLUG (NEW!)
-  // ====================================
   async findBySlug(slug: string) {
     return await this.memberRepo.findOne({ where: { slug } });
   }
 
-  // ====================================
-  // FIND by User ID
-  // ====================================
   async findByUserId(userId: number) {
     if (!userId) return null;
     return await this.memberRepo.findOne({ where: { userId } });
   }
 
-  // ====================================
-  // UPDATE Member by ID
-  // ====================================
   async update(id: string, updateMemberDto: UpdateMemberDto) {
     const exists = await this.memberRepo.findOne({ where: { id } });
     if (!exists) return null;
 
-    // Regenerate slug jika name berubah
     let newSlug = exists.slug;
     if (updateMemberDto.name && updateMemberDto.name !== exists.name) {
       const baseSlug = this.makeSlug(updateMemberDto.name);
@@ -209,14 +180,10 @@ export class MemberService {
     return this.findOne(id);
   }
 
-  // ====================================
-  // UPDATE by User ID (for /member/me)
-  // ====================================
   async updateByUserId(userId: number, updateMemberDto: UpdateMemberDto) {
     const existing = await this.findByUserId(userId);
     if (!existing) return null;
 
-    // Regenerate slug jika name berubah
     let newSlug = existing.slug;
     if (updateMemberDto.name && updateMemberDto.name !== existing.name) {
       newSlug = this.makeSlug(updateMemberDto.name);
@@ -281,9 +248,6 @@ export class MemberService {
     return await this.memberRepo.save(existing);
   }
 
-  // ====================================
-  // APPROVE Member
-  // ====================================
   async approve(id: string, field: string) {
     const member = await this.memberRepo.findOne({ where: { id } });
     if (!member) {
@@ -300,9 +264,6 @@ export class MemberService {
     return this.memberRepo.save(member);
   }
 
-  // ====================================
-  // REJECT Member
-  // ====================================
   async reject(id: string) {
     const existing = await this.memberRepo.findOne({ where: { id } });
     if (!existing) return null;
@@ -310,9 +271,6 @@ export class MemberService {
     return true;
   }
 
-  // ====================================
-  // DELETE Member
-  // ====================================
   async remove(id: string) {
     await this.memberRepo.delete(id);
     return { message: 'Member deleted' };

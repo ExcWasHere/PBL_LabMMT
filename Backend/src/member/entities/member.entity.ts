@@ -23,10 +23,6 @@ export class Member {
   @Column()
   role: 'dosen' | 'mahasiswa' | 'admin';
 
-  // =====================================================
-  // REQUIRED by your existing MemberService + DB
-  // =====================================================
-
   @Column({ type: 'varchar', length: 255, nullable: true })
   email: string;
 
@@ -45,10 +41,6 @@ export class Member {
 
   @Column({ type: 'date', nullable: true })
   startDate: Date;
-
-  // =====================================================
-  // NEW FIELDS (lecturer)
-  // =====================================================
 
   @Column({ type: 'varchar', length: 255, nullable: true })
   nip?: string;

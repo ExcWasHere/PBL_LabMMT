@@ -46,10 +46,6 @@ export class CreateMemberDto {
   @IsString()
   startDate?: string;
 
-  // ============================
-  // Added lecturer fields
-  // ============================
-
   @IsOptional()
   @IsString()
   nip?: string;

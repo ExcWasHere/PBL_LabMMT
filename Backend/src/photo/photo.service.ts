@@ -16,36 +16,30 @@ export class PhotoService {
     private readonly photoRepo: Repository<Photo>,
   ) {}
 
-  // =====================
-  // CREATE
-  // =====================
   async createPhoto(payload: {
     title: string;
     photoUrl: string;
     galleryId?: string;
-    publisher?: string; // ✅ Tambahkan
+    publisher?: string;
     location?: string;
     date?: string;
-    status?: string; // ✅ Tambahkan
+    status?: string;
     description?: string;
   }) {
     const photo = this.photoRepo.create({
       title: payload.title,
       photoUrl: payload.photoUrl,
       galleryId: payload.galleryId,
-      publisher: payload.publisher ?? null, // ✅ Tambahkan
+      publisher: payload.publisher ?? null,
       location: payload.location ?? null,
       date: payload.date ? new Date(payload.date) : null,
       description: payload.description ?? null,
-      status: payload.status ?? 'Review', // ✅ Ubah dari 'Published' ke 'Review' atau dari payload
+      status: payload.status ?? 'Review',
     } as DeepPartial<Photo>);
 
     return this.photoRepo.save(photo);
   }
 
-  // =====================
-  // READ
-  // =====================
   findAll() {
     return this.photoRepo.find({
       order: { createdAt: 'DESC' },
@@ -58,9 +52,6 @@ export class PhotoService {
     });
   }
 
-  // =====================
-  // UPDATE
-  // =====================
   async update(id: string, dto: UpdatePhotoDto) {
     const updateData: any = { ...dto };
 
@@ -72,17 +63,11 @@ export class PhotoService {
     return this.findOne(id);
   }
 
-  // =====================
-  // DELETE
-  // =====================
   async remove(id: string) {
     await this.photoRepo.delete(id);
     return { message: 'Photo deleted' };
   }
 
-  // =====================
-  // CRON JOB
-  // =====================
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async handleScheduledPhotos() {
     this.logger.debug('Checking for scheduled photos to publish...');

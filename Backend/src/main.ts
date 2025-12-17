@@ -8,15 +8,13 @@ import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
   app.use(cookieParser());
+
   app.enableCors({
-    origin: 'http://localhost:5173',
+    origin: ['http://localhost:5173', 'https://pbl-lab-mmt.vercel.app'],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
-  });
-
-  app.useStaticAssets(path.join(process.cwd(), 'uploads'), {
-    prefix: '/uploads',
   });
 
   app.useGlobalPipes(
@@ -27,34 +25,23 @@ async function bootstrap() {
   );
 
   const uploadsRoot = path.join(process.cwd(), 'uploads');
+
   if (!fs.existsSync(uploadsRoot)) {
     fs.mkdirSync(uploadsRoot, { recursive: true });
-    console.log('✅ Folder uploads berhasil dibuat!');
   }
 
-  const cvDir = path.join(uploadsRoot, 'cv');
-  if (!fs.existsSync(cvDir)) {
-    fs.mkdirSync(cvDir, { recursive: true });
-    console.log('✅ Folder uploads/cv berhasil dibuat!');
-  }
-
-  const photosDir = path.join(uploadsRoot, 'photo');
-  if (!fs.existsSync(photosDir)) {
-    fs.mkdirSync(photosDir, { recursive: true });
-    console.log('✅ Folder uploads/photo berhasil dibuat!');
-  }
-
-  const videosDir = path.join(uploadsRoot, 'video');
-  if (!fs.existsSync(videosDir)) {
-    fs.mkdirSync(videosDir, { recursive: true });
-    console.log('✅ Folder uploads/video berhasil dibuat!');
-  }
-
-  app.useStaticAssets(uploadsRoot, {
-    prefix: '/uploads/',
+  ['cv', 'photo', 'video'].forEach((dir) => {
+    const fullPath = path.join(uploadsRoot, dir);
+    if (!fs.existsSync(fullPath)) {
+      fs.mkdirSync(fullPath, { recursive: true });
+    }
   });
 
-  await app.listen(3000);
-  console.log('🚀 Server running on http://localhost:3000');
+  app.useStaticAssets(uploadsRoot, {
+    prefix: '/uploads',
+  });
+
+  await app.listen(process.env.PORT || 3000);
+  console.log('🚀 Server running');
 }
 bootstrap();
